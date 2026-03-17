@@ -1,0 +1,63 @@
+name: Discord on Push and Pull Request
+on:
+  push:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - closed
+
+jobs:
+  discord-notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get current timestamp
+        id: get_ts
+        run: |
+          echo "timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
+
+      - name: Post commit message on push
+        if: github.event_name == 'push'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          # Push時は「緑色 (2351974)」のカードで通知します
+          jq -n \
+            --arg title "📦 Push to ${{ github.repository }}" \
+            --arg desc "Branch: **${{ github.ref_name }}**\n\n**Commit Message:**\n$COMMIT_MSG" \
+            --arg url "${{ github.event.head_commit.url }}" \
+            --arg timestamp "${{ steps.get_ts.outputs.timestamp }}" \
+            '{
+              embeds: [{
+                title: $title,
+                description: $desc,
+                url: $url,
+                color: 2351974,
+                timestamp: $timestamp
+              }]
+            }' | curl -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK_URL"
+
+      - name: Post PR info to Discord
+        if: github.event_name == 'pull_request'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          # Pull Request時は「青色 (3447003)」のカードで通知します
+          jq -n \
+            --arg title "🔄 Pull Request #${{ github.event.pull_request.number }}: $PR_TITLE" \
+            --arg desc "Repo: **${{ github.repository }}**\nBranch: **${{ github.head_ref }}**\nAuthor: **${{ github.event.pull_request.user.login }}**" \
+            --arg url "${{ github.event.pull_request.html_url }}" \
+            --arg timestamp "${{ steps.get_ts.outputs.timestamp }}" \
+            '{
+              embeds: [{
+                title: $title,
+                description: $desc,
+                url: $url,
+                color: 3447003,
+                timestamp: $timestamp
+              }]
+            }' | curl -H "Content-Type: application/json" -X POST -d @- "$DISCORD_WEBHOOK_URL"

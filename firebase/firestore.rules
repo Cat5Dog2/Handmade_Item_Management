@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    /**
+     * このアプリの業務データは、すべて Cloud Run 上の Express API 経由で操作する。
+     *
+     * 理由:
+     * - 商品ID採番は counters/product を使ったサーバー側トランザクション前提
+     * - 商品の論理削除、QR販売更新、画像メタ更新、代表画像制御は API 側業務ルール前提
+     * - カテゴリ / タグ / タスク / ダッシュボード集計も API 契約に統一する
+     *
+     * Cloud Run の Admin SDK は Firestore Security Rules をバイパスするため、
+     * クライアント SDK からの直接アクセスのみを明示的に禁止する。
+     */
+    function denyAll() {
+      return false;
+    }
+
+    // 商品本体（論理削除を含む）
+    match /products/{productId} {
+      allow read, write: if denyAll();
+    }
+
+    // 商品別タスク
+    match /tasks/{taskId} {
+      allow read, write: if denyAll();
+    }
+
+    // カテゴリマスタ
+    match /categories/{categoryId} {
+      allow read, write: if denyAll();
+    }
+
+    // タグマスタ
+    match /tags/{tagId} {
+      allow read, write: if denyAll();
+    }
+
+    // 商品ID採番カウンタ
+    match /counters/{counterKey} {
+      allow read, write: if denyAll();
+    }
+
+    // 主要操作ログ
+    match /operationLogs/{logId} {
+      allow read, write: if denyAll();
+    }
+
+    // 将来追加コレクションを含め、クライアントからの直接アクセスは一律禁止
+    match /{document=**} {
+      allow read, write: if denyAll();
+    }
+  }
+}

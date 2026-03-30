@@ -50,7 +50,8 @@
 | LGN-07 | 二重送信防止 | 有効な認証情報がある | 1. ログイン画面を開く<br>2. 認証情報を入力する<br>3. ログインボタンを連打する | 認証中はボタンが押下不可となり、二重送信されない |
 | LGN-08 | セッション切れ後の再ログイン遷移 | 認証済みで保護画面を表示中 | 1. APIが401を返す状態を作る<br>2. 保護画面からAPIを呼び出す | セッション切れメッセージ表示後、ログイン画面へ遷移する |
 | LGN-09 | ログアウト | 認証済み | 1. 保護画面でログアウトを実行する<br>2. ブラウザの戻る操作を行う<br>3. 再ログインする<br>4. ログアウト前に使用していた画面状態や検索条件を確認する | ログイン画面へ遷移し、戻る操作でも保護対象画面を表示できない。再ログイン後、ログアウト前の画面状態キャッシュ・検索条件キャッシュは引き継がれない |
-| LGN-10 | 利用不可時のログイン遷移 | 認証済みで保護画面を表示中 | 1. APIが403を返す状態を作る<br>2. 保護画面からAPIを呼び出す | 「この操作は実行できません。」表示後、ログイン画面へ遷移する |
+| LGN-10 | URLクエリ残存時の再ログイン | 認証済みで、商品一覧に検索条件付きURLクエリが残る状態を再現できる | 1. 商品一覧でキーワード・カテゴリ・ステータスなどの検索条件を設定し、URLクエリが付与された状態にする<br>2. ログアウトを実行する<br>3. ログイン画面へ遷移したことを確認する<br>4. URLに過去の検索条件クエリが残った状態で再ログインする<br>5. 初期表示画面と、商品一覧へ再訪した際の条件を確認する | 再ログイン直後の初期表示はダッシュボードとなる。URLに過去の検索条件クエリが残っていても自動復元されない。商品一覧へ再訪した場合も初期条件から開始する |
+| LGN-11 | 利用不可時のログイン遷移 | 認証済みで保護画面を表示中 | 1. APIが403を返す状態を作る<br>2. 保護画面からAPIを呼び出す | 「この操作は実行できません。」表示後、ログイン画面へ遷移する |
 
 #### SCR-02 ダッシュボード画面
 
@@ -82,7 +83,7 @@
 | PRL-10 | 販売済ステータス選択時の固定挙動 | 販売済商品が存在する | 1. ステータスで販売済を選択する | 販売済表示切替はON固定となり、販売済商品を表示できる |
 | PRL-11 | ページングと条件変更時のページリセット | 51件以上の商品が存在し、2ページ目を表示できる | 1. 商品一覧を開く<br>2. 次へボタンを押下する<br>3. 前へボタンを押下する<br>4. 2ページ目で検索条件を変更する | ページ遷移でき、条件を保持したまま移動できる。条件変更時はページが1に戻って再取得される |
 | PRL-12 | サムネイルURL再取得 | 一覧の `thumbnailUrl` が取得済みで、有効期限切れを再現できる | 1. 商品一覧を開く<br>2. サムネイル表示を確認する<br>3. `thumbnailUrl` の有効期限切れ後に商品一覧を再取得する | サムネイル表示に `thumbnailUrl` を利用でき、有効期限切れ後は再取得した最新URLで再表示される |
-| PRL-13 | 0件表示 | 条件に一致する商品が存在しない | 1. 条件を指定して検索する | 「該当する商品はありません」が表示され、条件クリア導線が表示される |
+| PRL-13 | 0件表示 | 条件に一致する商品が存在しない | 1. 条件を指定して検索する | 「条件に一致する商品はありません。検索条件を変更してください。」が表示され、条件クリア導線が表示される |
 | PRL-14 | 詳細遷移 | 商品データあり | 1. 商品行を押下する | 商品詳細画面へ遷移する |
 | PRL-15 | 新規登録導線 | 認証済み | 1. 新規登録ボタンを押下する | 商品登録/編集画面へ遷移する |
 | PRL-16 | 一覧取得失敗時再試行 | APIを一時的に失敗させる | 1. 商品一覧を開く<br>2. エラー表示後、再試行を押下する | 直前条件・直前ページを保持したまま再取得される |
@@ -104,7 +105,7 @@
 | PRD-11 | 編集画面遷移 | 商品詳細表示中 | 1. 編集ボタンを押下する | 商品登録/編集画面へ遷移する |
 | PRD-12 | タスク管理画面遷移 | 商品詳細表示中 | 1. タスク管理ボタンを押下する | タスク管理画面へ遷移する |
 | PRD-13 | 商品削除導線 | 商品詳細表示中 | 1. 削除ボタンを押下する | 共通確認ダイアログが表示され、削除後は商品一覧へ戻る |
-| PRD-14 | 取得不可時の挙動 | 存在しない商品IDまたは論理削除済み商品IDを使用する | 1. 商品詳細取得を実行する | 取得不可メッセージと商品一覧への戻り導線が表示される |
+| PRD-14 | 取得不可時の挙動 | 存在しない商品IDまたは論理削除済み商品IDを使用する | 1. 商品詳細取得を実行する | 「対象の商品が見つかりません。」または「対象の商品はすでに利用できません。」が表示され、商品一覧への戻り導線が表示される |
 | PRD-15 | 商品詳細取得失敗時再試行 | APIを一時的に失敗させる | 1. 商品詳細を開く<br>2. エラー表示後、再試行を押下する | エラーメッセージ表示後、同一商品の詳細を再取得できる |
 
 #### SCR-05 商品登録/編集画面
@@ -252,7 +253,7 @@
 | IMG-01 | 画像追加正常 | 保存済み商品が存在する | 1. JPEG/PNG/WebP画像で `POST /api/products/:productId/images` を実行する | `201 Created` で画像追加される |
 | IMG-02 | 画像上限 | 10枚登録済み商品が存在する | 1. 11枚目を追加する | `IMAGE_LIMIT_EXCEEDED` となる |
 | IMG-03 | 非対応形式/サイズ超過 | 非対応形式ファイル、10MB超ファイルを用意する | 1. 画像追加APIを実行する | `UNSUPPORTED_IMAGE_TYPE` または `IMAGE_TOO_LARGE` となる |
-| IMG-04 | 代表画像追加 | 既存画像あり商品に `isPrimary=true` で追加する | 1. 画像追加APIを実行する | 新画像が代表画像となり、他画像は `isPrimary=false` となる |
+| IMG-04 | 画像追加時は代表画像を変更しない | 既存画像あり商品が存在し、代表画像が設定済みである | 1. `POST /api/products/:productId/images` を実行する | 追加画像は登録されるが代表画像は変更されない。代表画像の変更は `PUT /api/products/:productId` の `primaryImageId` で行う |
 | IMG-05 | 画像差し替え | 画像登録済み商品が存在する | 1. `PUT /api/products/:productId/images/:imageId` を実行する | `imageId` と `sortOrder` を維持したまま差し替えられる |
 | IMG-06 | 画像削除 | 画像登録済み商品が存在する | 1. `DELETE /api/products/:productId/images/:imageId` を実行する | Storage実体削除と商品更新が行われる |
 | IMG-07 | sortOrder詰め直し | 複数画像が存在する | 1. 中間画像を削除する | 残画像の `sortOrder` が1始まり連番になる |
@@ -274,8 +275,8 @@
 | TAP-02 | タスク並び順 | 納期あり/なし、完了/未完了のタスクがある | 1. タスク一覧APIを実行する | 未完了優先、`dueDate` 昇順、未設定後ろとなる |
 | TAP-03 | タスク登録正常 | 商品が存在する | 1. `POST /api/products/:productId/tasks` を実行する | `201 Created` で登録され、`isCompleted=false`、`completedAt=null` となる |
 | TAP-04 | タスク更新正常 | タスクが存在する | 1. `PUT /api/tasks/:taskId` を実行する | 内容が更新され、`updatedAt` も更新される |
-| TAP-05 | 完了制御 | 未完了タスクが存在する | 1. `PUT /api/tasks/:taskId` または `PATCH /completion` で完了化する | `completedAt` が設定される |
-| TAP-06 | 未完了戻し制御 | 完了済みタスクが存在する | 1. `PUT /api/tasks/:taskId` または `PATCH /completion` で未完了化する | `completedAt=null` となる |
+| TAP-05 | 完了制御 | 未完了タスクが存在する | 1. `PUT /api/tasks/:taskId` または `PATCH /api/tasks/:taskId/completion` で完了化する | `completedAt` が設定される |
+| TAP-06 | 未完了戻し制御 | 完了済みタスクが存在する | 1. `PUT /api/tasks/:taskId` または `PATCH /api/tasks/:taskId/completion` で未完了化する | `completedAt=null` となる |
 | TAP-07 | 完了切替専用API | タスクが存在する | 1. `PATCH /api/tasks/:taskId/completion` を実行する | `isCompleted`、`completedAt`、`updatedAt` のみ更新される |
 | TAP-08 | タスク物理削除 | タスクが存在する | 1. `DELETE /api/tasks/:taskId` を実行する | 復元不可の物理削除となる |
 | TAP-09 | 論理削除済み商品配下のタスク一覧 | 論理削除済み商品が存在する | 1. `GET /api/products/:productId/tasks` を実行する | `PRODUCT_RELATED_RESOURCE_UNAVAILABLE` となる |
@@ -315,11 +316,11 @@
 
 | テストケースID | テスト内容 | 前提条件 | 手順 | 期待結果 |
 |---|---|---|---|---|
-| QAP-01 | QR lookup 更新可能判定 | 展示中または在庫中の商品が存在する | 1. `POST /api/qr/lookup` を実行する | `canSell=true` かつ `reasonCode=CAN_SELL` で返る |
-| QAP-02 | QR lookup 既販売済 | 販売済商品が存在する | 1. `POST /api/qr/lookup` を実行する | `canSell=false` かつ `reasonCode=ALREADY_SOLD` で返る |
-| QAP-03 | QR lookup 制作系 | 制作前 / 制作中 / 制作済商品が存在する | 1. `POST /api/qr/lookup` を実行する | `canSell=false` かつ `reasonCode=INVALID_STATUS` で返る |
-| QAP-04 | QR lookup 論理削除商品 | 論理削除済み商品が存在する | 1. `POST /api/qr/lookup` を実行する | `canSell=false` かつ `reasonCode=PRODUCT_DELETED` で返る |
-| QAP-04A | QR lookup 未登録商品 | 未登録の `qrCodeValue` を用意する | 1. `POST /api/qr/lookup` を実行する | `canSell=false` かつ `reasonCode=PRODUCT_NOT_FOUND` で返る |
+| QAP-01 | QR lookup 更新可能判定 | 展示中または在庫中の商品が存在する | 1. `POST /api/qr/lookup` を実行する | `200 OK` で `canSell=true` かつ `reasonCode=CAN_SELL` で返る |
+| QAP-02 | QR lookup 既販売済 | 販売済商品が存在する | 1. `POST /api/qr/lookup` を実行する | `200 OK` で `canSell=false` かつ `reasonCode=ALREADY_SOLD` で返る |
+| QAP-03 | QR lookup 制作系 | 制作前 / 制作中 / 制作済商品が存在する | 1. `POST /api/qr/lookup` を実行する | `200 OK` で `canSell=false` かつ `reasonCode=INVALID_STATUS` で返る |
+| QAP-04 | QR lookup 論理削除商品 | 論理削除済み商品が存在する | 1. `POST /api/qr/lookup` を実行する | `200 OK` で `canSell=false` かつ `reasonCode=PRODUCT_DELETED` で返る |
+| QAP-04A | QR lookup 未登録商品 | 未登録の `qrCodeValue` を用意する | 1. `POST /api/qr/lookup` を実行する | `200 OK` で `canSell=false` かつ `reasonCode=PRODUCT_NOT_FOUND` で返る |
 | QAP-04B | QR lookup 入力必須バリデーション | なし | 1. `qrCodeValue` を未指定で `POST /api/qr/lookup` を実行する | `VALIDATION_ERROR` となる |
 | QAP-05 | QR sell 正常更新 | 更新可能商品が存在する | 1. `POST /api/qr/sell` を実行する | `status=sold` と `soldAt` が設定される |
 | QAP-06 | QR sell 重複更新防止 | 既販売済商品が存在する | 1. `POST /api/qr/sell` を実行する | 更新されず、`ALREADY_SOLD` を返す |

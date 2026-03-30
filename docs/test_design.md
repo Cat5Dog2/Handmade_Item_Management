@@ -78,6 +78,7 @@
 
 | 区分 | メソッド | パス |
 |---|---|---|
+| Health | GET | `/api/health` |
 | Dashboard | GET | `/api/dashboard` |
 | Products | GET | `/api/products` |
 | Products | POST | `/api/products` |
@@ -290,13 +291,16 @@
 | 観点ID | テスト観点 | 確認内容 |
 |---|---|---|
 | LGN-01 | 正常ログイン | 正しいメールアドレス / パスワードでログインし、ダッシュボードへ遷移する |
-| LGN-02 | 未入力 | メールアドレス未入力、パスワード未入力で入力エラー表示 |
-| LGN-03 | 形式不正 | メールアドレス形式不正で入力エラー表示 |
-| LGN-04 | 認証失敗 | 誤った認証情報でエラーメッセージ表示、再操作可能 |
-| LGN-05 | パスワード再設定 | 再設定導線からメール送信できる |
-| LGN-06 | 二重送信防止 | 認証中はログインボタン押下不可 |
-| LGN-07 | セッション切れ遷移 | 401起点で本画面へ戻り、理由メッセージが表示される |
-| LGN-08 | ログアウト | ログアウト実行でログイン画面へ遷移し、セッションおよび画面状態キャッシュが破棄され、ブラウザの戻る操作でも保護対象画面を再表示できない |
+| LGN-02 | メールアドレス未入力 | メールアドレス未入力時に入力エラーが表示される |
+| LGN-03 | パスワード未入力 | パスワード未入力時に入力エラーが表示される |
+| LGN-04 | メールアドレス形式不正 | メールアドレス形式不正時に入力エラーが表示される |
+| LGN-05 | 認証失敗 | 誤った認証情報でエラーメッセージ表示、再操作可能 |
+| LGN-06 | パスワード再設定導線 | 再設定導線からメール送信できる |
+| LGN-07 | 二重送信防止 | 認証中はログインボタン押下不可 |
+| LGN-08 | セッション切れ後の再ログイン遷移 | 401起点でセッション切れメッセージ表示後、ログイン画面へ遷移する |
+| LGN-09 | ログアウト | ログアウト実行でログイン画面へ遷移し、セッションおよび画面状態キャッシュが破棄され、ブラウザの戻る操作でも保護対象画面を再表示できない |
+| LGN-10 | URLクエリ残存時の再ログイン | ログアウト前の一覧検索条件がURLクエリとして残っていても、再ログイン直後は復元されず、ダッシュボード起点・商品一覧初期条件で開始する |
+| LGN-11 | 利用不可時のログイン遷移 | 403起点で利用不可メッセージを表示し、ログイン画面へ遷移する |
 
 ### 10.2 SCR-02 ダッシュボード画面
 
@@ -446,13 +450,14 @@
 
 | 観点ID | テスト観点 | 確認内容 |
 |---|---|---|
-| API-01 | 認証必須 | Bearer token なしで `AUTH_REQUIRED` |
+| API-01 | 認証必須（業務API） | Bearer token なしで `AUTH_REQUIRED` |
 | API-02 | 403応答 | 利用不可時に `AUTH_FORBIDDEN` |
 | API-03 | 正常レスポンス形式 | `data` を返却、一覧APIは必要時 `meta` を返却 |
 | API-04 | エラーレスポンス形式 | `code`, `message`, 必要に応じて `details` |
 | API-05 | 日時形式 | ISO 8601文字列で返却 |
 | API-06 | 期限付きURL | 取得系APIの画像URLは期限付きで返却され、期限切れ後は再取得で更新される |
 | API-07 | 論理削除 | 論理削除済み商品の通常参照系は404 |
+| API-08 | `GET /api/health` | 認証不要で `200 OK` を返し、疎通確認に利用できる |
 
 ### 11.2 商品API
 
@@ -480,14 +485,14 @@
 
 | 観点ID | API | テスト観点 | 確認内容 |
 |---|---|---|---|
-| IMG-01 | `POST /images` | 画像追加 | JPEG/PNG/WebP、10MB以下、最大10枚 |
-| IMG-02 | `POST /images` | 上限 | 11枚目で `IMAGE_LIMIT_EXCEEDED` |
-| IMG-03 | `POST /images` | 形式 / サイズ | 非対応形式、サイズ超過でエラー |
-| IMG-04 | `POST /images` | 代表画像 | `isPrimary=true` 追加時の正規化 |
-| IMG-05 | `PUT /images/:imageId` | 差し替え | `imageId` / `sortOrder` 維持 |
-| IMG-06 | `DELETE /images/:imageId` | 削除 | Storage削除、商品更新 |
-| IMG-07 | `DELETE /images/:imageId` | `sortOrder` 詰め直し | 1始まり連番に再整列 |
-| IMG-08 | `DELETE /images/:imageId` | 代表画像削除 | 残画像の先頭が代表扱い |
+| IMG-01 | `POST /api/products/:productId/images` | 画像追加 | JPEG/PNG/WebP、10MB以下、最大10枚 |
+| IMG-02 | `POST /api/products/:productId/images` | 上限 | 11枚目で `IMAGE_LIMIT_EXCEEDED` |
+| IMG-03 | `POST /api/products/:productId/images` | 形式 / サイズ | 非対応形式、サイズ超過でエラー |
+| IMG-04 | `POST /api/products/:productId/images` | 代表画像変更不可 | 画像追加APIでは代表画像を変更せず、変更は `PUT /api/products/:productId` の `primaryImageId` で行う |
+| IMG-05 | `PUT /api/products/:productId/images/:imageId` | 差し替え | `imageId` / `sortOrder` 維持 |
+| IMG-06 | `DELETE /api/products/:productId/images/:imageId` | 削除 | Storage削除、商品更新 |
+| IMG-07 | `DELETE /api/products/:productId/images/:imageId` | `sortOrder` 詰め直し | 1始まり連番に再整列 |
+| IMG-08 | `DELETE /api/products/:productId/images/:imageId` | 代表画像削除 | 残画像の先頭が代表扱い |
 | IMG-09 | 画面連携 | 更新後再取得 | 画像API成功後、`GET /api/products/:productId` 再取得で最新の期限付きURLと画像状態を反映 |
 | IMG-10 | 共通 | 論理削除商品 | `PRODUCT_RELATED_RESOURCE_UNAVAILABLE` |
 
@@ -495,14 +500,14 @@
 
 | 観点ID | API | テスト観点 | 確認内容 |
 |---|---|---|---|
-| TAP-01 | `GET /tasks` | 既定値 | `showCompleted=false` |
-| TAP-02 | `GET /tasks` | 並び順 | 未完了優先、`dueDate` 昇順、未設定後ろ |
-| TAP-03 | `POST /tasks` | 登録 | `isCompleted=false`, `completedAt=null` |
-| TAP-04 | `PUT /tasks/:taskId` | 更新 | 項目更新と `updatedAt` 更新 |
-| TAP-05 | `PUT /tasks/:taskId` | 完了制御 | `false -> true` で `completedAt` 設定 |
-| TAP-06 | `PUT /tasks/:taskId` | 未完了戻し | `true -> false` で `completedAt=null` |
-| TAP-07 | `PATCH /completion` | 完了切替専用 | `isCompleted`, `completedAt`, `updatedAt` のみ更新 |
-| TAP-08 | `DELETE /tasks/:taskId` | 物理削除 | 復元不可 |
+| TAP-01 | `GET /api/products/:productId/tasks` | 既定値 | `showCompleted=false` |
+| TAP-02 | `GET /api/products/:productId/tasks` | 並び順 | 未完了優先、`dueDate` 昇順、未設定後ろ |
+| TAP-03 | `POST /api/products/:productId/tasks` | 登録 | `isCompleted=false`, `completedAt=null` |
+| TAP-04 | `PUT /api/tasks/:taskId` | 更新 | 項目更新と `updatedAt` 更新 |
+| TAP-05 | `PUT /api/tasks/:taskId` | 完了制御 | `false -> true` で `completedAt` 設定 |
+| TAP-06 | `PUT /api/tasks/:taskId` | 未完了戻し | `true -> false` で `completedAt=null` |
+| TAP-07 | `PATCH /api/tasks/:taskId/completion` | 完了切替専用 | `isCompleted`, `completedAt`, `updatedAt` のみ更新 |
+| TAP-08 | `DELETE /api/tasks/:taskId` | 物理削除 | 復元不可 |
 | TAP-09 | 共通 | 論理削除商品 | `PRODUCT_RELATED_RESOURCE_UNAVAILABLE` |
 
 ### 11.5 カテゴリ / タグAPI
@@ -580,7 +585,7 @@
 本書のテストケースは、要件定義書の受入条件を最低充足ラインとして作成する。  
 受入確認では以下を重点確認する。
 
-- 認証: ログイン / ログアウト / パスワード再設定 / 認証失敗表示
+- 認証: ログイン / ログアウト / パスワード再設定 / 認証失敗表示 / ログアウト後のURLクエリ非復元
 - 商品管理: 一意採番、必須入力、検索、絞り込み、並び替え、論理削除除外
 - 画像管理: 最大10枚、形式、サイズ、代表画像補完、プレースホルダー、期限付きURL再取得
 - ステータス管理: 販売日時設定、販売済戻し確認、販売日時解除

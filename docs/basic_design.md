@@ -1244,14 +1244,14 @@ MVPでは以下の観点でインデックスを整備する。
 
 本書で定めた基本方針のうち、以下の項目は関連文書で具体化済みである。実装・テスト時は各参照先を正本として扱う。
 
-- 画面レイアウト詳細: `screen_design_revised_v4.md`
-- APIリクエスト/レスポンス定義: `api_specification_revised_v3.md`
-- Firestoreインデックス定義の最終版: `data_design.md` および `implementation-notes_revised_v3.md`
-- 画像変換方式、命名規則、保存パス: `data_design.md` および `implementation-notes_revised_v3.md`
-- QRコード生成ライブラリ、読み取りライブラリ: `implementation-notes_revised_v3.md`
-- フロント状態管理方式: `implementation-notes_revised_v3.md`
-- エラーメッセージ文言一覧: `error-messages_revised_v3.md`
-- ログ出力項目と保持方針: `detail_design_revised_v6.md` および `implementation-notes_revised_v3.md`
+- 画面レイアウト詳細: `screen_design.md`
+- APIリクエスト/レスポンス定義: `api_specification.md`
+- Firestoreインデックス定義の最終版: `data_design.md` および `implementation-notes.md`
+- 画像変換方式、命名規則、保存パス: `data_design.md` および `implementation-notes.md`
+- QRコード生成ライブラリ、読み取りライブラリ: `implementation-notes.md`
+- フロント状態管理方式: `implementation-notes.md`
+- エラーメッセージ文言一覧: `error-messages.md`
+- ログ出力項目と保持方針: `detail_design.md` および `implementation-notes.md`
 
 補足:
 - 本書は基本設計書として全体方針を定める

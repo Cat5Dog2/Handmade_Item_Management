@@ -9,12 +9,13 @@ Thumbs.db
 # =========================
 # Logs
 # =========================
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+firebase-debug.log*
 
 # =========================
 # Environment variables
@@ -23,16 +24,25 @@ pnpm-debug.log*
 .env.*
 !.env.example
 
+# App-specific local env files
+apps/web/.env.local
+apps/api/.env
+apps/api/.env.local
+
 # =========================
 # Dependencies
 # =========================
 node_modules/
+apps/web/node_modules/
+apps/api/node_modules/
 
 # =========================
 # Build outputs
 # =========================
 dist/
 build/
+apps/web/dist/
+apps/api/dist/
 
 # =========================
 # TypeScript
@@ -44,6 +54,8 @@ build/
 # =========================
 coverage/
 .nyc_output/
+apps/web/coverage/
+apps/api/coverage/
 
 # =========================
 # Vite
@@ -52,7 +64,7 @@ vite.config.ts.timestamp-*
 *.local
 
 # =========================
-# Cache
+# Cache / Temp
 # =========================
 .cache/
 .temp/
@@ -60,20 +72,19 @@ tmp/
 temp/
 
 # =========================
-# Frontend specific
+# Firebase local artifacts
 # =========================
-frontend/node_modules/
-frontend/dist/
-frontend/coverage/
-
-# =========================
-# Backend specific
-# =========================
-backend/node_modules/
-backend/dist/
-backend/coverage/
+.firebase/
 
 # =========================
 # Optional: uploaded/generated files
 # =========================
 uploads/
+
+# =========================
+# Secrets
+# =========================
+*.service-account.json
+service-account.json
+gcp-service-account.json
+firebase-adminsdk-*.json

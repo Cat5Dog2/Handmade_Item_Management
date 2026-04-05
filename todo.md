@@ -75,12 +75,12 @@ Next:
 
 ## 0. この TODO の使い方
 
-- 本書は、`requirements.md` / `basic_design.md` / `detail_design.md` / `api_specification.md` / `data_design.md` / `screen_design.md` / `implementation-notes.md` / `test_design.md` / `test_cases.md` を前提にした、**Codex 向けの実装タスクリスト**である。
+- 本書は、`docs/requirements.md` / `docs/basic_design.md` / `docs/detail_design.md` / `docs/api_specification.md` / `docs/data_design.md` / `docs/screen_design.md` / `docs/implementation-notes.md` / `docs/test_design.md` / `docs/test_cases.md` を前提にした、**Codex 向けの実装タスクリスト**である。
 - 目的は、Codex が **1タスクずつ安全に実装し、差分を小さく保ちながら前進できる状態** を作ることにある。
 - 1回の実装では、原則として **1つのタスクIDのみ** を完了させる。
 - タスク着手時は、必ず **依存タスク** を確認する。
 - タスク完了時は、**Done 条件** を満たしたうえで終了する。
-- 実装順や着手順の判断が `implementation-notes.md` の推奨順と食い違う場合は、**本 TODO の依存関係と 6-0 の番号付き一覧を正本として優先する**。
+- 実装順や着手順が `docs/implementation-notes.md` の推奨順と食い違う場合でも、**仕様の正本は `AGENTS.md` で定めた優先順位に従う**。本 TODO は作業分割と依存関係整理の補助として扱う。
 
 ### 0-1. タスク状態
 

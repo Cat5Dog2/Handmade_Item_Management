@@ -31,10 +31,14 @@ docker compose up --build
 
 ## 想定している前提
 
+- 設計書先行の段階では workspace 基盤が未作成のことがある
 - ルートに `package.json` があり、npm workspaces を使っている
 - `apps/web`, `apps/api`, `packages/shared` が存在する
 - Web は `npm run dev --workspace apps/web`
 - API は `npm run dev --workspace apps/api`
+
+workspace 基盤が未作成の場合は、先に `README.md` にある基盤ファイル
+（ルート `package.json`、各 workspace `package.json`、TypeScript 共通設定）を作成してからこの構成を使う。
 
 ## ずれそうな点
 
@@ -49,6 +53,11 @@ pnpm / yarn / 各 app 個別 package.json 運用の場合は、`Dockerfile` と 
 ### 3. Firebase Web SDK 設定
 
 `.env.docker.example` の `VITE_FIREBASE_*` は実プロジェクト値へ置き換えてください。
+
+### 3-1. 単独利用の allowlist
+
+`.env.docker` の `APP_OWNER_EMAIL` に、利用者本人のログイン用メールアドレスを設定してください。  
+API は Firebase 認証に加えて、このメールアドレスの一致を確認する前提です。
 
 ### 4. フロントから Firestore / Storage を直接触らない前提
 

@@ -144,6 +144,7 @@ flowchart TB
 
 - Firebase Authentication により本人認証を行う
 - APIは認証済みトークンを検証して処理を許可する
+- APIはトークン検証後、MVPでは運用で定めた単一の利用者メールアドレスとの一致確認を行う
 - 未認証時は管理画面にアクセス不可とする
 - 本人のみ利用前提のため、ロール管理は行わない
 
@@ -1047,7 +1048,7 @@ MVPでは以下の観点でインデックスを整備する。
 | 区分 | 例 | 内容 |
 |---|---|---|
 | `AUTH_REQUIRED` | 401 | 認証が必要 / セッション切れ |
-| `AUTH_FORBIDDEN` | 403 | 認証済だが利用不可 |
+| `AUTH_FORBIDDEN` | 403 | 認証済だが利用不可（本人メール不一致を含む） |
 | `VALIDATION_ERROR` | 400 | 入力不正 |
 | `PRODUCT_NOT_FOUND` | 404 | 商品未存在 |
 | `PRODUCT_DELETED` | 404 | 論理削除済み |
@@ -1114,6 +1115,7 @@ MVPでは以下の観点でインデックスを整備する。
 
 - Firebase Authentication による本人認証
 - APIでトークン検証
+- MVPでは `APP_OWNER_EMAIL` を既定とする allowlist で本人確認を補強し、不一致は `403` とする
 - Storage へのアクセスは認証前提の制御とする
 - 不要な公開URL設計を避ける
 

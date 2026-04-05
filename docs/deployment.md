@@ -14,6 +14,11 @@
 
 本書は `README.md` の実行概要を、実運用向けにもう一段具体化したものである。
 
+補足:
+
+- 本書は、**実装済みの workspace 基盤が揃っている段階**を前提とする
+- 設計書・Firebase設定・Docker雛形のみの初期状態では、後述の `npm` / Docker / Cloud Run コマンドはまだ実行できない
+
 ---
 
 ## 2. 配置構成
@@ -77,12 +82,22 @@ README.md
 .env.example
 firebase.json
 .firebaserc
+package.json
+apps/web/package.json
+apps/api/package.json
+packages/shared/package.json
+tsconfig.base.json
 firebase/firestore.indexes.json
 firebase/firestore.rules
 firebase/storage.rules
 docs/implementation-notes.md
 docs/error-messages.md
 ```
+
+補足:
+
+- 現在のリポジトリが設計書先行の初期セットである場合、上記の workspace 基盤ファイルは未配置のことがある
+- その場合は、先に `README.md` 記載の基盤ファイルを追加してから本手順へ進む
 
 ---
 
@@ -312,6 +327,7 @@ MVPでは Cloud Run 自体は公開エンドポイントとして配置するが
 
 - 現在の `apps/api/Dockerfile` は、**リポジトリルートを build context とする前提**で `package*.json`、`apps/*`、`packages/shared` を `COPY` する
 - そのため、`apps/api` を単独の source directory にすると build に失敗する
+- workspace 基盤未作成の状態でも build に失敗するため、先に manifest / tsconfig を揃える
 - Cloud Build / Docker / CI のいずれを使う場合も、**build context はリポジトリルート `.`** にする
 
 ローカルでの確認例:

@@ -1,6 +1,6 @@
 # Docker ローカル開発構成
 
-この構成は、以下をローカルで同時起動するための最小セットです。
+この構成は、**workspace 基盤作成後**に以下をローカルで同時起動するための最小セットです。
 
 - `web`: Vite 開発サーバー
 - `api`: Express API
@@ -14,6 +14,16 @@
 - API コンテナからは Docker Compose のサービス名で Emulator に接続する
 
 ## 使い方
+
+前提:
+
+- ルート `package.json`
+- `apps/web/package.json`
+- `apps/api/package.json`
+- `packages/shared/package.json`
+- TypeScript 共通設定
+
+が揃っていることを確認する。
 
 ```bash
 cp .env.docker.example .env.docker

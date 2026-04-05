@@ -9,7 +9,7 @@ services:
     working_dir: /workspace
     command: >
       sh -c "
-      if [ ! -d node_modules ]; then npm ci; fi &&
+      if [ ! -d node_modules ]; then if [ -f package-lock.json ]; then npm ci; else npm install; fi; fi &&
       npm run dev --workspace apps/web -- --host 0.0.0.0 --port 5173
       "
     ports:
@@ -35,7 +35,7 @@ services:
     working_dir: /workspace
     command: >
       sh -c "
-      if [ ! -d node_modules ]; then npm ci; fi &&
+      if [ ! -d node_modules ]; then if [ -f package-lock.json ]; then npm ci; else npm install; fi; fi &&
       npm run dev --workspace apps/api
       "
     ports:

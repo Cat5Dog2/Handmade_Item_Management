@@ -1,0 +1,83 @@
+name: handmade-item-management
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile.dev
+    container_name: handmade-web
+    working_dir: /workspace
+    command: >
+      sh -c "
+      if [ ! -d node_modules ]; then npm ci; fi &&
+      npm run dev --workspace apps/web -- --host 0.0.0.0 --port 5173
+      "
+    ports:
+      - "5173:5173"
+    env_file:
+      - .env.docker
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - .:/workspace
+      - repo_node_modules:/workspace/node_modules
+    depends_on:
+      api:
+        condition: service_started
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: dev
+    container_name: handmade-api
+    working_dir: /workspace
+    command: >
+      sh -c "
+      if [ ! -d node_modules ]; then npm ci; fi &&
+      npm run dev --workspace apps/api
+      "
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.docker
+    environment:
+      PORT: "8080"
+      API_BASE_PATH: "/api"
+      CORS_ORIGIN: "http://localhost:5173"
+      FIREBASE_AUTH_EMULATOR_HOST: "firebase-emulators:9099"
+      FIRESTORE_EMULATOR_HOST: "firebase-emulators:8081"
+      FIREBASE_STORAGE_EMULATOR_HOST: "firebase-emulators:9199"
+      GOOGLE_CLOUD_PROJECT: "${FIREBASE_PROJECT_ID:-demo-handmade-item-management}"
+      FIREBASE_PROJECT_ID: "${FIREBASE_PROJECT_ID:-demo-handmade-item-management}"
+    volumes:
+      - .:/workspace
+      - repo_node_modules:/workspace/node_modules
+    depends_on:
+      firebase-emulators:
+        condition: service_started
+
+  firebase-emulators:
+    build:
+      context: .
+      dockerfile: docker/firebase-emulators/Dockerfile
+    container_name: handmade-firebase-emulators
+    working_dir: /workspace
+    command: ["/usr/local/bin/start-emulators.sh"]
+    environment:
+      FIREBASE_PROJECT_ID: "${FIREBASE_PROJECT_ID:-demo-handmade-item-management}"
+    ports:
+      - "4000:4000"
+      - "8081:8081"
+      - "9099:9099"
+      - "9199:9199"
+    volumes:
+      - .:/workspace
+      - firebase_cache:/root/.cache/firebase
+      - firebase_data:/workspace/.firebase-emulator-data
+
+volumes:
+  repo_node_modules:
+  firebase_cache:
+  firebase_data:

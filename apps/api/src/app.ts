@@ -1,6 +1,7 @@
 import "./env";
 import cors from "cors";
 import express from "express";
+import { errorHandler } from "./errors/error-handler";
 
 const DEFAULT_API_BASE_PATH = "/api";
 const DEFAULT_SERVICE_NAME = "handmade-sales-api";
@@ -29,6 +30,8 @@ export function createApp() {
       }
     });
   });
+
+  app.use(errorHandler);
 
   return app;
 }

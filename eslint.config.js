@@ -5,6 +5,17 @@ const reactHooks = require("eslint-plugin-react-hooks");
 const reactRefresh = require("eslint-plugin-react-refresh");
 const globals = require("globals");
 
+const vitestGlobals = {
+  describe: "readonly",
+  it: "readonly",
+  expect: "readonly",
+  beforeEach: "readonly",
+  afterEach: "readonly",
+  beforeAll: "readonly",
+  afterAll: "readonly",
+  vi: "readonly"
+};
+
 module.exports = [
   {
     ignores: [
@@ -57,6 +68,12 @@ module.exports = [
           allowConstantExport: true
         }
       ]
+    }
+  },
+  {
+    files: ["**/*.test.{ts,tsx}", "**/src/test/**/*.{ts,tsx}"],
+    languageOptions: {
+      globals: vitestGlobals
     }
   }
 ];

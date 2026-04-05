@@ -1,6 +1,6 @@
 # Docker ローカル開発構成
 
-この構成は、**workspace 基盤作成後**に以下をローカルで同時起動するための最小セットです。
+この構成は、以下をローカルで同時起動するための最小セットです。
 
 - `web`: Vite 開発サーバー
 - `api`: Express API
@@ -41,14 +41,11 @@ docker compose up --build
 
 ## 想定している前提
 
-- 設計書先行の段階では workspace 基盤が未作成のことがある
 - ルートに `package.json` があり、npm workspaces を使っている
 - `apps/web`, `apps/api`, `packages/shared` が存在する
 - Web は `npm run dev --workspace apps/web`
 - API は `npm run dev --workspace apps/api`
-
-workspace 基盤が未作成の場合は、先に `README.md` にある基盤ファイル
-（ルート `package.json`、各 workspace `package.json`、TypeScript 共通設定）を作成してからこの構成を使う。
+- Web は `/api` を呼び、Vite dev server が `VITE_API_PROXY_TARGET` へ proxy する
 
 ## ずれそうな点
 

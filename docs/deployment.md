@@ -16,8 +16,7 @@
 
 補足:
 
-- 本書は、**実装済みの workspace 基盤が揃っている段階**を前提とする
-- 設計書・Firebase設定・Docker雛形のみの初期状態では、後述の `npm` / Docker / Cloud Run コマンドはまだ実行できない
+- 本書は、**ルート `package.json` と各 workspace を含む現行リポジトリ構成**を前提とする
 
 ---
 
@@ -93,11 +92,6 @@ firebase/storage.rules
 docs/implementation-notes.md
 docs/error-messages.md
 ```
-
-補足:
-
-- 現在のリポジトリが設計書先行の初期セットである場合、上記の workspace 基盤ファイルは未配置のことがある
-- その場合は、先に `README.md` 記載の基盤ファイルを追加してから本手順へ進む
 
 ---
 
@@ -193,13 +187,14 @@ cp .env.example .env
 実リポジトリでは次のどちらかで運用する。
 
 - ルート `.env`
-- `apps/web/.env.local` と `apps/api/.env` に分割
+- ルート `.env` を正本にしつつ、必要なら `apps/api/.env` で API 側だけ上書き
 
 ## 6.2 代表的な設定値
 
 ### Web 側
 
 - `VITE_API_BASE_URL`
+- `VITE_API_PROXY_TARGET`
 - `VITE_FIREBASE_API_KEY`
 - `VITE_FIREBASE_AUTH_DOMAIN`
 - `VITE_FIREBASE_PROJECT_ID`
@@ -327,7 +322,6 @@ MVPでは Cloud Run 自体は公開エンドポイントとして配置するが
 
 - 現在の `apps/api/Dockerfile` は、**リポジトリルートを build context とする前提**で `package*.json`、`apps/*`、`packages/shared` を `COPY` する
 - そのため、`apps/api` を単独の source directory にすると build に失敗する
-- workspace 基盤未作成の状態でも build に失敗するため、先に manifest / tsconfig を揃える
 - Cloud Build / Docker / CI のいずれを使う場合も、**build context はリポジトリルート `.`** にする
 
 ローカルでの確認例:

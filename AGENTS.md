@@ -1,0 +1,435 @@
+# AGENTS.md
+
+## 1. このファイルの目的
+このファイルは、VS Code拡張機能の Codex が本リポジトリで作業する際の共通ルールを定義する。
+Codex は常に本書の**作業ルール**を優先的に参照し、設計書と実装方針に沿って最小変更で開発すること。
+プロダクト仕様に関する判断は、3章の優先順位に従うこと。
+
+---
+
+## 2. 対象プロジェクト
+- プロジェクト名: ハンドメイド在庫・販売管理アプリ
+- 対象: MVP 初期リリース
+- 対象ユーザー: アプリ利用者本人のみ
+- モバイルファースト、PCレスポンシブ対応
+
+### 技術構成
+- フロントエンド: React + TypeScript + Vite
+- バックエンド: Node.js + TypeScript + Express
+- 認証: Firebase Authentication
+- データベース: Firestore
+- 画像保存: Cloud Storage
+- ホスティング: Firebase Hosting
+- 実行基盤: Cloud Run
+
+### 基本ディレクトリ構成
+```text
+/apps
+  /web
+  /api
+/packages
+  /shared
+/docs
+/firebase
+```
+
+- `apps/web`: フロントエンド
+- `apps/api`: API
+- `packages/shared`: 型・schema・定数など共有物
+- `docs`: 設計・補足文書
+- `firebase`: rules / indexes / Firebase設定
+
+---
+
+## 3. 仕様の優先順位
+プロダクト仕様に迷いがある場合は、以下の優先順位で判断すること。
+
+1. `docs/requirements.md`
+2. `docs/basic_design.md`
+3. `docs/detail_design.md`
+4. `docs/api_specification.md`
+5. `docs/data_design.md`
+6. `docs/screen_design.md`
+7. `docs/test_design.md`
+8. `docs/test_cases.md`
+9. `docs/implementation-notes.md`
+10. `docs/error-messages.md`
+11. 本ファイル `AGENTS.md`
+
+補足:
+- Codex の作業手順・禁止事項・報告ルールは、本ファイルを常に適用する
+- 商品仕様・API仕様・画面仕様の衝突は、上記の順で判断する
+
+### 判断原則
+- 上位設計に反する実装をしない
+- 設計に未記載の拡張を勝手に追加しない
+- MVP外の機能は実装しない
+- 複雑さが少ない案を優先する
+- 判断が必要な場合は、変更理由をコードコメントではなく説明文または関連ドキュメントに残す
+
+---
+
+## 4. Codex の作業原則
+
+### 4.1 変更前の確認
+Codex は実装前に以下を優先して確認すること。
+- 変更対象に関係する設計書
+- 既存の実装パターン
+- 既存の型・schema・定数の再利用可能性
+- 既存API契約との整合性
+
+### 4.2 変更方針
+- 変更は常に **最小差分** を優先する
+- 一度に広範囲を触りすぎない
+- 無関係なリファクタリングを混ぜない
+- 命名・責務・レイヤ分離は既存設計に合わせる
+- まず既存ファイルを活かし、必要な場合のみ新規ファイルを追加する
+
+### 4.3 実装後の確認
+変更後は、可能な範囲で以下を確認すること。
+
+```bash
+npm run lint
+npm run typecheck
+npm run test
+npm run build:web
+```
+
+- ワークスペースや script が未整備の段階では、実行できなかった理由と不足ファイルを必ず報告する
+- `build:api` または全体 `build` が整備されている場合は、影響範囲に応じて追加で確認してよい
+
+- 変更内容に不要なエラーが出ていないこと
+- 型破壊がないこと
+- API契約変更時はフロント・共有型・ドキュメントの整合が取れていること
+- 挙動変更がある場合は、必要なテストや仕様文書の更新を行うこと
+
+---
+
+## 5. アーキテクチャ上の固定ルール
+
+### 5.1 Firebase アクセス方針
+- **フロントから Firestore / Storage へ直接アクセスしない**
+- 業務データの取得・更新は **必ず Cloud Run の API 経由** とする
+- フロントで直接使う Firebase は **Authentication のみ** とする
+- Firestore / Storage rules は、クライアントSDKからの直接 read/write を許可しない前提で扱う
+
+### 5.2 API 呼び出し方針
+- ブラウザからの業務API呼び出しは **`/api` 経由** に統一する
+- フロントは Firebase ID Token を付与して API を呼ぶ
+- API は Firebase Admin SDK でトークン検証を行う
+- 利用者本人のみを担保するため、API はトークン検証後に allowlist を確認する。MVP既定は `APP_OWNER_EMAIL` と一致するユーザーのみ許可し、不一致は `403` とする
+- 認証必須APIと認証不要APIの差を勝手に変更しない
+
+### 5.3 責務分担
+#### フロントの責務
+- 画面表示
+- 一次入力チェック
+- 認証状態監視
+- 一覧条件管理
+- QR読取UI
+
+#### API の責務
+- 業務ルール適用
+- データ整合性担保
+- 商品ID採番
+- 論理削除制御
+- 販売済更新制御
+- 画像変換とStorage保存
+
+#### DB / Storage の責務
+- 永続化
+- 検索対象データ保持
+- 画像保管
+
+---
+
+## 6. フロントエンド実装ルール
+
+### 6.1 状態管理
+以下で固定する。
+- サーバー状態: **TanStack Query**
+- フォーム状態: **React Hook Form + Zod**
+- 画面ローカル状態: `useState` / `useMemo` / `useReducer`
+- グローバル状態: 認証情報と最小限のUI状態のみ
+
+### 6.2 グローバル状態に置かないもの
+- 商品一覧の絞り込み条件
+- 商品編集フォームの入力値
+- ダッシュボード取得結果
+- 商品詳細取得結果
+- QR読取結果の永続保持
+
+### 6.3 一覧条件
+商品一覧条件は URL クエリで保持する。
+対象:
+- `keyword`
+- `categoryId`
+- `tagId`
+- `status`
+- `includeSold`
+- `sortBy`
+- `sortOrder`
+- `page`
+- `pageSize`
+
+補足:
+- ログアウト時は一覧条件を復元対象外とする
+- 再ログイン後の初期画面は `/dashboard`
+- URL に過去クエリが残っていても、ログアウト直後の再ログインでは自動復元しない
+
+### 6.4 ルーティング
+以下のルートを前提として実装すること。
+
+```text
+/login
+/dashboard
+/products
+/products/new
+/products/:productId
+/products/:productId/edit
+/products/:productId/tasks
+/categories
+/tags
+/qr
+```
+
+### 6.5 UI方針
+- モバイルファースト
+- 片手操作しやすさを優先
+- 主要操作は少ないタップ数で完了できることを重視
+- 一覧 / 詳細 / フォーム / ダイアログで共通部品を寄せる
+- UIライブラリ依存は最小限にする
+
+---
+
+## 7. バックエンド / API 実装ルール
+
+### 7.1 API 共通
+- ベースパスは `/api`
+- レスポンス形式は設計書に従う
+- 認証・業務・入力エラーはエラーコードで統一する
+- 通常APIでは論理削除済み商品を参照不可とする
+
+### 7.2 実装対象API
+以下のAPI群を前提とする。
+- `GET /api/health`
+- `GET /api/dashboard`
+- `GET /api/products`
+- `POST /api/products`
+- `GET /api/products/:productId`
+- `PUT /api/products/:productId`
+- `DELETE /api/products/:productId`
+- `POST /api/products/:productId/images`
+- `PUT /api/products/:productId/images/:imageId`
+- `DELETE /api/products/:productId/images/:imageId`
+- `GET /api/products/:productId/tasks`
+- `POST /api/products/:productId/tasks`
+- `PUT /api/tasks/:taskId`
+- `PATCH /api/tasks/:taskId/completion`
+- `DELETE /api/tasks/:taskId`
+- `GET /api/categories`
+- `POST /api/categories`
+- `PUT /api/categories/:categoryId`
+- `DELETE /api/categories/:categoryId`
+- `GET /api/tags`
+- `POST /api/tags`
+- `PUT /api/tags/:tagId`
+- `DELETE /api/tags/:tagId`
+- `POST /api/qr/lookup`
+- `POST /api/qr/sell`
+
+### 7.3 共有物の配置
+以下はできるだけ `packages/shared` に寄せること。
+- ステータス定数
+- API共通型
+- Zod schema の共有可能部分
+- エラーコード定数
+- 文字列正規化関数
+- 日付 / 日時フォーマット定数
+
+---
+
+## 8. データモデルと業務ルール
+
+### 8.1 主なコレクション
+- `products`
+- `tasks`
+- `categories`
+- `tags`
+- `counters`
+- `operationLogs`
+
+### 8.2 削除方針
+- 商品: **論理削除**
+- タスク: **物理削除**
+- カテゴリ: **未使用時のみ物理削除**
+- タグ: **未使用時のみ物理削除**
+- 商品画像: **Storage上の実体削除 + 商品情報更新**
+
+### 8.3 商品ID
+- 形式は `HM-000001`
+- 固定接頭辞 `HM-` + 6桁連番
+- 再利用しない
+- `counters/product` を使って採番する
+
+### 8.4 ステータス内部値
+以下で固定する。
+
+```text
+beforeProduction
+inProduction
+completed
+onDisplay
+inStock
+sold
+```
+
+表示名へ変換するのは UI 側の責務とする。
+
+### 8.5 販売日時 `soldAt`
+- `sold` へ変更した際、未設定なら設定する
+- 既に設定済みなら上書きしない
+- `sold` から他ステータスへ戻す場合は `null` に戻す
+
+### 8.6 QR販売更新ルール
+- QRで販売済更新できるのは **`onDisplay` / `inStock` のみ**
+- `sold` は重複更新しない
+- `beforeProduction` / `inProduction` / `completed` は QR販売更新不可
+
+---
+
+## 9. 画像実装ルール
+
+### 9.1 受付条件
+- 対応形式: JPEG / PNG / WebP
+- 最大サイズ: 10MB
+- 1商品あたり最大10枚
+
+### 9.2 変換方針
+- API側で `sharp` を使用する
+- 元画像は保持しない
+- 表示用・サムネイル用ともに WebP へ変換する
+
+### 9.3 保存ルール
+#### 表示用画像
+- 長辺最大 2000px
+- 品質 82
+
+#### サムネイル
+- 長辺最大 400px
+- 品質 75
+
+#### 保存パス
+```text
+products/{productId}/display/{imageId}.webp
+products/{productId}/thumb/{imageId}.webp
+```
+
+### 9.4 URL方針
+- `displayUrl` / `thumbnailUrl` は永続保存しない
+- 取得系APIで signed URL を生成する
+- 有効期限は既定 60分
+- URL失効後は対象取得APIの再取得で更新する
+
+### 9.5 画像更新ルール
+- 画像差し替え時は `imageId` と `sortOrder` を維持する
+- 削除時は残画像の `sortOrder` を 1 から詰め直す
+- 代表画像削除時は先頭画像を代表扱いとする
+- 画像並び替えUIは MVP対象外
+
+---
+
+## 10. 検索・一覧・表示ルール
+
+### 10.1 商品一覧検索
+- 対象: `name`, `description`, `productId`, `categoryName`, `tagNames`
+- キーワード最大100文字
+- 前後空白除去
+- 連続空白は単一空白相当
+- 英字は大文字小文字を区別しない
+- 全角/半角差は可能な範囲で吸収
+- ひらがな/カタカナは別文字として扱う
+- 複雑な全文検索エンジンは導入しない
+
+### 10.2 Firestore 検索戦略
+- Firestore で絞り込める条件は先に適用する
+- キーワードの部分一致は API 後段フィルタで行う
+- 100件程度のMVP運用を前提とし、過剰な検索基盤を追加しない
+
+### 10.3 一覧既定
+- 商品一覧の既定並び順は `updatedAt` 降順
+- 販売済表示の初期値は ON
+- 条件変更時はページを 1 に戻す
+
+---
+
+## 11. エラー・認証・画面状態
+
+### 11.1 401 / 403
+- 401: 「セッションが切れました。再度ログインしてください。」を表示し `/login` へ遷移
+- 403: 「この操作は実行できません。」を表示し `/login` へ遷移
+
+### 11.2 共通画面状態
+- 初期表示 / 再取得中: スピナーまたはスケルトン、主要操作押下不可
+- 0件: 対象なしメッセージ + 条件変更または新規登録導線
+- 通信失敗: エラー表示 + 再試行導線
+- 再試行時は直前条件を保持
+
+### 11.3 エラーメッセージ
+- APIの英語メッセージや例外名をそのまま表示しない
+- `details` がある場合は項目エラーへ優先マッピング
+- 同一内容を項目欄と画面上部に重複表示しない
+
+---
+
+## 12. ログ / 運用
+- `operationLogs` には主要イベントを記録する
+- 少なくとも以下を対象に検討する
+  - ログイン
+  - 商品更新
+  - 販売済更新
+  - 論理削除
+  - 主要エラー
+- Cloud Run ログでも主要エラーを追跡可能にする
+
+---
+
+## 13. Codex がやってはいけないこと
+- フロントから Firestore / Storage を直接操作する実装へ戻すこと
+- MVP範囲外の機能を勝手に追加すること
+- 仕様未定事項を独断で拡張すること
+- Redux など大規模状態管理を導入すること
+- 元画像保存を追加すること
+- 画像一括アップロードを追加すること
+- QRコード画像の永続保存を追加すること
+- ステータス履歴の本格管理を追加すること
+- 複数ユーザー前提の権限設計を入れること
+- 互換性のない API / データ構造変更を、関連更新なしで行うこと
+- 無関係なリネームや整形を広範囲に行うこと
+
+---
+
+## 14. Codex への具体的な作業指示テンプレート
+Codex は実装時、次の順で進めること。
+
+1. 対象仕様を確認する
+2. 影響ファイルを特定する
+3. 最小差分で実装する
+4. 必要に応じて共有型・schema・定数を更新する
+5. 必要に応じて画面 / API / docs / test を同期更新する
+6. lint / typecheck / test / build の範囲確認を行う
+7. 変更内容・前提・未対応事項を簡潔に報告する
+
+### 報告時に含めること
+- 何を変更したか
+- なぜ変更したか
+- どの仕様に基づいたか
+- 未対応事項があれば何か
+- 追加確認が必要な点があるか
+
+---
+
+## 15. 補足
+- ルートに置くファイル名は **`AGENTS.md`** を正とする
+- 必要に応じてサブディレクトリへ追加の `AGENTS.md` を置いて上書きしてよい
+- ただし、まずはルートの本ファイルを単一の基準として運用する

@@ -1,0 +1,45 @@
+{
+  "name": "handmade-sales-manager-codex-skill",
+  "display_name": "Handmade Sales Manager Codex Skill",
+  "description": "ハンドメイド在庫・販売管理アプリのMVPを、設計書優先・最小差分・API経由原則で実装/修正/調査するためのスキル。",
+  "version": "1.0.0",
+  "language": "ja",
+  "entrypoint": "SKILL.md",
+  "compatible_files": [
+    "SKILL.md"
+  ],
+  "tags": [
+    "codex",
+    "agent-skills",
+    "typescript",
+    "react",
+    "express",
+    "firebase",
+    "firestore",
+    "cloud-run",
+    "mvp"
+  ],
+  "project": {
+    "name": "ハンドメイド在庫・販売管理アプリ",
+    "scope": "MVP 初期リリース",
+    "primary_user": "アプリ利用者本人のみ"
+  },
+  "recommended_resources": [
+    "resources/01-project-overview.md",
+    "resources/02-spec-priority.md",
+    "resources/03-architecture-rules.md",
+    "resources/04-fixed-business-rules.md",
+    "resources/05-routing-and-api-summary.md",
+    "resources/06-change-workflow-checklist.md",
+    "resources/07-validation-and-error-summary.md"
+  ],
+  "examples": [
+    "examples/feature-request-example.md",
+    "examples/bugfix-request-example.md",
+    "examples/api-alignment-request-example.md"
+  ],
+  "templates": [
+    "templates/task-brief-template.md",
+    "templates/change-report-template.md"
+  ]
+}

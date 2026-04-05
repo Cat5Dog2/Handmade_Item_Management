@@ -1,0 +1,26 @@
+{
+  "name": "Handmade Item Management",
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+  "service": "web",
+  "runServices": [
+    "web",
+    "api",
+    "firebase-emulators"
+  ],
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker",
+        "Firebase.vscode-firebase-explorer"
+      ]
+    }
+  },
+  "postCreateCommand": "npm ci",
+  "remoteUser": "root"
+}

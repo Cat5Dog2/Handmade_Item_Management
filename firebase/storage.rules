@@ -1,0 +1,32 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    /**
+     * このアプリの画像操作は、すべて Cloud Run 上の Express API 経由で行う。
+     *
+     * 理由:
+     * - 画像追加 / 差し替え / 削除は商品存在確認、論理削除判定、最大10枚制限、
+     *   代表画像再判定、display / thumb の同時更新などの業務ルール前提
+     * - 保存パスは products/{productId}/display/{imageId}.webp および
+     *   products/{productId}/thumb/{imageId}.webp に統一する
+     * - 画面へ返す URL は永続保存せず、API が displayPath / thumbnailPath から
+     *   期限付き URL を生成して返却する
+     *
+     * そのため、クライアント SDK からの Cloud Storage 直接 read / write は許可しない。
+     * サーバー側の管理権限アクセスおよび署名付きURLによる配信を前提とする。
+     */
+    function denyAll() {
+      return false;
+    }
+
+    // 商品画像（display / thumb）
+    match /products/{productId}/{imageType}/{fileName} {
+      allow read, write: if denyAll();
+    }
+
+    // その他の将来パスを含め、クライアントからの直接アクセスは一律禁止
+    match /{allPaths=**} {
+      allow read, write: if denyAll();
+    }
+  }
+}

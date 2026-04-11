@@ -18,15 +18,33 @@ export function normalizeLineEndings(value: string) {
   return value.replace(LINE_ENDINGS, "\n");
 }
 
-export function normalizeName(value: string) {
+export function normalizeSingleLineText(value: string) {
   return toSafeText(normalizeLineEndings(value))
     .replace(/\n/g, " ")
     .replace(/\t/g, " ")
     .trim();
 }
 
+export const normalizeName = normalizeSingleLineText;
+
+export function normalizeOptionalSingleLineText(value?: string | null) {
+  if (value == null) {
+    return value;
+  }
+
+  return normalizeSingleLineText(value);
+}
+
 export function normalizeMultilineText(value: string) {
   return toSafeText(normalizeLineEndings(value));
+}
+
+export function normalizeOptionalMultilineText(value?: string | null) {
+  if (value == null) {
+    return value;
+  }
+
+  return normalizeMultilineText(value);
 }
 
 export function normalizeSearchKeyword(value: string) {
@@ -38,4 +56,14 @@ export function normalizeSearchKeyword(value: string) {
     .trim()
     .replace(MULTIPLE_SPACES, " ")
     .toLowerCase();
+}
+
+export function normalizeOptionalSearchKeyword(value?: string | null) {
+  if (value == null) {
+    return undefined;
+  }
+
+  const normalized = normalizeSearchKeyword(value);
+
+  return normalized === "" ? undefined : normalized;
 }

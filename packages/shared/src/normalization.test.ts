@@ -1,6 +1,7 @@
 import {
   normalizeName,
   normalizeMultilineText,
+  normalizeOptionalSearchKeyword,
   normalizeSearchKeyword
 } from "./normalization";
 
@@ -25,5 +26,9 @@ describe("normalization helpers", () => {
 
   it("keeps empty search keywords empty after normalization", () => {
     expect(normalizeSearchKeyword(" \t \r\n ")).toBe("");
+  });
+
+  it("converts blank optional search keywords to undefined", () => {
+    expect(normalizeOptionalSearchKeyword(" \t \r\n ")).toBeUndefined();
   });
 });

@@ -436,10 +436,10 @@ Next:
   - `feat(shared): add common constants and status definitions`
 
 ### SHARED-02 共通型を実装する
-- 状態: [~]
+- 状態: [x]
 - 優先度: P0
 - 依存: `SHARED-01`
-- 現状メモ: health / auth / product summary 系の型はあるが、Task / Category / Tag / Dashboard / QR の共通型は未整備。
+- 現状メモ: Product / Task / Category / Tag / Dashboard / QR の API 契約型と関連 request / response data 型を `packages/shared` に集約済み。
 - 作業:
   - [ ] Product 系型を作成する
   - [ ] Task 系型を作成する
@@ -453,10 +453,10 @@ Next:
   - `feat(shared): add domain and api contract types`
 
 ### SHARED-03 共通 Zod スキーマと正規化を実装する
-- 状態: [~]
+- 状態: [x]
 - 優先度: P0
 - 依存: `SHARED-02`
-- 現状メモ: error / health schema と文字列正規化 util はあるが、商品・タスク・カテゴリ・タグ入力 schema は未整備。
+- 現状メモ: Product / Task / Category / Tag / QR / 一覧 query の入力 schema と再利用用の正規化 util を `packages/shared` に集約済み。
 - 作業:
   - [ ] 商品入力スキーマを作成する
   - [ ] タスク入力スキーマを作成する
@@ -1348,14 +1348,14 @@ Next:
 Ready Queue は、**依存を満たしていて、かつ未完了のタスクだけ** を指す。  
 Codex は毎回、まず `[~]` の再開対象があるかを確認し、なければ Ready Queue を確認したうえで、**この節の番号付き一覧で最上位の 1件だけ** を選んで着手する。
 
-現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` は完了**、**`SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` は着手済み** である。  
-そのため、**新規の `[ ]` タスクへ進む前に、最上位の `[~]` タスクである `SHARED-02` を再開**する。  
+現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` は完了**、**`API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` は着手済み** である。  
+そのため、**新規の `[ ]` タスクへ進む前に、最上位の `[~]` タスクである `API-BASE-01` を再開**する。  
 また、**`LOG-00` は依存なしで Ready であっても、Phase A の土台タスク（`BOOT-*` / `SHARED-*` / `API-BASE-*` / `WEB-BASE-*`）に未完了がある間は着手保留としてよい**。  
 `LOG-00` は、上記の土台タスクが完了した時点、または **その時点で他により上位の再開 / Ready タスクが存在しない場合** に着手候補へ戻す。
 
-- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`
-- 現在の再開候補: `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`
-- 現在の最優先: `SHARED-02`
+- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`
+- 現在の再開候補: `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`
+- 現在の最優先: `API-BASE-01`
 - `LOG-00` の扱い: Ready ではあるが、Phase A 完了までは着手保留としてよい
 
 以下の番号付き一覧は、**依存関係を満たした後の推奨実行順** を示す。  

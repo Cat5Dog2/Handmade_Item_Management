@@ -7,6 +7,7 @@
     "packages/*"
   ],
   "scripts": {
+    "ci": "npm run lint && npm run typecheck && npm run test && npm run build",
     "dev": "npm-run-all --parallel dev:web dev:api",
     "dev:web": "npm --workspace apps/web run dev",
     "dev:api": "npm --workspace apps/api run dev",

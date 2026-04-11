@@ -1,5 +1,12 @@
-const CONTROL_CHARACTERS =
-  /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
+const CONTROL_CHARACTER_RANGES = [
+  "\\u0000-\\u0008",
+  "\\u000B",
+  "\\u000C",
+  "\\u000E-\\u001F",
+  "\\u007F"
+].join("");
+
+const CONTROL_CHARACTERS = new RegExp(`[${CONTROL_CHARACTER_RANGES}]`, "g");
 const LINE_ENDINGS = /\r\n?/g;
 const MULTIPLE_SPACES = /\s+/g;
 

@@ -42,7 +42,11 @@ module.exports = [
     }
   },
   {
-    files: ["apps/api/**/*.ts", "packages/shared/**/*.ts"],
+    files: [
+      "apps/api/**/*.ts",
+      "apps/web/vite.config.ts",
+      "packages/shared/**/*.ts"
+    ],
     languageOptions: {
       globals: {
         ...globals.node

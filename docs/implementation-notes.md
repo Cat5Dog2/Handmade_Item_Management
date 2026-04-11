@@ -584,3 +584,37 @@ MVPでは **operationLogs の自動削除は実装しない**。
 4. 複雑さの少ない実装を選ぶ
 5. 判断内容を別ドキュメントに残してから進める
 
+---
+
+## 15. 依存脆弱性運用メモ
+
+### 15.1 2026年4月11日時点の監査前提
+
+- 監査はルート `package-lock.json` を生成したうえで実施する
+- 確認コマンドは `npm audit` と `npm audit --omit=dev` を使う
+- この時点の結果は **全体 13 件（low 8, moderate 5）**、**prod 依存のみでは low 8 / high・critical 0** である
+
+### 15.2 dev-only 脆弱性の扱い
+
+- moderate は主に `vite` / `vitest` / `vite-node` / `@vitest/mocker` / `esbuild` に由来する
+- これは開発サーバーとテスト実行系の依存であり、Cloud Run 本番 API や Firebase Hosting 配信物の実行時依存とは切り分けて扱う
+- ただし、**Vite dev server を外部公開しない** ことを運用条件とする
+- Docker / ローカル起動を含め、開発用途のサーバーは localhost または閉域ネットワーク内に限定する
+- `npm audit fix --force` による一括更新は、`vite@8` や `vitest@4` へのメジャー更新を伴うため、別タスクで検証してから実施する
+
+### 15.3 prod-low 許容判断
+
+- prod 側に残る low は `firebase-admin@13.8.0` 配下の推移依存（`@google-cloud/firestore`, `@google-cloud/storage`, `teeny-request`, `retry-request`, `http-proxy-agent`, `@tootallnate/once` など）に由来する
+- 2026年4月11日時点では、`npm audit` が提示する自動修正案は **`firebase-admin@10.3.0` へのダウングレード** であり、これは破壊的変更かつ最新版より後退するため採用しない
+- 現時点では **high / critical が無いこと、prod 側は low のみであること、非破壊な自動修正手段が無いこと** を根拠に、MVP 開発中は許容とする
+- ただし、許容は恒久対応ではなく、次の条件で再評価する
+  - `firebase-admin` または配下依存に非破壊更新が出たとき
+  - severity が moderate 以上へ上がったとき
+  - リリース前確認で `npm audit` の結果が変化したとき
+
+### 15.4 運用ルール
+
+- `package-lock.json` は監査と再現性のため管理対象に含める
+- `npm audit fix --force` は、メジャー更新やダウングレードの影響を設計・テストで確認する前には実行しない
+- リリース前には `REL-01` の一部として `npm audit` と `npm audit --omit=dev` を再実行し、結果を記録する
+

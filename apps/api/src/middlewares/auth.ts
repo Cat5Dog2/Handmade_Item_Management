@@ -96,7 +96,7 @@ export function createRequireAuth(
       };
 
       next();
-    } catch (_error) {
+    } catch {
       next(createAuthRequiredError());
     }
   };

@@ -1,0 +1,8 @@
+node_modules/
+dist/
+build/
+coverage/
+.firebase/
+apps/web/dist/
+apps/api/dist/
+packages/shared/dist/

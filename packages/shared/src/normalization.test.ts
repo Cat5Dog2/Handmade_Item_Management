@@ -1,5 +1,4 @@
 import {
-  normalizeLineEndings,
   normalizeName,
   normalizeMultilineText,
   normalizeSearchKeyword

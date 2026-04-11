@@ -11,8 +11,10 @@ export function errorHandler(
   error: unknown,
   _request: Request,
   response: Response,
-  _next: NextFunction
+  next: NextFunction
 ) {
+  void next;
+
   if (error instanceof AppError) {
     const payload: ApiErrorResponse = {
       code: error.code,

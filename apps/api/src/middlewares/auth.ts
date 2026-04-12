@@ -1,5 +1,9 @@
 import type { RequestHandler } from "express";
-import { AppError } from "../errors/app-error";
+import {
+  createAuthForbiddenError,
+  createAuthRequiredError,
+  createInternalError
+} from "../errors/api-errors";
 import { verifyFirebaseIdToken } from "../firebase/firebase-admin";
 
 interface VerifiedToken {
@@ -10,30 +14,6 @@ interface VerifiedToken {
 interface CreateRequireAuthOptions {
   ownerEmail?: string | null;
   verifyIdToken?: (idToken: string) => Promise<VerifiedToken>;
-}
-
-function createAuthRequiredError() {
-  return new AppError({
-    statusCode: 401,
-    code: "AUTH_REQUIRED",
-    message: "認証が必要です。"
-  });
-}
-
-function createAuthForbiddenError() {
-  return new AppError({
-    statusCode: 403,
-    code: "AUTH_FORBIDDEN",
-    message: "この操作は実行できません。"
-  });
-}
-
-function createInternalError() {
-  return new AppError({
-    statusCode: 500,
-    code: "INTERNAL_ERROR",
-    message: "システムエラーが発生しました。"
-  });
 }
 
 function extractBearerToken(authorizationHeader?: string) {

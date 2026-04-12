@@ -7,6 +7,5 @@
     "types": ["node", "vitest/globals"],
     "noEmit": true
   },
-  "include": ["src"],
-  "exclude": ["src/**/*.test.ts"]
+  "include": ["src"]
 }

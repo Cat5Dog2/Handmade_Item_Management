@@ -518,17 +518,17 @@ Next:
   - `feat(api): add shared response and error helpers`
 
 ### WEB-BASE-01 React Web アプリを初期化する
-- 状態: [~]
+- 状態: [x]
 - 優先度: P0
 - 依存: `BOOT-01`
-- 現状メモ: Vite + React + TypeScript の起動土台と単一画面はあるが、React Router と保護画面ルーティング土台は未実装。
+- 現状メモ: React Router、`/login` と保護画面群のルーティング土台、共通ヘッダ、共通ナビゲーション、ページ雛形を実装済み。
 - 作業:
-  - [ ] Vite + React + TypeScript を初期化する
-  - [ ] React Router を設定する
-  - [ ] 基本レイアウトを作成する
-  - [ ] 共通ヘッダ / ナビゲーションを配置する
+  - [x] Vite + React + TypeScript を初期化する
+  - [x] React Router を設定する
+  - [x] 基本レイアウトを作成する
+  - [x] 共通ヘッダ / ナビゲーションを配置する
 - Done:
-  - [ ] `/login` と保護画面のルーティング土台がある
+  - [x] `/login` と保護画面のルーティング土台がある
 - 推奨コミット:
   - `feat(web): bootstrap react app and routing`
 
@@ -1350,14 +1350,14 @@ Next:
 Ready Queue は、**依存を満たしていて、かつ未完了のタスクだけ** を指す。  
 Codex は毎回、まず `[~]` の再開対象があるかを確認し、なければ Ready Queue を確認したうえで、**この節の番号付き一覧で最上位の 1件だけ** を選んで着手する。
 
-現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `TEST-01` / `SEC-01` は完了**、**`WEB-BASE-01` は着手済み** である。  
-そのため、**新規の `[ ]` タスクへ進む前に、最上位の `[~]` タスクである `WEB-BASE-01` を再開**する。  
+現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `TEST-01` / `SEC-01` は完了** である。  
+そのため、**次に着手する新規の `[ ]` タスクは、番号付き一覧で最上位の `WEB-BASE-02`** とする。  
 また、**`LOG-00` は依存なしで Ready であっても、Phase A の土台タスク（`BOOT-*` / `SHARED-*` / `API-BASE-*` / `WEB-BASE-*`）に未完了がある間は着手保留としてよい**。  
 `LOG-00` は、上記の土台タスクが完了した時点、または **その時点で他により上位の再開 / Ready タスクが存在しない場合** に着手候補へ戻す。
 
-- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `TEST-01`, `SEC-01`
-- 現在の再開候補: `WEB-BASE-01`
-- 現在の最優先: `WEB-BASE-01`
+- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `TEST-01`, `SEC-01`
+- 現在の再開候補: なし
+- 現在の最優先: `WEB-BASE-02`
 - `LOG-00` の扱い: Ready ではあるが、Phase A 完了までは着手保留としてよい
 
 以下の番号付き一覧は、**依存関係を満たした後の推奨実行順** を示す。  

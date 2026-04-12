@@ -8,6 +8,7 @@ import {
   type ApiLogger
 } from "./middlewares/request-logger";
 import { sendSuccess } from "./responses/api-response";
+import { registerDefaultProtectedRoutes } from "./routes";
 
 const DEFAULT_API_BASE_PATH = "/api";
 const DEFAULT_SERVICE_NAME = "handmade-sales-api";
@@ -16,7 +17,7 @@ interface CreateAppContext {
   apiBasePath: string;
 }
 
-interface CreateProtectedAppContext extends CreateAppContext {
+export interface CreateProtectedAppContext extends CreateAppContext {
   requireAuthMiddleware: RequestHandler;
 }
 
@@ -60,6 +61,11 @@ export function createApp(options: CreateAppOptions = {}) {
 
   options.registerPublicRoutes?.(publicApiRouter, {
     apiBasePath
+  });
+
+  registerDefaultProtectedRoutes(protectedApiRouter, {
+    apiBasePath,
+    requireAuthMiddleware
   });
 
   options.registerProtectedRoutes?.(protectedApiRouter, {

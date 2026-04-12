@@ -1,6 +1,6 @@
 import type { RequestHandler } from "express";
 import { AppError } from "../errors/app-error";
-import { verifyFirebaseIdToken } from "../auth/firebase-admin";
+import { verifyFirebaseIdToken } from "../firebase/firebase-admin";
 
 interface VerifiedToken {
   uid: string;

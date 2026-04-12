@@ -22,22 +22,19 @@ function createProtectedTestApp({
 } = {}) {
   return createApp({
     logger,
-    registerRoutes: (app) => {
-      app.get(
-        "/api/protected",
-        createRequireAuth({
-          ownerEmail,
-          verifyIdToken
-        }),
-        (request, response) => {
-          response.status(200).json({
-            data: {
-              actorUid: request.authContext?.actorUid ?? null,
-              email: request.authContext?.email ?? null
-            }
-          });
-        }
-      );
+    requireAuthMiddleware: createRequireAuth({
+      ownerEmail,
+      verifyIdToken
+    }),
+    registerProtectedRoutes: (router, { requireAuthMiddleware }) => {
+      router.get("/protected", requireAuthMiddleware, (request, response) => {
+        response.status(200).json({
+          data: {
+            actorUid: request.authContext?.actorUid ?? null,
+            email: request.authContext?.email ?? null
+          }
+        });
+      });
     }
   });
 }
@@ -69,6 +66,46 @@ describe("createApp", () => {
     expect(response.status).toBe(404);
     expect(response.body).toEqual({
       message: "Not Found"
+    });
+  });
+
+  it("keeps public routes outside auth middleware", async () => {
+    const response = await request(
+      createApp({
+        logger: createTestLogger(),
+        requireAuthMiddleware: createRequireAuth({
+          ownerEmail: "owner@example.com",
+          verifyIdToken: async () => ({
+            uid: "uid-1",
+            email: "owner@example.com"
+          })
+        }),
+        registerPublicRoutes: (router) => {
+          router.get("/public", (_request, response) => {
+            response.status(200).json({
+              data: {
+                ok: true
+              }
+            });
+          });
+        },
+        registerProtectedRoutes: (router, { requireAuthMiddleware }) => {
+          router.get("/protected", requireAuthMiddleware, (_request, response) => {
+            response.status(200).json({
+              data: {
+                ok: true
+              }
+            });
+          });
+        }
+      })
+    ).get("/api/public");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        ok: true
+      }
     });
   });
 

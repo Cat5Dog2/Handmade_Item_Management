@@ -1,7 +1,8 @@
 import "./env";
 import cors from "cors";
-import express, { type Express } from "express";
+import express, { type RequestHandler, type Router } from "express";
 import { createErrorHandler } from "./errors/error-handler";
+import { requireAuth } from "./middlewares/auth";
 import {
   createRequestLogger,
   type ApiLogger
@@ -14,9 +15,18 @@ interface CreateAppContext {
   apiBasePath: string;
 }
 
+interface CreateProtectedAppContext extends CreateAppContext {
+  requireAuthMiddleware: RequestHandler;
+}
+
 interface CreateAppOptions {
   logger?: ApiLogger;
-  registerRoutes?: (app: Express, context: CreateAppContext) => void;
+  requireAuthMiddleware?: RequestHandler;
+  registerProtectedRoutes?: (
+    router: Router,
+    context: CreateProtectedAppContext
+  ) => void;
+  registerPublicRoutes?: (router: Router, context: CreateAppContext) => void;
 }
 
 export function createApp(options: CreateAppOptions = {}) {
@@ -24,6 +34,10 @@ export function createApp(options: CreateAppOptions = {}) {
   const apiBasePath = process.env.API_BASE_PATH ?? DEFAULT_API_BASE_PATH;
   const corsOrigin = process.env.CORS_ORIGIN;
   const logger = options.logger ?? console;
+  const requireAuthMiddleware =
+    options.requireAuthMiddleware ?? requireAuth;
+  const publicApiRouter = express.Router();
+  const protectedApiRouter = express.Router();
 
   app.use(createRequestLogger(logger));
   app.use(express.json());
@@ -37,7 +51,7 @@ export function createApp(options: CreateAppOptions = {}) {
     );
   }
 
-  app.get(`${apiBasePath}/health`, (_request, response) => {
+  publicApiRouter.get("/health", (_request, response) => {
     response.status(200).json({
       data: {
         status: "ok",
@@ -46,9 +60,17 @@ export function createApp(options: CreateAppOptions = {}) {
     });
   });
 
-  options.registerRoutes?.(app, {
+  options.registerPublicRoutes?.(publicApiRouter, {
     apiBasePath
   });
+
+  options.registerProtectedRoutes?.(protectedApiRouter, {
+    apiBasePath,
+    requireAuthMiddleware
+  });
+
+  app.use(apiBasePath, publicApiRouter);
+  app.use(apiBasePath, protectedApiRouter);
 
   app.use((_request, response) => {
     response.status(404).json({

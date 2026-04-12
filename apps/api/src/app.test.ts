@@ -102,6 +102,30 @@ describe("createApp", () => {
     });
   });
 
+  it("returns INTERNAL_ERROR and logs unexpected failures", async () => {
+    const logger = createTestLogger();
+
+    const response = await request(
+      createApp({
+        logger,
+        registerPublicRoutes: (router) => {
+          router.get("/unexpected-error", (_request, _response, next) => {
+            next(new Error("boom"));
+          });
+        }
+      })
+    ).get("/api/unexpected-error");
+
+    expect(response.status).toBe(500);
+    expect(response.body).toMatchObject({
+      code: "INTERNAL_ERROR"
+    });
+    expect(logger.error).toHaveBeenCalledWith(
+      "Unhandled API error",
+      expect.any(Error)
+    );
+  });
+
   it("keeps public routes outside auth middleware", async () => {
     const response = await request(
       createApp({
@@ -181,6 +205,17 @@ describe("createApp", () => {
     });
   });
 
+  it("returns AUTH_REQUIRED for malformed bearer headers", async () => {
+    const response = await request(createProtectedTestApp())
+      .get("/api/protected")
+      .set("Authorization", "Token invalid-token");
+
+    expect(response.status).toBe(401);
+    expect(response.body).toMatchObject({
+      code: "AUTH_REQUIRED"
+    });
+  });
+
   it("returns AUTH_REQUIRED when token verification fails", async () => {
     const response = await request(
       createProtectedTestApp({
@@ -215,6 +250,25 @@ describe("createApp", () => {
     expect(response.body).toEqual({
       code: "AUTH_FORBIDDEN",
       message: "この操作は実行できません。"
+    });
+  });
+
+  it("returns INTERNAL_ERROR when the owner allowlist is not configured", async () => {
+    const response = await request(
+      createProtectedTestApp({
+        ownerEmail: "   ",
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .get("/api/protected")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(response.status).toBe(500);
+    expect(response.body).toMatchObject({
+      code: "INTERNAL_ERROR"
     });
   });
 

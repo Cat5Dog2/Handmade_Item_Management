@@ -8,6 +8,8 @@ import {
   useLocation,
   useNavigate
 } from "react-router-dom";
+import { useAuthSession } from "./auth/auth-session";
+import { AppProviders } from "./providers/app-providers";
 
 interface ProtectedRouteDefinition {
   navLabel?: string;
@@ -91,11 +93,18 @@ function findProtectedRoute(pathname: string) {
 }
 
 function LoginPage() {
+  const { authNotice } = useAuthSession();
+
   return (
     <main className="auth-layout">
       <section className="auth-panel" aria-labelledby="login-title">
         <p className="auth-panel__brand">{APP_NAME}</p>
         <h1 id="login-title">ログイン</h1>
+        {authNotice ? (
+          <p className="auth-panel__notice" role="alert">
+            {authNotice}
+          </p>
+        ) : null}
         <p className="auth-panel__summary">
           本人アカウントで続行し、ダッシュボードから一日の流れを始めます。
         </p>
@@ -183,19 +192,23 @@ function WorkspacePage({
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate replace to="/login" />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route element={<ProtectedLayout />}>
-        {protectedRoutes.map((route) => (
-          <Route
-            key={route.path}
-            path={route.path}
-            element={<WorkspacePage summary={route.summary} title={route.title} />}
-          />
-        ))}
-      </Route>
-      <Route path="*" element={<Navigate replace to="/login" />} />
-    </Routes>
+    <AppProviders>
+      <Routes>
+        <Route path="/" element={<Navigate replace to="/login" />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route element={<ProtectedLayout />}>
+          {protectedRoutes.map((route) => (
+            <Route
+              key={route.path}
+              path={route.path}
+              element={
+                <WorkspacePage summary={route.summary} title={route.title} />
+              }
+            />
+          ))}
+        </Route>
+        <Route path="*" element={<Navigate replace to="/login" />} />
+      </Routes>
+    </AppProviders>
   );
 }

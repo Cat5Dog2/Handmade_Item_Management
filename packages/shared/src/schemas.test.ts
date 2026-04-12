@@ -3,6 +3,7 @@ import {
   isoDateSchema,
   productCreateInputSchema,
   productListQuerySchema,
+  productUpdateInputSchema,
   qrSellInputSchema,
   taskCreateInputSchema
 } from "./schemas";
@@ -48,6 +49,21 @@ describe("shared schemas", () => {
     });
   });
 
+  it("rejects query values outside supported boundaries", () => {
+    expect(() =>
+      productListQuerySchema.parse({
+        keyword: "a".repeat(101)
+      })
+    ).toThrow();
+
+    expect(() =>
+      productListQuerySchema.parse({
+        page: "0",
+        pageSize: "101"
+      })
+    ).toThrow();
+  });
+
   it("treats blank query keywords as unspecified", () => {
     expect(productListQuerySchema.parse({ keyword: " \t " })).toEqual({});
   });
@@ -79,6 +95,48 @@ describe("shared schemas", () => {
       name: "Earrings",
       sortOrder: null
     });
+  });
+
+  it("requires explicit update fields and normalizes nullable primary images", () => {
+    expect(
+      productUpdateInputSchema.parse({
+        name: "  Updated Item ",
+        description: "line1\r\nline2",
+        price: "3200",
+        categoryId: " cat_001 ",
+        tagIds: [" tag_001 "],
+        status: "sold",
+        primaryImageId: ""
+      })
+    ).toEqual({
+      name: "Updated Item",
+      description: "line1\nline2",
+      price: 3200,
+      categoryId: "cat_001",
+      tagIds: ["tag_001"],
+      status: "sold",
+      primaryImageId: null
+    });
+
+    expect(() =>
+      productUpdateInputSchema.parse({
+        name: "Updated Item",
+        description: "",
+        price: 3200,
+        categoryId: "cat_001",
+        tagIds: [],
+        status: "sold"
+      })
+    ).toThrow();
+  });
+
+  it("rejects category names longer than 50 characters", () => {
+    expect(() =>
+      categoryInputSchema.parse({
+        name: "a".repeat(51),
+        sortOrder: 0
+      })
+    ).toThrow();
   });
 
   it("requires a qr sell identifier", () => {

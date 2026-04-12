@@ -10,6 +10,11 @@ describe("normalization helpers", () => {
     expect(normalizeName("  Handmade Bag  ")).toBe("Handmade Bag");
   });
 
+  it("removes control characters from normalized text", () => {
+    expect(normalizeName("Hand\u0000made\u0007 Bag")).toBe("Handmade Bag");
+    expect(normalizeSearchKeyword("One\u0000\t Two\u0007")).toBe("one two");
+  });
+
   it("removes tabs and line breaks from single-line names", () => {
     expect(normalizeName("\tHandmade\r\nBag\t")).toBe("Handmade Bag");
   });

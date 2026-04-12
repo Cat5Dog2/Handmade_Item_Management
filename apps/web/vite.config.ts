@@ -14,6 +14,11 @@ export default defineConfig(({ mode }) => {
   return {
     envDir,
     plugins: [react()],
+    resolve: {
+      alias: {
+        "@handmade/shared": path.resolve(envDir, "packages/shared/src/index.ts")
+      }
+    },
     server: {
       proxy: {
         "/api": {

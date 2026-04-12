@@ -1,16 +1,31 @@
 import "./env";
 import cors from "cors";
-import express from "express";
-import { errorHandler } from "./errors/error-handler";
+import express, { type Express } from "express";
+import { createErrorHandler } from "./errors/error-handler";
+import {
+  createRequestLogger,
+  type ApiLogger
+} from "./middlewares/request-logger";
 
 const DEFAULT_API_BASE_PATH = "/api";
 const DEFAULT_SERVICE_NAME = "handmade-sales-api";
 
-export function createApp() {
+interface CreateAppContext {
+  apiBasePath: string;
+}
+
+interface CreateAppOptions {
+  logger?: ApiLogger;
+  registerRoutes?: (app: Express, context: CreateAppContext) => void;
+}
+
+export function createApp(options: CreateAppOptions = {}) {
   const app = express();
   const apiBasePath = process.env.API_BASE_PATH ?? DEFAULT_API_BASE_PATH;
   const corsOrigin = process.env.CORS_ORIGIN;
+  const logger = options.logger ?? console;
 
+  app.use(createRequestLogger(logger));
   app.use(express.json());
 
   if (corsOrigin) {
@@ -31,7 +46,17 @@ export function createApp() {
     });
   });
 
-  app.use(errorHandler);
+  options.registerRoutes?.(app, {
+    apiBasePath
+  });
+
+  app.use((_request, response) => {
+    response.status(404).json({
+      message: "Not Found"
+    });
+  });
+
+  app.use(createErrorHandler(logger));
 
   return app;
 }

@@ -503,10 +503,10 @@ Next:
   - `feat(api): add firebase admin initialization and auth middleware`
 
 ### API-BASE-03 共通レスポンス整形を実装する
-- 状態: [~]
+- 状態: [x]
 - 優先度: P0
 - 依存: `API-BASE-01`, `SHARED-02`
-- 現状メモ: `AppError` と error handler はあるが、`{ data, meta }` / `{ code, message, details }` helper 群は未整備。
+- 現状メモ: `{ data, meta }` / `{ code, message, details }` helper、`VALIDATION_ERROR` 生成、`AUTH_REQUIRED` / `AUTH_FORBIDDEN` 応答の統一を実装済み。
 - 作業:
   - [ ] `{ data, meta }` レスポンス helper を作成する
   - [ ] `{ code, message, details }` エラー helper を作成する
@@ -1348,14 +1348,14 @@ Next:
 Ready Queue は、**依存を満たしていて、かつ未完了のタスクだけ** を指す。  
 Codex は毎回、まず `[~]` の再開対象があるかを確認し、なければ Ready Queue を確認したうえで、**この節の番号付き一覧で最上位の 1件だけ** を選んで着手する。
 
-現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` は完了**、**`API-BASE-03` / `WEB-BASE-01` は着手済み** である。  
-そのため、**新規の `[ ]` タスクへ進む前に、最上位の `[~]` タスクである `API-BASE-03` を再開**する。  
+現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` は完了**、**`WEB-BASE-01` は着手済み** である。  
+そのため、**新規の `[ ]` タスクへ進む前に、最上位の `[~]` タスクである `WEB-BASE-01` を再開**する。  
 また、**`LOG-00` は依存なしで Ready であっても、Phase A の土台タスク（`BOOT-*` / `SHARED-*` / `API-BASE-*` / `WEB-BASE-*`）に未完了がある間は着手保留としてよい**。  
 `LOG-00` は、上記の土台タスクが完了した時点、または **その時点で他により上位の再開 / Ready タスクが存在しない場合** に着手候補へ戻す。
 
-- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`
-- 現在の再開候補: `API-BASE-03`, `WEB-BASE-01`
-- 現在の最優先: `API-BASE-03`
+- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`
+- 現在の再開候補: `WEB-BASE-01`
+- 現在の最優先: `WEB-BASE-01`
 - `LOG-00` の扱い: Ready ではあるが、Phase A 完了までは着手保留としてよい
 
 以下の番号付き一覧は、**依存関係を満たした後の推奨実行順** を示す。  

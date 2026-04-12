@@ -1,6 +1,7 @@
 import request from "supertest";
 import { vi } from "vitest";
 import { createApp } from "./app";
+import { createValidationError } from "./errors/api-errors";
 import { createRequireAuth } from "./middlewares/auth";
 import type { ApiLogger } from "./middlewares/request-logger";
 
@@ -53,6 +54,38 @@ describe("createApp", () => {
         status: "ok",
         service: "handmade-sales-api"
       }
+    });
+  });
+
+  it("returns VALIDATION_ERROR in the shared error format", async () => {
+    const response = await request(
+      createApp({
+        logger: createTestLogger(),
+        registerPublicRoutes: (router) => {
+          router.get("/validation-error", (_request, _response, next) => {
+            next(
+              createValidationError([
+                {
+                  field: "name",
+                  message: "商品名を入力してください。"
+                }
+              ])
+            );
+          });
+        }
+      })
+    ).get("/api/validation-error");
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      code: "VALIDATION_ERROR",
+      message: "入力内容を確認してください。",
+      details: [
+        {
+          field: "name",
+          message: "商品名を入力してください。"
+        }
+      ]
     });
   });
 
@@ -142,7 +175,10 @@ describe("createApp", () => {
     );
 
     expect(response.status).toBe(401);
-    expect(response.body.code).toBe("AUTH_REQUIRED");
+    expect(response.body).toEqual({
+      code: "AUTH_REQUIRED",
+      message: "セッションが切れました。再度ログインしてください。"
+    });
   });
 
   it("returns AUTH_REQUIRED when token verification fails", async () => {
@@ -157,7 +193,10 @@ describe("createApp", () => {
       .set("Authorization", "Bearer invalid-token");
 
     expect(response.status).toBe(401);
-    expect(response.body.code).toBe("AUTH_REQUIRED");
+    expect(response.body).toEqual({
+      code: "AUTH_REQUIRED",
+      message: "セッションが切れました。再度ログインしてください。"
+    });
   });
 
   it("returns AUTH_FORBIDDEN when the user email does not match APP_OWNER_EMAIL", async () => {
@@ -173,7 +212,10 @@ describe("createApp", () => {
       .set("Authorization", "Bearer valid-token");
 
     expect(response.status).toBe(403);
-    expect(response.body.code).toBe("AUTH_FORBIDDEN");
+    expect(response.body).toEqual({
+      code: "AUTH_FORBIDDEN",
+      message: "この操作は実行できません。"
+    });
   });
 
   it("stores authContext when the token and allowlist match", async () => {

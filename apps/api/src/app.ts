@@ -7,6 +7,7 @@ import {
   createRequestLogger,
   type ApiLogger
 } from "./middlewares/request-logger";
+import { sendSuccess } from "./responses/api-response";
 
 const DEFAULT_API_BASE_PATH = "/api";
 const DEFAULT_SERVICE_NAME = "handmade-sales-api";
@@ -34,8 +35,7 @@ export function createApp(options: CreateAppOptions = {}) {
   const apiBasePath = process.env.API_BASE_PATH ?? DEFAULT_API_BASE_PATH;
   const corsOrigin = process.env.CORS_ORIGIN;
   const logger = options.logger ?? console;
-  const requireAuthMiddleware =
-    options.requireAuthMiddleware ?? requireAuth;
+  const requireAuthMiddleware = options.requireAuthMiddleware ?? requireAuth;
   const publicApiRouter = express.Router();
   const protectedApiRouter = express.Router();
 
@@ -52,11 +52,9 @@ export function createApp(options: CreateAppOptions = {}) {
   }
 
   publicApiRouter.get("/health", (_request, response) => {
-    response.status(200).json({
-      data: {
-        status: "ok",
-        service: DEFAULT_SERVICE_NAME
-      }
+    sendSuccess(response, {
+      status: "ok" as const,
+      service: DEFAULT_SERVICE_NAME
     });
   });
 

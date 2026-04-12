@@ -65,7 +65,7 @@ describe("firebase admin shared clients", () => {
       uid: "uid-1"
     });
 
-    const firebaseAdmin = await import("./firebase-admin");
+    const firebaseAdmin = await import("./firebase-admin.js");
 
     expect(firebaseAdmin.getFirebaseAdminApp()).toBe(appInstance);
     expect(firebaseAdmin.getFirebaseAdminApp()).toBe(appInstance);
@@ -96,7 +96,7 @@ describe("firebase admin shared clients", () => {
 
     getAppsMock.mockReturnValue([appInstance]);
 
-    const firebaseAdmin = await import("./firebase-admin");
+    const firebaseAdmin = await import("./firebase-admin.js");
 
     expect(firebaseAdmin.getFirebaseAdminApp()).toBe(appInstance);
     expect(initializeAppMock).not.toHaveBeenCalled();

@@ -5,6 +5,12 @@ import { createValidationError } from "./errors/api-errors";
 import { createRequireAuth } from "./middlewares/auth";
 import type { ApiLogger } from "./middlewares/request-logger";
 
+const listCategoriesMock = vi.hoisted(() => vi.fn());
+
+vi.mock("./categories/list-categories", () => ({
+  listCategories: listCategoriesMock
+}));
+
 function createTestLogger(): ApiLogger {
   return {
     info: vi.fn(),
@@ -41,6 +47,10 @@ function createProtectedTestApp({
 }
 
 describe("createApp", () => {
+  beforeEach(() => {
+    listCategoriesMock.mockReset();
+  });
+
   it("returns the health payload", async () => {
     const response = await request(
       createApp({
@@ -291,5 +301,52 @@ describe("createApp", () => {
         email: "owner@example.com"
       }
     });
+  });
+
+  it("returns category items from the default protected route", async () => {
+    listCategoriesMock.mockResolvedValue({
+      items: [
+        {
+          categoryId: "cat-001",
+          name: "ピアス",
+          sortOrder: 10,
+          updatedAt: "2026-04-12T00:00:00.000Z",
+          usedProductCount: 2,
+          isInUse: true
+        }
+      ]
+    });
+
+    const response = await request(
+      createApp({
+        logger: createTestLogger(),
+        requireAuthMiddleware: createRequireAuth({
+          ownerEmail: "owner@example.com",
+          verifyIdToken: async () => ({
+            uid: "uid-1",
+            email: "owner@example.com"
+          })
+        })
+      })
+    )
+      .get("/api/categories")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        items: [
+          {
+            categoryId: "cat-001",
+            name: "ピアス",
+            sortOrder: 10,
+            updatedAt: "2026-04-12T00:00:00.000Z",
+            usedProductCount: 2,
+            isInUse: true
+          }
+        ]
+      }
+    });
+    expect(listCategoriesMock).toHaveBeenCalledTimes(1);
   });
 });

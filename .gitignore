@@ -23,6 +23,7 @@ firebase-debug.log*
 .env
 .env.*
 !.env.example
+!.env.docker.example
 
 # App-specific local env files
 apps/web/.env.local

@@ -11,6 +11,7 @@ import {
   SESSION_EXPIRED_MESSAGE,
   useAuthSession
 } from "../auth/auth-session";
+import { useAppAuth } from "../auth/auth-provider";
 import { createApiClient, type ApiClient } from "./api-client";
 
 const ApiClientContext = createContext<ApiClient | null>(null);
@@ -18,6 +19,7 @@ const ApiClientContext = createContext<ApiClient | null>(null);
 export function ApiClientProvider({ children }: PropsWithChildren) {
   const navigate = useNavigate();
   const { getIdToken, setAuthNotice } = useAuthSession();
+  const { logout } = useAppAuth();
 
   const apiClient = useMemo(
     () =>
@@ -25,14 +27,20 @@ export function ApiClientProvider({ children }: PropsWithChildren) {
         getIdToken,
         onUnauthorized: () => {
           setAuthNotice(SESSION_EXPIRED_MESSAGE);
+          void logout({
+            clearNotice: false
+          });
           navigate("/login", { replace: true });
         },
         onForbidden: () => {
           setAuthNotice(AUTH_FORBIDDEN_MESSAGE);
+          void logout({
+            clearNotice: false
+          });
           navigate("/login", { replace: true });
         }
       }),
-    [getIdToken, navigate, setAuthNotice]
+    [getIdToken, logout, navigate, setAuthNotice]
   );
 
   return (

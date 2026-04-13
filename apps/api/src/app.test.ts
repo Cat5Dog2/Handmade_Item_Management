@@ -8,6 +8,7 @@ import type { ApiLogger } from "./middlewares/request-logger";
 const listCategoriesMock = vi.hoisted(() => vi.fn());
 const listTagsMock = vi.hoisted(() => vi.fn());
 const createCategoryMock = vi.hoisted(() => vi.fn());
+const createTagMock = vi.hoisted(() => vi.fn());
 const updateCategoryMock = vi.hoisted(() => vi.fn());
 const deleteCategoryMock = vi.hoisted(() => vi.fn());
 
@@ -21,6 +22,10 @@ vi.mock("./tags/list-tags", () => ({
 
 vi.mock("./categories/create-category", () => ({
   createCategory: createCategoryMock
+}));
+
+vi.mock("./tags/create-tag", () => ({
+  createTag: createTagMock
 }));
 
 vi.mock("./categories/update-category", () => ({
@@ -69,6 +74,7 @@ function createProtectedTestApp({
 describe("createApp", () => {
   beforeEach(() => {
     createCategoryMock.mockReset();
+    createTagMock.mockReset();
     deleteCategoryMock.mockReset();
     listCategoriesMock.mockReset();
     listTagsMock.mockReset();
@@ -417,6 +423,40 @@ describe("createApp", () => {
       }
     });
     expect(listTagsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("creates a tag through the default protected route", async () => {
+    createTagMock.mockResolvedValue({
+      tagId: "tag_010"
+    });
+
+    const response = await request(
+      createApp({
+        logger: createTestLogger(),
+        requireAuthMiddleware: createRequireAuth({
+          ownerEmail: "owner@example.com",
+          verifyIdToken: async () => ({
+            uid: "uid-1",
+            email: "owner@example.com"
+          })
+        })
+      })
+    )
+      .post("/api/tags")
+      .set("Authorization", "Bearer valid-token")
+      .send({
+        name: "春"
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({
+      data: {
+        tagId: "tag_010"
+      }
+    });
+    expect(createTagMock).toHaveBeenCalledWith({
+      name: "春"
+    });
   });
 
   it("creates a category through the default protected route", async () => {

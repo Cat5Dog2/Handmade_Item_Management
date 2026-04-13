@@ -44,6 +44,7 @@ module.exports = [
   {
     files: [
       "apps/api/**/*.ts",
+      "apps/api/vite.config.ts",
       "apps/web/vite.config.ts",
       "packages/shared/**/*.ts"
     ],

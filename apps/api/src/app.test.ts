@@ -12,6 +12,7 @@ const createTagMock = vi.hoisted(() => vi.fn());
 const updateCategoryMock = vi.hoisted(() => vi.fn());
 const updateTagMock = vi.hoisted(() => vi.fn());
 const deleteCategoryMock = vi.hoisted(() => vi.fn());
+const deleteTagMock = vi.hoisted(() => vi.fn());
 
 vi.mock("./categories/list-categories", () => ({
   listCategories: listCategoriesMock
@@ -39,6 +40,10 @@ vi.mock("./tags/update-tag", () => ({
 
 vi.mock("./categories/delete-category", () => ({
   deleteCategory: deleteCategoryMock
+}));
+
+vi.mock("./tags/delete-tag", () => ({
+  deleteTag: deleteTagMock
 }));
 
 function createTestLogger(): ApiLogger {
@@ -81,6 +86,7 @@ describe("createApp", () => {
     createCategoryMock.mockReset();
     createTagMock.mockReset();
     deleteCategoryMock.mockReset();
+    deleteTagMock.mockReset();
     listCategoriesMock.mockReset();
     listTagsMock.mockReset();
     updateCategoryMock.mockReset();
@@ -497,6 +503,35 @@ describe("createApp", () => {
     expect(updateTagMock).toHaveBeenCalledWith("tag_001", {
       name: "初夏"
     });
+  });
+
+  it("deletes a tag through the default protected route", async () => {
+    deleteTagMock.mockResolvedValue({
+      tagId: "tag_001"
+    });
+
+    const response = await request(
+      createApp({
+        logger: createTestLogger(),
+        requireAuthMiddleware: createRequireAuth({
+          ownerEmail: "owner@example.com",
+          verifyIdToken: async () => ({
+            uid: "uid-1",
+            email: "owner@example.com"
+          })
+        })
+      })
+    )
+      .delete("/api/tags/tag_001")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        tagId: "tag_001"
+      }
+    });
+    expect(deleteTagMock).toHaveBeenCalledWith("tag_001");
   });
 
   it("creates a category through the default protected route", async () => {

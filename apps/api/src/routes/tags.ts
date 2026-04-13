@@ -3,11 +3,16 @@ import type { Router } from "express";
 import type { CreateProtectedAppContext } from "../app";
 import { createTag } from "../tags/create-tag";
 import { listTags } from "../tags/list-tags";
+import { updateTag } from "../tags/update-tag";
 import { sendSuccess } from "../responses/api-response";
 
 interface RegisterTagRoutesOptions {
   createTagHandler?: (input: unknown) => Promise<TagMutationData>;
   listTagsHandler?: () => Promise<TagListData>;
+  updateTagHandler?: (
+    tagId: string,
+    input: unknown
+  ) => Promise<TagMutationData>;
 }
 
 export function registerTagRoutes(
@@ -17,6 +22,7 @@ export function registerTagRoutes(
 ) {
   const createTagHandler = options.createTagHandler ?? createTag;
   const listTagsHandler = options.listTagsHandler ?? listTags;
+  const updateTagHandler = options.updateTagHandler ?? updateTag;
 
   router.get(
     "/tags",
@@ -38,6 +44,21 @@ export function registerTagRoutes(
         sendSuccess(response, await createTagHandler(request.body), {
           statusCode: 201
         });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  router.put(
+    "/tags/:tagId",
+    context.requireAuthMiddleware,
+    async (request, response, next) => {
+      try {
+        sendSuccess(
+          response,
+          await updateTagHandler(request.params.tagId, request.body)
+        );
       } catch (error) {
         next(error);
       }

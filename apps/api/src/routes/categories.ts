@@ -6,11 +6,15 @@ import type { Router } from "express";
 import type { CreateProtectedAppContext } from "../app";
 import { sendSuccess } from "../responses/api-response";
 import { createCategory } from "../categories/create-category";
+import { deleteCategory } from "../categories/delete-category";
 import { listCategories } from "../categories/list-categories";
 import { updateCategory } from "../categories/update-category";
 
 interface RegisterCategoryRoutesOptions {
   createCategoryHandler?: (input: unknown) => Promise<CategoryMutationData>;
+  deleteCategoryHandler?: (
+    categoryId: string
+  ) => Promise<CategoryMutationData>;
   listCategoriesHandler?: () => Promise<CategoryListData>;
   updateCategoryHandler?: (
     categoryId: string,
@@ -24,6 +28,7 @@ export function registerCategoryRoutes(
   options: RegisterCategoryRoutesOptions = {}
 ) {
   const createCategoryHandler = options.createCategoryHandler ?? createCategory;
+  const deleteCategoryHandler = options.deleteCategoryHandler ?? deleteCategory;
   const listCategoriesHandler = options.listCategoriesHandler ?? listCategories;
   const updateCategoryHandler = options.updateCategoryHandler ?? updateCategory;
 
@@ -61,6 +66,21 @@ export function registerCategoryRoutes(
         sendSuccess(
           response,
           await updateCategoryHandler(request.params.categoryId, request.body)
+        );
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  router.delete(
+    "/categories/:categoryId",
+    context.requireAuthMiddleware,
+    async (request, response, next) => {
+      try {
+        sendSuccess(
+          response,
+          await deleteCategoryHandler(request.params.categoryId)
         );
       } catch (error) {
         next(error);

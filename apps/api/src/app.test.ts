@@ -6,12 +6,17 @@ import { createRequireAuth } from "./middlewares/auth";
 import type { ApiLogger } from "./middlewares/request-logger";
 
 const listCategoriesMock = vi.hoisted(() => vi.fn());
+const listTagsMock = vi.hoisted(() => vi.fn());
 const createCategoryMock = vi.hoisted(() => vi.fn());
 const updateCategoryMock = vi.hoisted(() => vi.fn());
 const deleteCategoryMock = vi.hoisted(() => vi.fn());
 
 vi.mock("./categories/list-categories", () => ({
   listCategories: listCategoriesMock
+}));
+
+vi.mock("./tags/list-tags", () => ({
+  listTags: listTagsMock
 }));
 
 vi.mock("./categories/create-category", () => ({
@@ -66,6 +71,7 @@ describe("createApp", () => {
     createCategoryMock.mockReset();
     deleteCategoryMock.mockReset();
     listCategoriesMock.mockReset();
+    listTagsMock.mockReset();
     updateCategoryMock.mockReset();
   });
 
@@ -366,6 +372,51 @@ describe("createApp", () => {
       }
     });
     expect(listCategoriesMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns tag items from the default protected route", async () => {
+    listTagsMock.mockResolvedValue({
+      items: [
+        {
+          tagId: "tag-001",
+          name: "春",
+          updatedAt: "2026-04-12T00:00:00.000Z",
+          usedProductCount: 2,
+          isInUse: true
+        }
+      ]
+    });
+
+    const response = await request(
+      createApp({
+        logger: createTestLogger(),
+        requireAuthMiddleware: createRequireAuth({
+          ownerEmail: "owner@example.com",
+          verifyIdToken: async () => ({
+            uid: "uid-1",
+            email: "owner@example.com"
+          })
+        })
+      })
+    )
+      .get("/api/tags")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        items: [
+          {
+            tagId: "tag-001",
+            name: "春",
+            updatedAt: "2026-04-12T00:00:00.000Z",
+            usedProductCount: 2,
+            isInUse: true
+          }
+        ]
+      }
+    });
+    expect(listTagsMock).toHaveBeenCalledTimes(1);
   });
 
   it("creates a category through the default protected route", async () => {

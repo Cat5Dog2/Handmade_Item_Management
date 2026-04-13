@@ -618,3 +618,27 @@ MVPでは **operationLogs の自動削除は実装しない**。
 - `npm audit fix --force` は、メジャー更新やダウングレードの影響を設計・テストで確認する前には実行しない
 - リリース前には `REL-01` の一部として `npm audit` と `npm audit --omit=dev` を再実行し、結果を記録する
 
+---
+
+## 16. フロントビルド警告メモ
+
+### 16.1 2026年4月13日時点の状況
+
+- `npm run build:web` および `npm run ci` 実行時に、Vite から
+  `Some chunks are larger than 500 kB after minification` の警告が出る
+- 現時点では **ビルド失敗ではなく警告のみ** であり、MVP 開発継続を止める条件とはしない
+- ただし、モバイル環境を含む初回表示性能には影響しうるため、**技術負債として管理する**
+
+### 16.2 現時点の判断
+
+- 2026年4月13日時点では、機能開発を優先し **警告は許容** とする
+- 単に `chunkSizeWarningLimit` を上げて警告だけを消す対応は行わない
+- パフォーマンス対策としては、まず **route 単位の dynamic import による code splitting** を優先検討する
+- 必要に応じて `build.rollupOptions.output.manualChunks` を追加する
+
+### 16.3 再評価タイミング
+
+- 画面数や依存ライブラリが増えて、bundle size がさらに拡大したとき
+- 体感性能、Lighthouse、または実機確認で初回表示の遅さが問題になったとき
+- `REL-01` のリリース前確認で Web 配信物サイズを見直すとき
+

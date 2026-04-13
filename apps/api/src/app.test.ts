@@ -7,6 +7,7 @@ import type { ApiLogger } from "./middlewares/request-logger";
 
 const listCategoriesMock = vi.hoisted(() => vi.fn());
 const createCategoryMock = vi.hoisted(() => vi.fn());
+const updateCategoryMock = vi.hoisted(() => vi.fn());
 
 vi.mock("./categories/list-categories", () => ({
   listCategories: listCategoriesMock
@@ -14,6 +15,10 @@ vi.mock("./categories/list-categories", () => ({
 
 vi.mock("./categories/create-category", () => ({
   createCategory: createCategoryMock
+}));
+
+vi.mock("./categories/update-category", () => ({
+  updateCategory: updateCategoryMock
 }));
 
 function createTestLogger(): ApiLogger {
@@ -55,6 +60,7 @@ describe("createApp", () => {
   beforeEach(() => {
     createCategoryMock.mockReset();
     listCategoriesMock.mockReset();
+    updateCategoryMock.mockReset();
   });
 
   it("returns the health payload", async () => {
@@ -388,6 +394,42 @@ describe("createApp", () => {
     });
     expect(createCategoryMock).toHaveBeenCalledWith({
       name: "ピアス",
+      sortOrder: null
+    });
+  });
+
+  it("updates a category through the default protected route", async () => {
+    updateCategoryMock.mockResolvedValue({
+      categoryId: "cat_001"
+    });
+
+    const response = await request(
+      createApp({
+        logger: createTestLogger(),
+        requireAuthMiddleware: createRequireAuth({
+          ownerEmail: "owner@example.com",
+          verifyIdToken: async () => ({
+            uid: "uid-1",
+            email: "owner@example.com"
+          })
+        })
+      })
+    )
+      .put("/api/categories/cat_001")
+      .set("Authorization", "Bearer valid-token")
+      .send({
+        name: "イヤリング",
+        sortOrder: null
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        categoryId: "cat_001"
+      }
+    });
+    expect(updateCategoryMock).toHaveBeenCalledWith("cat_001", {
+      name: "イヤリング",
       sortOrder: null
     });
   });

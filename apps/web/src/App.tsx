@@ -15,6 +15,7 @@ import { useAuthSession } from "./auth/auth-session";
 import { CategoryManagementPage } from "./categories/category-management-page";
 import { useZodForm } from "./forms/use-zod-form";
 import { AppProviders } from "./providers/app-providers";
+import { TagManagementPage } from "./tags/tag-management-page";
 
 interface ProtectedRouteDefinition {
   navLabel?: string;
@@ -488,6 +489,8 @@ export default function App() {
               element={
                 route.path === "/categories" ? (
                   <CategoryManagementPage />
+                ) : route.path === "/tags" ? (
+                  <TagManagementPage />
                 ) : (
                   <WorkspacePage summary={route.summary} title={route.title} />
                 )

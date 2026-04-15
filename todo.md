@@ -1147,17 +1147,17 @@ Next:
   - `feat(web): implement qr sell confirmation flow`
 
 ### LOG-00 LOGIN 記録APIの設計反映を行う
-- 状態: [ ]
+- 状態: [x]
 - 優先度: P1
 - 依存: なし
 - 作業:
-  - [ ] `api_specification.md` に LOGIN 記録APIのパス / メソッド / 認証要否 / 入出力 / エラーを追記する
-  - [ ] `detail_design.md` に LOGIN ログ記録フローを追記する
-  - [ ] `test_design.md` / `test_cases.md` に LOGIN ログ確認観点を追記または整合確認する
-  - [ ] TODO 内のログ系タスクと設計書の対応関係を確認する
+  - [x] `api_specification.md` に LOGIN 記録APIのパス / メソッド / 認証要否 / 入出力 / エラーを追記する
+  - [x] `detail_design.md` に LOGIN ログ記録フローを追記する
+  - [x] `test_design.md` / `test_cases.md` に LOGIN ログ確認観点を追記または整合確認する
+  - [x] TODO 内のログ系タスクと設計書の対応関係を確認する
 - Done:
-  - [ ] LOGIN 記録APIが設計書上で曖昧でない
-  - [ ] `LOG-01B` 以降が設計書整合前提で着手できる
+  - [x] LOGIN 記録APIが設計書上で曖昧でない
+  - [x] `LOG-01B` 以降が設計書整合前提で着手できる
 - 推奨コミット:
   - `docs: align login operation log api design`
 
@@ -1362,15 +1362,15 @@ Next:
 Ready Queue は、**依存を満たしていて、かつ未完了のタスクだけ** を指す。  
 Codex は毎回、まず `[~]` の再開対象があるかを確認し、なければ Ready Queue を確認したうえで、**この節の番号付き一覧で最上位の 1件だけ** を選んで着手する。
 
-現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` は完了** である。  
-そのため、**次に着手する新規の `[ ]` タスクは、番号付き一覧で最上位の `LOG-00`** とする。  
-また、**`LOG-00` は依存なしで Ready であっても、Phase A の土台タスク（`BOOT-*` / `SHARED-*` / `API-BASE-*` / `WEB-BASE-*`）に未完了がある間は着手保留としてよい**。  
-`LOG-00` は、上記の土台タスクが完了した時点、または **その時点で他により上位の再開 / Ready タスクが存在しない場合** に着手候補へ戻す。
+現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` は完了** である。  
+そのため、**次に着手する新規の `[ ]` タスクは、番号付き一覧で最上位の `LOG-01A`** とする。  
+`LOG-01A` は `LOG-00`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-03` 依存だが、いずれも完了済みのため Ready とする。  
+`LOG-01B` 以降は、`LOG-01A` で operationLogs 共通方針と util を固定したあとに着手する。
 
-- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`
+- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`
 - 現在の再開候補: なし
-- 現在の最優先: `LOG-00`
-- `LOG-00` の扱い: Ready ではあるが、Phase A 完了までは着手保留としてよい
+- 現在の最優先: `LOG-01A`
+- 現在の保留理由: なし
 
 以下の番号付き一覧は、**依存関係を満たした後の推奨実行順** を示す。  
 Codex は常に、依存を満たしているタスクのうち **この一覧で最上位の未完了タスク 1つ** に着手する。

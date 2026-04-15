@@ -11,5 +11,8 @@ export const queryKeys = {
   products: {
     detail: (productId: string) => ["products", "detail", productId] as const,
     list: (filters: unknown) => ["products", "list", filters] as const
+  },
+  tags: {
+    list: ["tags", "list"] as const
   }
 } as const;

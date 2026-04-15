@@ -12,6 +12,7 @@ import {
 } from "react-router-dom";
 import { useAppAuth } from "./auth/auth-provider";
 import { useAuthSession } from "./auth/auth-session";
+import { CategoryManagementPage } from "./categories/category-management-page";
 import { useZodForm } from "./forms/use-zod-form";
 import { AppProviders } from "./providers/app-providers";
 
@@ -485,7 +486,11 @@ export default function App() {
               key={route.path}
               path={route.path}
               element={
-                <WorkspacePage summary={route.summary} title={route.title} />
+                route.path === "/categories" ? (
+                  <CategoryManagementPage />
+                ) : (
+                  <WorkspacePage summary={route.summary} title={route.title} />
+                )
               }
             />
           ))}

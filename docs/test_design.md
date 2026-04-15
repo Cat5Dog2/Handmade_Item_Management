@@ -79,6 +79,7 @@
 | 区分 | メソッド | パス |
 |---|---|---|
 | Health | GET | `/api/health` |
+| Auth | POST | `/api/auth/login-record` |
 | Dashboard | GET | `/api/dashboard` |
 | Products | GET | `/api/products` |
 | Products | POST | `/api/products` |
@@ -539,11 +540,12 @@
 
 | 観点ID | 対象 | テスト観点 | 確認内容 |
 |---|---|---|---|
-| LOG-01 | 認証 | ログインログ | 正常ログイン時に `LOGIN` が記録される |
+| LOG-01 | 認証 | ログインログ | ログイン成功後に `POST /api/auth/login-record` が呼ばれ、`LOGIN` が1件記録される（`detail.result=success`） |
 | LOG-02 | 商品 | 商品更新ログ | 商品更新時に `PRODUCT_UPDATED` が記録される |
 | LOG-03 | 商品 | 商品削除ログ | 論理削除時に `PRODUCT_DELETED` が記録される |
 | LOG-04 | QR | 販売済更新ログ | QR販売済更新時に `QR_SOLD` が記録される |
 | LOG-05 | 共通 | エラーログ | 主要エラー時に `ERROR` が記録され、原因調査に必要な情報を確認できる |
+| LOG-06 | 認証 | LOGIN 記録API認証エラー | `POST /api/auth/login-record` が未認証または利用不可の場合、`LOGIN` を追加せず `401/403` を返す |
 
 ---
 

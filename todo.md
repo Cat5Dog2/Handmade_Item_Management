@@ -770,18 +770,18 @@ Next:
   - `feat(web): implement product creation page`
 
 ### PRODUCT-05A Products API 詳細取得を実装する
-- 状態: [ ]
+- 状態: [x]
 - 優先度: P1
 - 依存: `PRODUCT-03`, `API-BASE-02`
 - 作業:
-  - [ ] `GET /api/products/:productId` を実装する
-  - [ ] 論理削除判定を実装する
-  - [ ] `images[].displayUrl` / `images[].thumbnailUrl` / `urlExpiresAt` を返す
-  - [ ] `tasksSummary` を返す
-  - [ ] `qrCodeValue` を返す
+  - [x] `GET /api/products/:productId` を実装する
+  - [x] 論理削除判定を実装する
+  - [x] `images[].displayUrl` / `images[].thumbnailUrl` / `urlExpiresAt` を返す
+  - [x] `tasksSummary` を返す
+  - [x] `qrCodeValue` を返す
 - Done:
-  - [ ] 未存在 / 論理削除時の 404 が統一されている
-  - [ ] 商品詳細画面が必要とする項目を詳細APIが返せる
+  - [x] 未存在 / 論理削除時の 404 が統一されている
+  - [x] 商品詳細画面が必要とする項目を詳細APIが返せる
 - 推奨コミット:
   - `feat(api): implement product detail endpoint`
 
@@ -1363,13 +1363,13 @@ Ready Queue は、**依存を満たしていて、かつ未完了のタスクだ
 Codex は毎回、まず `[~]` の再開対象があるかを確認し、なければ Ready Queue を確認したうえで、**この節の番号付き一覧で最上位の 1件だけ** を選んで着手する。
 
 現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` / `LOG-01A` / `LOG-01B` / `PRODUCT-01` / `PRODUCT-02` / `PRODUCT-03` / `PRODUCT-04` は完了** である。  
-そのため、**次に着手する新規の `[ ]` タスクは、番号付き一覧で最上位の `PRODUCT-05A`** とする。  
-`PRODUCT-05A` は `PRODUCT-03`, `API-BASE-02` 依存だが、いずれも完了済みのため Ready とする。  
-`PRODUCT-05A` では商品詳細取得 API の実装を進める。
+そのため、**次に着手する新規の `[ ]` タスクは、番号付き一覧で最上位の `PRODUCT-05B`** とする。  
+`PRODUCT-05B` は `PRODUCT-05A`, `API-BASE-02` 依存だが、いずれも完了済みのため Ready とする。  
+`PRODUCT-05B` では商品更新 API の実装を進める。
 
-- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`, `LOG-01B`, `PRODUCT-01`, `PRODUCT-02`, `PRODUCT-03`, `PRODUCT-04`
+- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`, `LOG-01B`, `PRODUCT-01`, `PRODUCT-02`, `PRODUCT-03`, `PRODUCT-04`, `PRODUCT-05A`
 - 現在の再開候補: なし
-- 現在の最優先: `PRODUCT-05A`
+- 現在の最優先: `PRODUCT-05B`
 - 現在の保留理由: なし
 
 以下の番号付き一覧は、**依存関係を満たした後の推奨実行順** を示す。  
@@ -1810,5 +1810,5 @@ Done 条件:
   7. `implementation-notes.md`
 
 ## Current Status
-- Done: SEC-01, LOG-00, LOG-01A, LOG-01B, PRODUCT-01, PRODUCT-02, PRODUCT-03, PRODUCT-04
-- Next: PRODUCT-05A
+- Done: SEC-01, LOG-00, LOG-01A, LOG-01B, PRODUCT-01, PRODUCT-02, PRODUCT-03, PRODUCT-04, PRODUCT-05A
+- Next: PRODUCT-05B

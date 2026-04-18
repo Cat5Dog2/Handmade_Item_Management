@@ -133,7 +133,7 @@ async function parseApiError(response: Response) {
 }
 
 export function createApiClient(options: CreateApiClientOptions = {}) {
-  const baseUrl = options.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? "";
+  const baseUrl = options.baseUrl ?? import.meta.env.VITE_API_BASE_URL ?? "/api";
   const fetchImpl = options.fetchImpl ?? fetch;
 
   async function request<TData, TMeta = undefined, TBody = unknown>(

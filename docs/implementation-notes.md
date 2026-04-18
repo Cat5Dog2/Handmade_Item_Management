@@ -423,6 +423,11 @@ MVPでは次の考え方で実装する。
 - `QR_SOLD`
 - `ERROR`
 
+補足:
+
+- `LOGIN` は Firebase Authentication 成功直後に、フロントから認証済み API `POST /api/auth/login-record` を呼んで記録する
+- Firebase 認証失敗そのものは、MVP の `operationLogs` 記録対象に含めない
+
 ## 9.2 ログ出力項目
 
 原則として以下を記録する。
@@ -433,6 +438,12 @@ MVPでは次の考え方で実装する。
 - `actorUid`
 - `createdAt`
 - `detail`
+
+補足:
+
+- `LOGIN` は `targetId=null`, `summary=ログインしました`, `detail.result=success` を基本とする
+- `detail` には原因調査や変更把握に必要な最小限の情報だけを入れる
+- `detail` にメールアドレス、ID トークン、画像バイナリなど不要な個人情報や大型データは含めない
 
 ## 9.3 detail に含めてよいもの
 
@@ -538,6 +549,8 @@ MVPでは **operationLogs の自動削除は実装しない**。
 - Storage signed URL 生成
 - image 変換ユーティリティ
 - operationLogs 書き込みユーティリティ
+  - `writeOperationLog` を共通 util として用意し、`eventType` / `targetId` / `summary` / `actorUid` / `createdAt` / `detail` を一元化する
+  - `logId` は util 側で生成し、保存先は `operationLogs/{logId}` に統一する
 
 ---
 

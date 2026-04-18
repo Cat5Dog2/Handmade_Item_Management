@@ -723,21 +723,21 @@ Next:
   - `feat(api): implement products list endpoint`
 
 ### PRODUCT-02 商品一覧画面を実装する
-- 状態: [ ]
+- 状態: [x]
 - 優先度: P1
 - 依存: `PRODUCT-01`, `MASTER-01A`, `MASTER-02A`, `WEB-BASE-03`
 - 作業:
-  - [ ] `/products` を実装する
-  - [ ] 検索欄を実装する
-  - [ ] カテゴリ / タグ / ステータス絞り込みを実装する
-  - [ ] 並び替えを実装する
-  - [ ] `includeSold` 切替を実装する
-  - [ ] URL クエリ同期を実装する
-  - [ ] ログアウト直後の再ログインでは URL に旧クエリが残っていても一覧条件を自動復元しない
-  - [ ] 0件 / 再試行表示を実装する
+  - [x] `/products` を実装する
+  - [x] 検索欄を実装する
+  - [x] カテゴリ / タグ / ステータス絞り込みを実装する
+  - [x] 並び替えを実装する
+  - [x] `includeSold` 切替を実装する
+  - [x] URL クエリ同期を実装する
+  - [x] ログアウト直後の再ログインでは URL に旧クエリが残っていても一覧条件を自動復元しない
+  - [x] 0件 / 再試行表示を実装する
 - Done:
-  - [ ] 設計どおりの検索条件で一覧が動く
-  - [ ] URL クエリ保持と再ログイン時の非復元条件が両立している
+  - [x] 設計どおりの検索条件で一覧が動く
+  - [x] URL クエリ保持と再ログイン時の非復元条件が両立している
 - 推奨コミット:
   - `feat(web): implement products list page`
 
@@ -1808,3 +1808,7 @@ Done 条件:
   5. `data_design.md`
   6. `screen_design.md`
   7. `implementation-notes.md`
+
+## Current Status
+- Done: SEC-01, LOG-00, LOG-01A, LOG-01B, PRODUCT-01, PRODUCT-02
+- Next: PRODUCT-03

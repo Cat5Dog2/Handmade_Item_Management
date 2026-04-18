@@ -15,6 +15,7 @@ import { useAuthSession } from "./auth/auth-session";
 import { CategoryManagementPage } from "./categories/category-management-page";
 import { useZodForm } from "./forms/use-zod-form";
 import { AppProviders } from "./providers/app-providers";
+import { ProductListPage } from "./products/product-list-page";
 import { TagManagementPage } from "./tags/tag-management-page";
 
 interface ProtectedRouteDefinition {
@@ -493,7 +494,9 @@ export default function App() {
               key={route.path}
               path={route.path}
               element={
-                route.path === "/categories" ? (
+                route.path === "/products" ? (
+                  <ProductListPage />
+                ) : route.path === "/categories" ? (
                   <CategoryManagementPage />
                 ) : route.path === "/tags" ? (
                   <TagManagementPage />

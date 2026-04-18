@@ -7,6 +7,7 @@ const listProductsMock = vi.hoisted(() => vi.fn());
 const createProductMock = vi.hoisted(() => vi.fn());
 const getProductMock = vi.hoisted(() => vi.fn());
 const updateProductMock = vi.hoisted(() => vi.fn());
+const deleteProductMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../products/list-products", () => ({
   listProducts: listProductsMock
@@ -22,6 +23,10 @@ vi.mock("../products/get-product", () => ({
 
 vi.mock("../products/update-product", () => ({
   updateProduct: updateProductMock
+}));
+
+vi.mock("../products/delete-product", () => ({
+  deleteProduct: deleteProductMock
 }));
 
 function createTestApp({
@@ -49,6 +54,7 @@ describe("products routes", () => {
     createProductMock.mockReset();
     getProductMock.mockReset();
     updateProductMock.mockReset();
+    deleteProductMock.mockReset();
   });
 
   it("returns AUTH_REQUIRED for unauthenticated product list requests", async () => {
@@ -246,6 +252,43 @@ describe("products routes", () => {
       status: "onDisplay",
       tagIds: ["tag-a"]
     });
+  });
+
+  it("returns AUTH_REQUIRED for unauthenticated product delete requests", async () => {
+    const response = await request(createTestApp()).delete("/api/products/HM-000001");
+
+    expect(response.status).toBe(401);
+    expect(response.body).toMatchObject({
+      code: "AUTH_REQUIRED"
+    });
+    expect(deleteProductMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the product delete envelope for authenticated requests", async () => {
+    deleteProductMock.mockResolvedValue({
+      deletedAt: "2026-04-18T11:00:00.000Z",
+      productId: "HM-000001"
+    });
+
+    const response = await request(
+      createTestApp({
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .delete("/api/products/HM-000001")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        deletedAt: "2026-04-18T11:00:00.000Z",
+        productId: "HM-000001"
+      }
+    });
+    expect(deleteProductMock).toHaveBeenCalledWith("HM-000001");
   });
 
   it("returns AUTH_REQUIRED for unauthenticated product create requests", async () => {

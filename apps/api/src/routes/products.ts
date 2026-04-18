@@ -1,5 +1,6 @@
 import type {
   ProductCreateData,
+  ProductDeleteData,
   ProductDetailData,
   ProductListData,
   ProductListMeta,
@@ -7,6 +8,7 @@ import type {
 } from "@handmade/shared";
 import type { Router } from "express";
 import type { CreateProtectedAppContext } from "../app";
+import { deleteProduct } from "../products/delete-product";
 import { createProduct } from "../products/create-product";
 import { getProduct } from "../products/get-product";
 import { updateProduct } from "../products/update-product";
@@ -20,6 +22,7 @@ interface ProductListResult {
 
 interface RegisterProductRoutesOptions {
   createProductHandler?: (input: unknown) => Promise<ProductCreateData>;
+  deleteProductHandler?: (productId: string) => Promise<ProductDeleteData>;
   getProductHandler?: (productId: string) => Promise<ProductDetailData>;
   updateProductHandler?: (
     productId: string,
@@ -34,6 +37,7 @@ export function registerProductRoutes(
   options: RegisterProductRoutesOptions = {}
 ) {
   const createProductHandler = options.createProductHandler ?? createProduct;
+  const deleteProductHandler = options.deleteProductHandler ?? deleteProduct;
   const getProductHandler = options.getProductHandler ?? getProduct;
   const updateProductHandler = options.updateProductHandler ?? updateProduct;
   const listProductsHandler = options.listProductsHandler ?? listProducts;
@@ -91,6 +95,21 @@ export function registerProductRoutes(
         sendSuccess(
           response,
           await updateProductHandler(request.params.productId, request.body)
+        );
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  router.delete(
+    "/products/:productId",
+    context.requireAuthMiddleware,
+    async (request, response, next) => {
+      try {
+        sendSuccess(
+          response,
+          await deleteProductHandler(request.params.productId)
         );
       } catch (error) {
         next(error);

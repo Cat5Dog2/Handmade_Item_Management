@@ -1,14 +1,15 @@
-export const API_BASE_PATH = "/api";
+const API_PATH_PREFIX = "";
 
 export const API_PATHS = {
-  health: `${API_BASE_PATH}/health`,
-  dashboard: `${API_BASE_PATH}/dashboard`,
-  products: `${API_BASE_PATH}/products`,
-  categories: `${API_BASE_PATH}/categories`,
-  tags: `${API_BASE_PATH}/tags`,
-  tasks: `${API_BASE_PATH}/tasks`,
-  qrLookup: `${API_BASE_PATH}/qr/lookup`,
-  qrSell: `${API_BASE_PATH}/qr/sell`
+  authLoginRecord: `${API_PATH_PREFIX}/auth/login-record`,
+  health: `${API_PATH_PREFIX}/health`,
+  dashboard: `${API_PATH_PREFIX}/dashboard`,
+  products: `${API_PATH_PREFIX}/products`,
+  categories: `${API_PATH_PREFIX}/categories`,
+  tags: `${API_PATH_PREFIX}/tags`,
+  tasks: `${API_PATH_PREFIX}/tasks`,
+  qrLookup: `${API_PATH_PREFIX}/qr/lookup`,
+  qrSell: `${API_PATH_PREFIX}/qr/sell`
 } as const;
 
 export function getProductPath(productId: string) {

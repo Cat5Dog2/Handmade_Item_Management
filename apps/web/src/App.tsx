@@ -10,7 +10,7 @@ import {
   useLocation,
   useNavigate
 } from "react-router-dom";
-import { useAppAuth } from "./auth/auth-provider";
+import { LoginRecordError, useAppAuth } from "./auth/auth-provider";
 import { useAuthSession } from "./auth/auth-session";
 import { CategoryManagementPage } from "./categories/category-management-page";
 import { useZodForm } from "./forms/use-zod-form";
@@ -25,6 +25,8 @@ interface ProtectedRouteDefinition {
 }
 
 const APP_NAME = "Handmade Item Management";
+const LOGIN_RECORD_ERROR_MESSAGE =
+  "ログイン記録の送信に失敗しました。しばらくしてから再度お試しください。";
 const LOGIN_ERROR_MESSAGE = "メールアドレスまたはパスワードが正しくありません。";
 const PASSWORD_RESET_ERROR_MESSAGE =
   "パスワード再設定メールを送信できませんでした。入力内容を確認してください。";
@@ -170,8 +172,12 @@ function LoginPage() {
     try {
       await login(values);
       loginForm.reset();
-    } catch {
-      setLoginError(LOGIN_ERROR_MESSAGE);
+    } catch (error) {
+      setLoginError(
+        error instanceof LoginRecordError
+          ? LOGIN_RECORD_ERROR_MESSAGE
+          : LOGIN_ERROR_MESSAGE
+      );
     }
   });
 
@@ -338,9 +344,9 @@ function AuthStatusPage() {
 }
 
 function LoginRoute() {
-  const { isAuthenticated, isAuthReady } = useAppAuth();
+  const { isAuthenticated, isAuthReady, isLoginInProgress } = useAppAuth();
 
-  if (!isAuthReady) {
+  if (!isAuthReady || isLoginInProgress) {
     return <AuthStatusPage />;
   }
 
@@ -449,9 +455,9 @@ function ProtectedLayout() {
 }
 
 function RequireAuthenticatedRoute() {
-  const { isAuthenticated, isAuthReady } = useAppAuth();
+  const { isAuthenticated, isAuthReady, isLoginInProgress } = useAppAuth();
 
-  if (!isAuthReady) {
+  if (!isAuthReady || isLoginInProgress) {
     return <AuthStatusPage />;
   }
 

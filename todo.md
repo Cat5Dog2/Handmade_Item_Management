@@ -1179,16 +1179,16 @@ Next:
   - `chore(api): fix operation logs recording strategy`
 
 ### LOG-01B LOGIN 記録APIとログ書き込みを実装する
-- 状態: [ ]
+- 状態: [x]
 - 優先度: P1
 - 依存: `LOG-01A`, `API-BASE-02`
 - 作業:
-  - [ ] 設計反映済みの `LOGIN` 記録APIを追加する
-  - [ ] ログイン成功後にフロントからその API を呼ぶ
-  - [ ] API 側で `LOGIN` を `operationLogs` に記録する
+  - [x] 設計反映済みの `LOGIN` 記録APIを追加する
+  - [x] ログイン成功後にフロントからその API を呼ぶ
+  - [x] API 側で `LOGIN` を `operationLogs` に記録する
 - Done:
-  - [ ] 正常ログイン時に `LOGIN` が記録される
-  - [ ] `LOGIN` 記録経路がコード上で一意に追える
+  - [x] 正常ログイン時に `LOGIN` が記録される
+  - [x] `LOGIN` 記録経路がコード上で一意に追える
 - 推奨コミット:
   - `feat(api): add login operation log endpoint`
 
@@ -1363,13 +1363,13 @@ Ready Queue は、**依存を満たしていて、かつ未完了のタスクだ
 Codex は毎回、まず `[~]` の再開対象があるかを確認し、なければ Ready Queue を確認したうえで、**この節の番号付き一覧で最上位の 1件だけ** を選んで着手する。
 
 現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` / `LOG-01A` は完了** である。  
-そのため、**次に着手する新規の `[ ]` タスクは、番号付き一覧で最上位の `LOG-01B`** とする。  
-`LOG-01B` は `LOG-01A`, `API-BASE-02` 依存だが、いずれも完了済みのため Ready とする。  
-`LOG-01B` では設計済みの `/api/auth/login-record` を追加し、ログイン成功後のフロント呼び出しと `LOGIN` 書き込みを実装する。
+そのため、**次に着手する新規の `[ ]` タスクは、番号付き一覧で最上位の `LOG-01C`** とする。  
+`LOG-01C` は `LOG-01A`, `PRODUCT-05B`, `PRODUCT-05C`, `QR-01B`, `API-BASE-02` 依存だが、いずれも完了済みのため Ready とする。  
+`LOG-01C` では業務操作ログの追加を実装する。
 
-- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`
+- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`, `LOG-01B`
 - 現在の再開候補: なし
-- 現在の最優先: `LOG-01B`
+- 現在の最優先: `LOG-01C`
 - 現在の保留理由: なし
 
 以下の番号付き一覧は、**依存関係を満たした後の推奨実行順** を示す。  

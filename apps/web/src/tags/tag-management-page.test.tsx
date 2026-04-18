@@ -127,7 +127,7 @@ describe("TagManagementPage", () => {
     );
 
     await waitFor(() => {
-      expect(apiClientMock.post).toHaveBeenCalledWith("/api/tags", {
+      expect(apiClientMock.post).toHaveBeenCalledWith("/tags", {
         body: {
           name: "限定"
         }
@@ -232,7 +232,7 @@ describe("TagManagementPage", () => {
     );
 
     await waitFor(() => {
-      expect(apiClientMock.put).toHaveBeenCalledWith("/api/tags/tag_001", {
+      expect(apiClientMock.put).toHaveBeenCalledWith("/tags/tag_001", {
         body: {
           name: "人気"
         }
@@ -286,7 +286,7 @@ describe("TagManagementPage", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "削除する" }));
 
     await waitFor(() => {
-      expect(apiClientMock.delete).toHaveBeenCalledWith("/api/tags/tag_001");
+      expect(apiClientMock.delete).toHaveBeenCalledWith("/tags/tag_001");
     });
 
     expect(await screen.findByText("タグを削除しました。")).toBeInTheDocument();

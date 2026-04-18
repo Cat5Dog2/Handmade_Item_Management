@@ -742,16 +742,16 @@ Next:
   - `feat(web): implement products list page`
 
 ### PRODUCT-03 Products API 登録を実装する
-- 状態: [ ]
+- 状態: [x]
 - 優先度: P1
 - 依存: `PRODUCT-01`, `API-BASE-02`
 - 作業:
-  - [ ] `POST /api/products` を実装する
-  - [ ] 商品ID採番を実装する
-  - [ ] カテゴリ / タグ参照チェックを実装する
-  - [ ] `soldAt` 自動設定を実装する
+  - [x] `POST /api/products` を実装する
+  - [x] 商品ID採番を実装する
+  - [x] カテゴリ / タグ参照チェックを実装する
+  - [x] `soldAt` 自動設定を実装する
 - Done:
-  - [ ] 正常登録で `201 Created` を返す
+  - [x] 正常登録で `201 Created` を返す
 - 推奨コミット:
   - `feat(api): implement product creation endpoint`
 
@@ -1810,5 +1810,5 @@ Done 条件:
   7. `implementation-notes.md`
 
 ## Current Status
-- Done: SEC-01, LOG-00, LOG-01A, LOG-01B, PRODUCT-01, PRODUCT-02
-- Next: PRODUCT-03
+- Done: SEC-01, LOG-00, LOG-01A, LOG-01B, PRODUCT-01, PRODUCT-02, PRODUCT-03
+- Next: PRODUCT-04

@@ -1162,19 +1162,19 @@ Next:
   - `docs: align login operation log api design`
 
 ### LOG-01A operationLogs 記録方針を固定する
-- 状態: [ ]
+- 状態: [x]
 - 優先度: P1
 - 依存: `LOG-00`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-03`
 - 作業:
-  - [ ] ログ対象イベントを `LOGIN` / `PRODUCT_UPDATED` / `PRODUCT_DELETED` / `QR_SOLD` / `ERROR` で固定する
-  - [ ] `LOGIN` はフロント認証成功後、**専用の認証済み API** を呼んで記録する方針で固定する
-  - [ ] `LOG-00` で反映した `LOGIN` 記録API設計を正本として扱う
-  - [ ] API側の共通 `operationLogs` 書き込み util を用意する
-  - [ ] `eventType` / `targetId` / `summary` / `actorUid` / `createdAt` / `detail` の最低項目を固定する
+  - [x] ログ対象イベントを `LOGIN` / `PRODUCT_UPDATED` / `PRODUCT_DELETED` / `QR_SOLD` / `ERROR` で固定する
+  - [x] `LOGIN` はフロント認証成功後、**専用の認証済み API** を呼んで記録する方針で固定する
+  - [x] `LOG-00` で反映した `LOGIN` 記録API設計を正本として扱う
+  - [x] API側の共通 `operationLogs` 書き込み util を用意する
+  - [x] `eventType` / `targetId` / `summary` / `actorUid` / `createdAt` / `detail` の最低項目を固定する
 - Done:
-  - [ ] ログ記録方針が実装前に固定されている
-  - [ ] `LOGIN` ログの経路が曖昧でない
-  - [ ] `LOGIN` 記録APIの設計と TODO の前提が一致している
+  - [x] ログ記録方針が実装前に固定されている
+  - [x] `LOGIN` ログの経路が曖昧でない
+  - [x] `LOGIN` 記録APIの設計と TODO の前提が一致している
 - 推奨コミット:
   - `chore(api): fix operation logs recording strategy`
 
@@ -1362,14 +1362,14 @@ Next:
 Ready Queue は、**依存を満たしていて、かつ未完了のタスクだけ** を指す。  
 Codex は毎回、まず `[~]` の再開対象があるかを確認し、なければ Ready Queue を確認したうえで、**この節の番号付き一覧で最上位の 1件だけ** を選んで着手する。
 
-現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` は完了** である。  
-そのため、**次に着手する新規の `[ ]` タスクは、番号付き一覧で最上位の `LOG-01A`** とする。  
-`LOG-01A` は `LOG-00`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-03` 依存だが、いずれも完了済みのため Ready とする。  
-`LOG-01B` 以降は、`LOG-01A` で operationLogs 共通方針と util を固定したあとに着手する。
+現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` / `LOG-01A` は完了** である。  
+そのため、**次に着手する新規の `[ ]` タスクは、番号付き一覧で最上位の `LOG-01B`** とする。  
+`LOG-01B` は `LOG-01A`, `API-BASE-02` 依存だが、いずれも完了済みのため Ready とする。  
+`LOG-01B` では設計済みの `/api/auth/login-record` を追加し、ログイン成功後のフロント呼び出しと `LOGIN` 書き込みを実装する。
 
-- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`
+- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`
 - 現在の再開候補: なし
-- 現在の最優先: `LOG-01A`
+- 現在の最優先: `LOG-01B`
 - 現在の保留理由: なし
 
 以下の番号付き一覧は、**依存関係を満たした後の推奨実行順** を示す。  

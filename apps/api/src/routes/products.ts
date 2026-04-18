@@ -1,6 +1,11 @@
-import type { ProductListData, ProductListMeta } from "@handmade/shared";
+import type {
+  ProductCreateData,
+  ProductListData,
+  ProductListMeta
+} from "@handmade/shared";
 import type { Router } from "express";
 import type { CreateProtectedAppContext } from "../app";
+import { createProduct } from "../products/create-product";
 import { sendSuccess } from "../responses/api-response";
 import { listProducts } from "../products/list-products";
 
@@ -10,6 +15,7 @@ interface ProductListResult {
 }
 
 interface RegisterProductRoutesOptions {
+  createProductHandler?: (input: unknown) => Promise<ProductCreateData>;
   listProductsHandler?: (input: unknown) => Promise<ProductListResult>;
 }
 
@@ -18,6 +24,7 @@ export function registerProductRoutes(
   context: CreateProtectedAppContext,
   options: RegisterProductRoutesOptions = {}
 ) {
+  const createProductHandler = options.createProductHandler ?? createProduct;
   const listProductsHandler = options.listProductsHandler ?? listProducts;
 
   router.get(
@@ -29,6 +36,20 @@ export function registerProductRoutes(
 
         sendSuccess(response, result.data, {
           meta: result.meta
+        });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  router.post(
+    "/products",
+    context.requireAuthMiddleware,
+    async (request, response, next) => {
+      try {
+        sendSuccess(response, await createProductHandler(request.body), {
+          statusCode: 201
         });
       } catch (error) {
         next(error);

@@ -5,6 +5,7 @@ import { createRequireAuth } from "../middlewares/auth";
 
 const listProductsMock = vi.hoisted(() => vi.fn());
 const createProductMock = vi.hoisted(() => vi.fn());
+const getProductMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../products/list-products", () => ({
   listProducts: listProductsMock
@@ -12,6 +13,10 @@ vi.mock("../products/list-products", () => ({
 
 vi.mock("../products/create-product", () => ({
   createProduct: createProductMock
+}));
+
+vi.mock("../products/get-product", () => ({
+  getProduct: getProductMock
 }));
 
 function createTestApp({
@@ -37,6 +42,7 @@ describe("products routes", () => {
   beforeEach(() => {
     listProductsMock.mockReset();
     createProductMock.mockReset();
+    getProductMock.mockReset();
   });
 
   it("returns AUTH_REQUIRED for unauthenticated product list requests", async () => {
@@ -107,6 +113,79 @@ describe("products routes", () => {
       page: "2",
       pageSize: "1"
     });
+  });
+
+  it("returns AUTH_REQUIRED for unauthenticated product detail requests", async () => {
+    const response = await request(createTestApp()).get("/api/products/HM-000001");
+
+    expect(response.status).toBe(401);
+    expect(response.body).toMatchObject({
+      code: "AUTH_REQUIRED"
+    });
+    expect(getProductMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the product detail envelope for authenticated requests", async () => {
+    getProductMock.mockResolvedValue({
+      images: [],
+      product: {
+        categoryId: "cat-a",
+        categoryName: "Accessories",
+        createdAt: "2026-04-18T09:00:00.000Z",
+        description: "Handmade pin",
+        name: "Fancy Pin",
+        price: 2800,
+        productId: "HM-000001",
+        soldAt: null,
+        status: "onDisplay",
+        tagIds: ["tag-a"],
+        tagNames: ["Spring"],
+        updatedAt: "2026-04-18T09:00:00.000Z"
+      },
+      qrCodeValue: "HM-000001",
+      tasksSummary: {
+        completedCount: 1,
+        openCount: 2
+      }
+    });
+
+    const response = await request(
+      createTestApp({
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .get("/api/products/HM-000001")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        images: [],
+        product: {
+          categoryId: "cat-a",
+          categoryName: "Accessories",
+          createdAt: "2026-04-18T09:00:00.000Z",
+          description: "Handmade pin",
+          name: "Fancy Pin",
+          price: 2800,
+          productId: "HM-000001",
+          soldAt: null,
+          status: "onDisplay",
+          tagIds: ["tag-a"],
+          tagNames: ["Spring"],
+          updatedAt: "2026-04-18T09:00:00.000Z"
+        },
+        qrCodeValue: "HM-000001",
+        tasksSummary: {
+          completedCount: 1,
+          openCount: 2
+        }
+      }
+    });
+    expect(getProductMock).toHaveBeenCalledWith("HM-000001");
   });
 
   it("returns AUTH_REQUIRED for unauthenticated product create requests", async () => {

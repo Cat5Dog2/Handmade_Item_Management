@@ -10,6 +10,8 @@ import {
   type PropsWithChildren
 } from "react";
 import type { User } from "firebase/auth";
+import { API_PATHS } from "@handmade/shared";
+import { createApiClient } from "../api/api-client";
 import { useAuthSession } from "./auth-session";
 import {
   sendPasswordReset,
@@ -27,10 +29,18 @@ interface LogoutOptions {
   clearNotice?: boolean;
 }
 
+export class LoginRecordError extends Error {
+  constructor() {
+    super("Login record request failed.");
+    this.name = "LoginRecordError";
+  }
+}
+
 interface AuthContextValue {
   authUser: User | null;
   isAuthenticated: boolean;
   isAuthReady: boolean;
+  isLoginInProgress: boolean;
   login: (input: LoginInput) => Promise<void>;
   logout: (options?: LogoutOptions) => Promise<void>;
   sendPasswordResetEmail: (email: string) => Promise<void>;
@@ -43,6 +53,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const { clearAuthNotice, setIdTokenProvider } = useAuthSession();
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isLoginInProgress, setIsLoginInProgress] = useState(false);
 
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
@@ -56,12 +67,40 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const login = useCallback(
     async ({ email, password }: LoginInput) => {
-      const credential = await signInWithEmail(email, password);
+      let shouldRollbackAuth = false;
 
-      clearAuthNotice();
-      setAuthUser(credential.user);
-      setIdTokenProvider(() => credential.user.getIdToken());
-      setIsAuthReady(true);
+      setIsLoginInProgress(true);
+
+      try {
+        const credential = await signInWithEmail(email, password);
+        shouldRollbackAuth = true;
+
+        const loginApiClient = createApiClient({
+          getIdToken: () => credential.user.getIdToken()
+        });
+
+        await loginApiClient.post<{ recorded: boolean }>(
+          API_PATHS.authLoginRecord
+        );
+
+        clearAuthNotice();
+        setAuthUser(credential.user);
+        setIdTokenProvider(() => credential.user.getIdToken());
+        setIsAuthReady(true);
+      } catch (error) {
+        if (shouldRollbackAuth) {
+          setAuthUser(null);
+          setIdTokenProvider(null);
+          setIsAuthReady(true);
+          await signOutUser().catch(() => undefined);
+
+          throw new LoginRecordError();
+        }
+
+        throw error;
+      } finally {
+        setIsLoginInProgress(false);
+      }
     },
     [clearAuthNotice, setIdTokenProvider]
   );
@@ -89,13 +128,21 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const value = useMemo<AuthContextValue>(
     () => ({
       authUser,
-      isAuthenticated: authUser !== null,
+      isAuthenticated: authUser !== null && !isLoginInProgress,
       isAuthReady,
+      isLoginInProgress,
       login,
       logout,
       sendPasswordResetEmail
     }),
-    [authUser, isAuthReady, login, logout, sendPasswordResetEmail]
+    [
+      authUser,
+      isAuthReady,
+      isLoginInProgress,
+      login,
+      logout,
+      sendPasswordResetEmail
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -18,7 +18,7 @@ describe("createApiClient", () => {
       getIdToken: vi.fn().mockResolvedValue("test-token")
     });
 
-    const response = await client.get<{ status: string }>("/api/health");
+    const response = await client.get<{ status: string }>("/health");
     const request = fetchImpl.mock.calls[0]?.[1] as FetchRequestInit;
     const headers = new Headers(request.headers);
 
@@ -40,7 +40,7 @@ describe("createApiClient", () => {
       getIdToken: vi.fn().mockResolvedValue("test-token")
     });
 
-    await client.get<{ service: string }>("/api/health", { requireAuth: false });
+    await client.get<{ service: string }>("/health", { requireAuth: false });
 
     const request = fetchImpl.mock.calls[0]?.[1] as FetchRequestInit;
     const headers = new Headers(request.headers);
@@ -69,7 +69,7 @@ describe("createApiClient", () => {
       onUnauthorized
     });
 
-    await expect(client.get("/api/dashboard")).rejects.toMatchObject({
+    await expect(client.get("/dashboard")).rejects.toMatchObject({
         code: "AUTH_REQUIRED",
         message: "セッションが切れました。再度ログインしてください。",
         status: 401
@@ -98,7 +98,7 @@ describe("createApiClient", () => {
       onForbidden
     });
 
-    await expect(client.get("/api/products")).rejects.toMatchObject({
+    await expect(client.get("/products")).rejects.toMatchObject({
         code: "AUTH_FORBIDDEN",
         message: "この操作は実行できません。",
         status: 403

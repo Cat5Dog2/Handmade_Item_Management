@@ -66,6 +66,20 @@ const authMock = vi.hoisted(() => {
   };
 });
 
+const fetchMock = vi.hoisted(() =>
+  vi.fn(async (input: unknown, init?: unknown) => {
+    void input;
+    void init;
+
+    return new Response(JSON.stringify({ data: { recorded: true } }), {
+      headers: {
+        "Content-Type": "application/json"
+      },
+      status: 201
+    });
+  })
+);
+
 vi.mock("./auth/firebase-auth-client", () => ({
   sendPasswordReset: authMock.sendPasswordReset,
   signInWithEmail: authMock.signInWithEmail,
@@ -90,6 +104,8 @@ function renderApp(initialEntry: string) {
 describe("App routing", () => {
   beforeEach(() => {
     authMock.reset();
+    fetchMock.mockClear();
+    vi.stubGlobal("fetch", fetchMock);
   });
 
   it("renders the login route and protects unauthenticated routes", async () => {
@@ -165,7 +181,20 @@ describe("App routing", () => {
         "owner@example.com",
         "password123"
       );
+      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
+
+    const loginRecordRequest = fetchMock.mock.calls[0];
+    expect(loginRecordRequest).toBeDefined();
+    expect(new URL(String(loginRecordRequest?.[0])).pathname).toBe(
+      "/api/auth/login-record"
+    );
+    const requestInit = loginRecordRequest?.[1] as
+      | { headers?: Record<string, string> }
+      | undefined;
+    expect(new Headers(requestInit?.headers).get("Authorization")).toBe(
+      "Bearer test-id-token"
+    );
 
     await waitFor(() => {
       expect(
@@ -184,10 +213,10 @@ describe("App routing", () => {
 
     const dialog = await screen.findByRole("dialog", { name: "パスワード再設定" });
     const dialogEmailInput = within(dialog).getByLabelText("メールアドレス");
-
     expect(dialogEmailInput).toHaveValue("owner@example.com");
 
     fireEvent.click(within(dialog).getByRole("button", { name: "送信" }));
+
 
     await waitFor(() => {
       expect(

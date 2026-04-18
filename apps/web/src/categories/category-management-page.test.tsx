@@ -130,7 +130,7 @@ describe("CategoryManagementPage", () => {
     );
 
     await waitFor(() => {
-      expect(apiClientMock.post).toHaveBeenCalledWith("/api/categories", {
+      expect(apiClientMock.post).toHaveBeenCalledWith("/categories", {
         body: {
           name: "ブローチ",
           sortOrder: null
@@ -246,7 +246,7 @@ describe("CategoryManagementPage", () => {
     );
 
     await waitFor(() => {
-      expect(apiClientMock.put).toHaveBeenCalledWith("/api/categories/cat_001", {
+      expect(apiClientMock.put).toHaveBeenCalledWith("/categories/cat_001", {
         body: {
           name: "イヤリング",
           sortOrder: 15
@@ -303,7 +303,7 @@ describe("CategoryManagementPage", () => {
 
     await waitFor(() => {
       expect(apiClientMock.delete).toHaveBeenCalledWith(
-        "/api/categories/cat_001"
+        "/categories/cat_001"
       );
     });
 

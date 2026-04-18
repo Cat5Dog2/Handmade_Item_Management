@@ -15,6 +15,7 @@ import { useAuthSession } from "./auth/auth-session";
 import { CategoryManagementPage } from "./categories/category-management-page";
 import { useZodForm } from "./forms/use-zod-form";
 import { AppProviders } from "./providers/app-providers";
+import { ProductCreatePage } from "./products/product-create-page";
 import { ProductListPage } from "./products/product-list-page";
 import { TagManagementPage } from "./tags/tag-management-page";
 
@@ -496,6 +497,8 @@ export default function App() {
               element={
                 route.path === "/products" ? (
                   <ProductListPage />
+                ) : route.path === "/products/new" ? (
+                  <ProductCreatePage />
                 ) : route.path === "/categories" ? (
                   <CategoryManagementPage />
                 ) : route.path === "/tags" ? (

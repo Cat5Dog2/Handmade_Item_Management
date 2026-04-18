@@ -152,6 +152,18 @@ describe("App routing", () => {
     );
   });
 
+  it("renders the product create route inside the protected workspace shell", async () => {
+    authMock.setUser({
+      email: "owner@example.com",
+      getIdToken: async () => "test-id-token",
+      uid: "owner-user"
+    });
+    renderApp("/products/new");
+
+    expect(await screen.findByLabelText("商品名")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "登録する" })).toBeInTheDocument();
+  });
+
   it("logs in and navigates to the dashboard", async () => {
     renderApp("/login");
 

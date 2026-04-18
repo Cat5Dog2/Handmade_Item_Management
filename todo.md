@@ -786,22 +786,22 @@ Next:
   - `feat(api): implement product detail endpoint`
 
 ### PRODUCT-05B Products API 更新を実装する
-- 状態: [ ]
+- 状態: [x]
 - 優先度: P1
 - 依存: `PRODUCT-05A`, `API-BASE-02`
 - 作業:
-  - [ ] `PUT /api/products/:productId` を実装する
-  - [ ] カテゴリ / タグ参照チェックを実装する
-  - [ ] `primaryImageId` の受け取りを実装する
-  - [ ] `primaryImageId` 未送信時の `VALIDATION_ERROR` を実装する
-  - [ ] 不正な `primaryImageId` 指定時の検証を実装する
-  - [ ] `primaryImageId` を `images[].isPrimary` に正規化する
-  - [ ] ステータス更新時の `soldAt` 制御を実装する
-  - [ ] 販売済から戻すときの `soldAt=null` を実装する
+  - [x] `PUT /api/products/:productId` を実装する
+  - [x] カテゴリ / タグ参照チェックを実装する
+  - [x] `primaryImageId` の受け取りを実装する
+  - [x] `primaryImageId` 未送信時の `VALIDATION_ERROR` を実装する
+  - [x] 不正な `primaryImageId` 指定時の検証を実装する
+  - [x] `primaryImageId` を `images[].isPrimary` に正規化する
+  - [x] ステータス更新時の `soldAt` 制御を実装する
+  - [x] 販売済から戻すときの `soldAt=null` を実装する
 - Done:
-  - [ ] 商品更新が仕様どおり反映される
-  - [ ] `primaryImageId` と `images[].isPrimary` の整合が保たれる
-  - [ ] `soldAt` の補完 / 解除が正しく制御される
+  - [x] 商品更新が仕様どおり反映される
+  - [x] `primaryImageId` と `images[].isPrimary` の整合が保たれる
+  - [x] `soldAt` の補完 / 解除が正しく制御される
 - 推奨コミット:
   - `feat(api): implement product update endpoint`
 
@@ -1362,14 +1362,14 @@ Next:
 Ready Queue は、**依存を満たしていて、かつ未完了のタスクだけ** を指す。  
 Codex は毎回、まず `[~]` の再開対象があるかを確認し、なければ Ready Queue を確認したうえで、**この節の番号付き一覧で最上位の 1件だけ** を選んで着手する。
 
-現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` / `LOG-01A` / `LOG-01B` / `PRODUCT-01` / `PRODUCT-02` / `PRODUCT-03` / `PRODUCT-04` は完了** である。  
-そのため、**次に着手する新規の `[ ]` タスクは、番号付き一覧で最上位の `PRODUCT-05B`** とする。  
-`PRODUCT-05B` は `PRODUCT-05A`, `API-BASE-02` 依存だが、いずれも完了済みのため Ready とする。  
-`PRODUCT-05B` では商品更新 API の実装を進める。
+現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` / `LOG-01A` / `LOG-01B` / `PRODUCT-01` / `PRODUCT-02` / `PRODUCT-03` / `PRODUCT-04` / `PRODUCT-05A` / `PRODUCT-05B` は完了** である。  
+そのため、**次に着手する新規の `[ ]` タスクは、番号付き一覧で最上位の `PRODUCT-05C`** とする。  
+`PRODUCT-05C` は `PRODUCT-05A`, `API-BASE-02` 依存だが、いずれも完了済みのため Ready とする。  
+`PRODUCT-05C` では商品論理削除 API の実装を進める。
 
-- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`, `LOG-01B`, `PRODUCT-01`, `PRODUCT-02`, `PRODUCT-03`, `PRODUCT-04`, `PRODUCT-05A`
+- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`, `LOG-01B`, `PRODUCT-01`, `PRODUCT-02`, `PRODUCT-03`, `PRODUCT-04`, `PRODUCT-05A`, `PRODUCT-05B`
 - 現在の再開候補: なし
-- 現在の最優先: `PRODUCT-05B`
+- 現在の最優先: `PRODUCT-05C`
 - 現在の保留理由: なし
 
 以下の番号付き一覧は、**依存関係を満たした後の推奨実行順** を示す。  
@@ -1810,5 +1810,5 @@ Done 条件:
   7. `implementation-notes.md`
 
 ## Current Status
-- Done: SEC-01, LOG-00, LOG-01A, LOG-01B, PRODUCT-01, PRODUCT-02, PRODUCT-03, PRODUCT-04, PRODUCT-05A
-- Next: PRODUCT-05B
+- Done: SEC-01, LOG-00, LOG-01A, LOG-01B, PRODUCT-01, PRODUCT-02, PRODUCT-03, PRODUCT-04, PRODUCT-05A, PRODUCT-05B
+- Next: PRODUCT-05C

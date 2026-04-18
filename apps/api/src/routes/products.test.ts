@@ -6,6 +6,7 @@ import { createRequireAuth } from "../middlewares/auth";
 const listProductsMock = vi.hoisted(() => vi.fn());
 const createProductMock = vi.hoisted(() => vi.fn());
 const getProductMock = vi.hoisted(() => vi.fn());
+const updateProductMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../products/list-products", () => ({
   listProducts: listProductsMock
@@ -17,6 +18,10 @@ vi.mock("../products/create-product", () => ({
 
 vi.mock("../products/get-product", () => ({
   getProduct: getProductMock
+}));
+
+vi.mock("../products/update-product", () => ({
+  updateProduct: updateProductMock
 }));
 
 function createTestApp({
@@ -43,6 +48,7 @@ describe("products routes", () => {
     listProductsMock.mockReset();
     createProductMock.mockReset();
     getProductMock.mockReset();
+    updateProductMock.mockReset();
   });
 
   it("returns AUTH_REQUIRED for unauthenticated product list requests", async () => {
@@ -186,6 +192,60 @@ describe("products routes", () => {
       }
     });
     expect(getProductMock).toHaveBeenCalledWith("HM-000001");
+  });
+
+  it("returns AUTH_REQUIRED for unauthenticated product update requests", async () => {
+    const response = await request(createTestApp()).put("/api/products/HM-000001");
+
+    expect(response.status).toBe(401);
+    expect(response.body).toMatchObject({
+      code: "AUTH_REQUIRED"
+    });
+    expect(updateProductMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the product update envelope for authenticated requests", async () => {
+    updateProductMock.mockResolvedValue({
+      productId: "HM-000001",
+      updatedAt: "2026-04-18T10:00:00.000Z"
+    });
+
+    const response = await request(
+      createTestApp({
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .put("/api/products/HM-000001")
+      .set("Authorization", "Bearer valid-token")
+      .send({
+        categoryId: "cat-a",
+        description: "Updated pin",
+        name: "Fancy Pin",
+        price: 3000,
+        primaryImageId: null,
+        status: "onDisplay",
+        tagIds: ["tag-a"]
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        productId: "HM-000001",
+        updatedAt: "2026-04-18T10:00:00.000Z"
+      }
+    });
+    expect(updateProductMock).toHaveBeenCalledWith("HM-000001", {
+      categoryId: "cat-a",
+      description: "Updated pin",
+      name: "Fancy Pin",
+      price: 3000,
+      primaryImageId: null,
+      status: "onDisplay",
+      tagIds: ["tag-a"]
+    });
   });
 
   it("returns AUTH_REQUIRED for unauthenticated product create requests", async () => {

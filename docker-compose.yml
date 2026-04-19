@@ -49,8 +49,8 @@ services:
       FIREBASE_AUTH_EMULATOR_HOST: "firebase-emulators:9099"
       FIRESTORE_EMULATOR_HOST: "firebase-emulators:8081"
       FIREBASE_STORAGE_EMULATOR_HOST: "firebase-emulators:9199"
-      GOOGLE_CLOUD_PROJECT: "${FIREBASE_PROJECT_ID:-demo-handmade-item-management}"
-      FIREBASE_PROJECT_ID: "${FIREBASE_PROJECT_ID:-demo-handmade-item-management}"
+      GOOGLE_CLOUD_PROJECT: "${FIREBASE_PROJECT_ID:-handmade-item-management}"
+      FIREBASE_PROJECT_ID: "${FIREBASE_PROJECT_ID:-handmade-item-management}"
     volumes:
       - .:/workspace
       - repo_node_modules:/workspace/node_modules
@@ -66,7 +66,7 @@ services:
     working_dir: /workspace
     command: ["/usr/local/bin/start-emulators.sh"]
     environment:
-      FIREBASE_PROJECT_ID: "${FIREBASE_PROJECT_ID:-demo-handmade-item-management}"
+      FIREBASE_PROJECT_ID: "${FIREBASE_PROJECT_ID:-handmade-item-management}"
     ports:
       - "4000:4000"
       - "8081:8081"

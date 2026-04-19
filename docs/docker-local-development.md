@@ -27,7 +27,7 @@
 
 ```bash
 cp .env.docker.example .env.docker
-docker compose up --build
+docker compose --env-file .env.docker up --build
 ```
 
 ## 公開ポート

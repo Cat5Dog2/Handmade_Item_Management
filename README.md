@@ -7,7 +7,7 @@
 
 > 補足:
 > - 現在のこのリポジトリは、設計書・Firebase設定に加えて、**最小の workspace 基盤** まで含む初期実装セットです。
-> - `npm install`、`npm run dev`、`docker compose up --build` などの実行系コマンドは利用できますが、業務機能はこれから段階的に実装する前提です。
+> - `npm install`、`npm run dev`、`docker compose --env-file .env.docker up --build` などの実行系コマンドは利用できますが、業務機能はこれから段階的に実装する前提です。
 > - フロントの API 呼び出し先は `/api` に統一し、ローカル開発時は Vite dev server の proxy で API へ中継します。
 
 ## 1. MVPの対象

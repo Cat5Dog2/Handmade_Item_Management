@@ -26,6 +26,8 @@ interface ProductDocument {
   productId: string;
   qrCodeValue: string;
   soldAt: Timestamp | null;
+  soldCustomerId?: string | null;
+  soldCustomerNameSnapshot?: string | null;
   status: ProductStatus;
   tagIds: string[];
   updatedAt: Timestamp;
@@ -211,6 +213,8 @@ export async function getProduct(
       tagNames: relatedNames.tagNames,
       status: product.status,
       soldAt: toIsoString(product.soldAt),
+      soldCustomerId: product.soldCustomerId ?? null,
+      soldCustomerNameSnapshot: product.soldCustomerNameSnapshot ?? null,
       createdAt: product.createdAt.toDate().toISOString(),
       updatedAt: product.updatedAt.toDate().toISOString()
     },

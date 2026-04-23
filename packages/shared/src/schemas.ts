@@ -234,7 +234,8 @@ export const productUpdateInputSchema = z.object({
   categoryId: identifierSchema,
   tagIds: z.array(identifierSchema),
   status: productStatusSchema,
-  primaryImageId: nullableIdentifierSchema
+  primaryImageId: nullableIdentifierSchema,
+  soldCustomerId: nullableIdentifierSchema
 });
 
 export const taskListQuerySchema = z.object({
@@ -275,6 +276,7 @@ export const qrLookupInputSchema = z.object({
 
 export const qrSellInputSchema = z
   .object({
+    customerId: nullableIdentifierSchema.optional(),
     productId: optionalIdentifierSchema,
     qrCodeValue: optionalIdentifierSchema
   })

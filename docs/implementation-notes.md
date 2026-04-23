@@ -78,6 +78,21 @@ inStock
 sold
 ```
 
+### 3.3.1 顧客項目名の固定
+
+顧客関連の内部項目名は次で固定する。
+
+- `gender`: 性別
+- `ageGroup`: 年代
+- `customerStyle`: 系統メモ
+- `snsAccounts`: SNSアカウント一覧
+- `memo`: 顧客メモ
+- `isArchived`: アーカイブフラグ
+
+補足:
+- UIラベルは「年代」「系統メモ」を用いる
+- `ageRange`、`styleTags` などの別名はMVPでは採用しない
+
 ---
 
 ## 4. フロントエンド実装方針
@@ -145,6 +160,9 @@ sold
 ['products', 'tasks', productId, showCompleted]
 ['categories', 'list']
 ['tags', 'list']
+['customers', 'list', filters]
+['customers', 'detail', customerId]
+['customers', 'purchases', customerId]
 ```
 
 ## 4.2 ルーティング
@@ -161,6 +179,10 @@ sold
 /products/:productId/tasks
 /categories
 /tags
+/customers
+/customers/new
+/customers/:customerId
+/customers/:customerId/edit
 /qr
 ```
 
@@ -212,6 +234,14 @@ QR読み取りライブラリは **`html5-qrcode`** を採用する。
 - `POST /api/qr/sell` 実行中は確定 / キャンセルともに押下不可にする
 
 ---
+
+## 5.4 顧客紐付け実装方針
+
+- 商品編集画面では `status=sold` のときのみ購入者選択UIを表示する
+- QR販売済更新画面では購入者選択は任意とし、未選択でも更新できる
+- 購入者選択UIは未アーカイブ顧客のみ候補表示する
+- 販売済更新時に `soldCustomerId` を保存した場合は、あわせて `soldCustomerNameSnapshot` を更新する
+- 顧客別購入履歴は `products` コレクションから導出し、別の `sales` コレクションは作成しない
 
 ## 6. 画像アップロード・変換方針
 
@@ -420,6 +450,8 @@ MVPでは次の考え方で実装する。
 - `LOGIN`
 - `PRODUCT_UPDATED`
 - `PRODUCT_DELETED`
+- `CUSTOMER_UPDATED`
+- `CUSTOMER_ARCHIVED`
 - `QR_SOLD`
 - `ERROR`
 

@@ -85,16 +85,18 @@ MVPでは、次の3層で保全する。
 - `tasks`
 - `categories`
 - `tags`
+- `customers`
 - `counters`
 - `operationLogs`
 
 補足:
 
 - `products` は論理削除を含む業務中核データである
+- `customers` はアーカイブ運用を含む業務中核データであり、顧客別購入履歴の導出元となる `products.soldCustomerId` / `soldCustomerNameSnapshot` とあわせて整合確認対象とする
 - `tasks`、`categories`、`tags` は物理削除がありうるが、**通常画面・通常運用上は復元対象外**とする
 - ただし、障害対応または誤操作対応としては、`tasks`、`categories`、`tags` も**運用復旧対象**に含める
 - すなわち、利用者向け機能としての「復元」は提供しない一方、管理・保守対応としてバックアップからの復旧はありうる
-- `counters/product` は採番整合性に影響するため、復旧時に必ず確認する
+- `counters/product` と `counters/customer` は採番整合性に影響するため、復旧時に必ず確認する
 - `operationLogs` は調査・整合確認のため重要だが、ログ自体の欠損より業務データ復旧を優先する
 
 ## 4.2 Cloud Storage
@@ -408,18 +410,18 @@ Firestore の復旧は、原則として次のどちらかで行う。
 
 ## 10.5 `counters` の復旧
 
-`counters/product` は慎重に扱う。
+`counters/product` と `counters/customer` は慎重に扱う。
 
 原則:
 
 - **過去値へ安易に戻さない**
-- 現在発番済みの最大 `productId` と矛盾しない値へ補正する
+- 現在発番済みの最大 `productId` / `customerId` と矛盾しない `currentValue` へ補正する
 
 確認観点:
 
-- すでに採番済みの商品IDの最大値
+- すでに採番済みの商品ID・顧客IDの最大値
 - 復旧対象期間中に重複採番が起きていないか
-- `nextNumber` または同等項目が将来採番と衝突しないか
+- `currentValue` が将来採番と衝突しないか
 
 ---
 
@@ -470,7 +472,7 @@ Firestore の復旧は、原則として次のどちらかで行う。
 5. 画像バケット側を復元する
 6. API をデプロイする
 7. フロントをデプロイする
-8. ログイン、一覧、詳細、登録、画像表示、QR販売更新を確認する
+8. ログイン、商品一覧 / 詳細 / 登録、顧客一覧 / 詳細 / 購入履歴、画像表示、QR販売更新を確認する
 
 参照文書:
 
@@ -530,10 +532,20 @@ gcloud firestore import gs://<backup-bucket>/firestore/2026/03/29/033000 --datab
 - 画像順序が崩れていない
 - 画像追加 / 削除 / 差し替えが継続して行える
 
-### 14.4 QR販売系
+### 14.4 顧客系
+
+- 顧客一覧 / 詳細 / 編集が表示できる
+- アーカイブ状態が復元前の想定と一致している
+- 顧客別購入履歴が `products.status=sold` と `soldCustomerId` から導出されている
+- 既存販売済商品の `soldCustomerId` / `soldCustomerNameSnapshot` が履歴として保持されている
+- `customers` とは別に `sales` コレクションを前提にした復旧確認をしていない
+
+### 14.5 QR販売系
 
 - QR参照ができる
 - 販売済更新可否判定が正しい
+- 購入者未選択でも販売済更新できる
+- 購入者指定時に `soldCustomerId` / `soldCustomerNameSnapshot` が更新される
 - 販売済更新後の一覧 / 詳細 / ダッシュボード反映が正しい
 
 ---
@@ -547,8 +559,9 @@ gcloud firestore import gs://<backup-bucket>/firestore/2026/03/29/033000 --datab
 2. 一時環境へ復元する
 3. 主要コレクション件数を確認する
 4. 代表商品の詳細と画像メタを確認する
-5. 必要なら画像復元手順も試す
-6. 問題点を `docs/backup-and-restore.md` に反映する
+5. 代表顧客の詳細と顧客別購入履歴を確認する
+6. 必要なら画像復元手順も試す
+7. 問題点を `docs/backup-and-restore.md` に反映する
 
 訓練で確認したい観点:
 

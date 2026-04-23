@@ -32,4 +32,4 @@
 ## 補足
 - 実質的なスキル本体は `.codex/skills/handmade-sales-manager/SKILL.md` です
 - `metadata.json` や `resources/` は補助ファイルです
-- `AGENT.md` は配置していません。Codex 向けの正本は `AGENTS.md` を想定しています
+- `AGENTS.md` が Codex 向けの正本です

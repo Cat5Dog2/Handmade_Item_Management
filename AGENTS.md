@@ -240,6 +240,10 @@ npm run build:web
 /products/:productId/tasks
 /categories
 /tags
+/customers
+/customers/new
+/customers/:customerId
+/customers/:customerId/edit
 /qr
 ```
 
@@ -263,6 +267,7 @@ npm run build:web
 ### 7.2 実装対象API
 以下のAPI群を前提とする。
 - `GET /api/health`
+- `POST /api/auth/login-record`
 - `GET /api/dashboard`
 - `GET /api/products`
 - `POST /api/products`
@@ -285,6 +290,12 @@ npm run build:web
 - `POST /api/tags`
 - `PUT /api/tags/:tagId`
 - `DELETE /api/tags/:tagId`
+- `GET /api/customers`
+- `POST /api/customers`
+- `GET /api/customers/:customerId`
+- `PUT /api/customers/:customerId`
+- `DELETE /api/customers/:customerId`
+- `GET /api/customers/:customerId/purchases`
 - `POST /api/qr/lookup`
 - `POST /api/qr/sell`
 
@@ -306,6 +317,7 @@ npm run build:web
 - `tasks`
 - `categories`
 - `tags`
+- `customers`
 - `counters`
 - `operationLogs`
 
@@ -314,6 +326,7 @@ npm run build:web
 - タスク: **物理削除**
 - カテゴリ: **未使用時のみ物理削除**
 - タグ: **未使用時のみ物理削除**
+- 顧客: **アーカイブ**
 - 商品画像: **Storage上の実体削除 + 商品情報更新**
 
 ### 8.3 商品ID
@@ -345,6 +358,17 @@ sold
 - QRで販売済更新できるのは **`onDisplay` / `inStock` のみ**
 - `sold` は重複更新しない
 - `beforeProduction` / `inProduction` / `completed` は QR販売更新不可
+
+### 8.7 顧客管理ルール
+- 顧客は `customers` コレクションで管理する
+- 顧客IDは `cus_000001` 形式とし、`counters/customer` を使って採番する
+- 顧客削除は物理削除ではなく `isArchived=true` のアーカイブ運用とする
+- 顧客別購入履歴は `products.status=sold` と `soldCustomerId` から導出し、別 `sales` コレクションは作らない
+
+### 8.8 顧客紐付けルール
+- 商品更新では `status=sold` のときのみ `soldCustomerId` を設定できる
+- QR販売済更新では `customerId` は任意とし、未指定でも販売済更新できる
+- 顧客指定時は未アーカイブ顧客のみ許可し、`soldCustomerNameSnapshot` をあわせて更新する
 
 ---
 
@@ -437,8 +461,10 @@ products/{productId}/thumb/{imageId}.webp
 - 少なくとも以下を対象に検討する
   - ログイン
   - 商品更新
-  - 販売済更新
-  - 論理削除
+  - 商品論理削除
+  - 顧客更新
+  - 顧客アーカイブ
+  - QR販売済更新
   - 主要エラー
 - Cloud Run ログでも主要エラーを追跡可能にする
 

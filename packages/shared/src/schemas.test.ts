@@ -106,7 +106,8 @@ describe("shared schemas", () => {
         categoryId: " cat_001 ",
         tagIds: [" tag_001 "],
         status: "sold",
-        primaryImageId: ""
+        primaryImageId: "",
+        soldCustomerId: ""
       })
     ).toEqual({
       name: "Updated Item",
@@ -115,7 +116,8 @@ describe("shared schemas", () => {
       categoryId: "cat_001",
       tagIds: ["tag_001"],
       status: "sold",
-      primaryImageId: null
+      primaryImageId: null,
+      soldCustomerId: null
     });
 
     expect(() =>
@@ -148,9 +150,11 @@ describe("shared schemas", () => {
     ).toThrow();
     expect(
       qrSellInputSchema.parse({
+        customerId: "",
         productId: " HM-000001 "
       })
     ).toEqual({
+      customerId: null,
       productId: "HM-000001"
     });
   });

@@ -108,6 +108,7 @@ export interface ProductCreateInput extends ProductBaseInput {
 
 export interface ProductUpdateInput extends ProductBaseInput {
   description: string;
+  soldCustomerId: string | null;
   tagIds: string[];
   primaryImageId: string | null;
 }
@@ -139,6 +140,8 @@ export interface ProductDetail {
   tagNames: string[];
   status: ProductStatus;
   soldAt: IsoDateTimeString | null;
+  soldCustomerId: string | null;
+  soldCustomerNameSnapshot: string | null;
   createdAt: IsoDateTimeString;
   updatedAt: IsoDateTimeString;
 }
@@ -305,6 +308,7 @@ export interface QrLookupData {
 }
 
 export interface QrSellInput {
+  customerId?: string | null;
   productId?: string;
   qrCodeValue?: string;
 }
@@ -313,5 +317,7 @@ export interface QrSellData {
   productId: string;
   status: "sold";
   soldAt: IsoDateTimeString;
+  soldCustomerId: string | null;
+  soldCustomerNameSnapshot: string | null;
   updatedAt: IsoDateTimeString;
 }

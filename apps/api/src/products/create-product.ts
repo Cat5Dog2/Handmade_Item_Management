@@ -30,6 +30,8 @@ interface ProductDocument {
   productId: string;
   qrCodeValue: string;
   soldAt: Timestamp | null;
+  soldCustomerId: string | null;
+  soldCustomerNameSnapshot: string | null;
   status: ProductStatus;
   tagIds: string[];
   updatedAt: Timestamp;
@@ -199,6 +201,8 @@ export async function createProduct(
       productId,
       qrCodeValue: productId,
       soldAt,
+      soldCustomerId: null,
+      soldCustomerNameSnapshot: null,
       status: parsedInput.data.status,
       tagIds,
       updatedAt: createdAt

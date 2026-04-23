@@ -149,6 +149,8 @@ describe("createProduct", () => {
       productId: "HM-000001",
       qrCodeValue: "HM-000001",
       soldAt: null,
+      soldCustomerId: null,
+      soldCustomerNameSnapshot: null,
       status: "completed",
       tagIds: ["tag-a", "tag-b"],
       updatedAt: now
@@ -236,6 +238,8 @@ describe("createProduct", () => {
       productId: "HM-000001",
       qrCodeValue: "HM-000001",
       soldAt: now,
+      soldCustomerId: null,
+      soldCustomerNameSnapshot: null,
       status: "sold",
       tagIds: [],
       updatedAt: now

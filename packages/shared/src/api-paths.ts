@@ -5,6 +5,7 @@ export const API_PATHS = {
   health: `${API_PATH_PREFIX}/health`,
   dashboard: `${API_PATH_PREFIX}/dashboard`,
   products: `${API_PATH_PREFIX}/products`,
+  customers: `${API_PATH_PREFIX}/customers`,
   categories: `${API_PATH_PREFIX}/categories`,
   tags: `${API_PATH_PREFIX}/tags`,
   tasks: `${API_PATH_PREFIX}/tasks`,
@@ -26,6 +27,14 @@ export function getProductImagePath(productId: string, imageId: string) {
 
 export function getProductTasksPath(productId: string) {
   return `${getProductPath(productId)}/tasks`;
+}
+
+export function getCustomerPath(customerId: string) {
+  return `${API_PATHS.customers}/${customerId}`;
+}
+
+export function getCustomerPurchasesPath(customerId: string) {
+  return `${getCustomerPath(customerId)}/purchases`;
 }
 
 export function getTaskPath(taskId: string) {

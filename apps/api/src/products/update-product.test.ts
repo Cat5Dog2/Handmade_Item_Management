@@ -141,6 +141,7 @@ describe("updateProduct", () => {
           name: "Fancy Pin",
           price: 3000,
           primaryImageId: "img-002",
+          soldCustomerId: null,
           status: "sold",
           tagIds: ["tag-b", "tag-a"]
         },
@@ -183,6 +184,8 @@ describe("updateProduct", () => {
       price: 3000,
       productId,
       qrCodeValue: productId,
+      soldCustomerId: null,
+      soldCustomerNameSnapshot: null,
       status: "sold",
       tagIds: ["tag-b", "tag-a"]
     });
@@ -190,6 +193,224 @@ describe("updateProduct", () => {
     expect(payload.deletedAt).toBeNull();
     expect(payload.soldAt).toBe(now);
     expect(payload.updatedAt).toBe(now);
+  });
+
+  it("sets sold customer fields when saving a sold product with a customer", async () => {
+    const now = createTimestamp("2026-04-18T10:30:00.000Z");
+    const productId = "HM-000002";
+    const productRef = { path: `products/${productId}` };
+    const categoryRef = { path: "categories/cat-a" };
+    const customerRef = { path: "customers/cus_000001" };
+    const transaction = {
+      get: vi.fn(async (reference: unknown) => {
+        if (reference === productRef) {
+          return createDocumentSnapshot({
+            categoryId: "cat-a",
+            createdAt: createTimestamp("2026-04-18T08:00:00.000Z"),
+            deletedAt: null,
+            description: "Display pin",
+            images: [],
+            isDeleted: false,
+            name: "Display Pin",
+            price: 2600,
+            productId,
+            qrCodeValue: productId,
+            soldAt: null,
+            soldCustomerId: null,
+            soldCustomerNameSnapshot: null,
+            status: "onDisplay",
+            tagIds: [],
+            updatedAt: createTimestamp("2026-04-18T09:00:00.000Z")
+          });
+        }
+
+        if (reference === categoryRef) {
+          return createDocumentSnapshot({ categoryId: "cat-a" });
+        }
+
+        if (reference === customerRef) {
+          return createDocumentSnapshot({
+            customerId: "cus_000001",
+            isArchived: false,
+            name: "山田 花子"
+          });
+        }
+
+        throw new Error("Unexpected transaction reference");
+      }),
+      set: vi.fn()
+    };
+    const db = {
+      collection: vi.fn((collectionName: string) => {
+        if (collectionName === "products") {
+          return {
+            doc: vi.fn(() => productRef)
+          };
+        }
+
+        if (collectionName === "categories") {
+          return {
+            doc: vi.fn(() => categoryRef)
+          };
+        }
+
+        if (collectionName === "customers") {
+          return {
+            doc: vi.fn((customerId: string) => {
+              if (customerId === "cus_000001") {
+                return customerRef;
+              }
+
+              throw new Error(`Unexpected customer ${customerId}`);
+            })
+          };
+        }
+
+        if (collectionName === "tags") {
+          return {
+            doc: vi.fn()
+          };
+        }
+
+        throw new Error(`Unexpected collection ${collectionName}`);
+      }),
+      runTransaction: vi.fn(async (callback) => callback(transaction as never))
+    };
+
+    await expect(
+      updateProduct(
+        productId,
+        {
+          categoryId: "cat-a",
+          description: "Sold pin",
+          name: "Display Pin",
+          price: 2600,
+          primaryImageId: null,
+          soldCustomerId: "cus_000001",
+          status: "sold",
+          tagIds: []
+        },
+        {
+          db: db as never,
+          now: () => now as never
+        }
+      )
+    ).resolves.toEqual({
+      productId,
+      updatedAt: "2026-04-18T10:30:00.000Z"
+    });
+
+    const [, payload] = transaction.set.mock.calls[0];
+
+    expect(payload).toMatchObject({
+      soldCustomerId: "cus_000001",
+      soldCustomerNameSnapshot: "山田 花子",
+      status: "sold"
+    });
+    expect(payload.soldAt).toBe(now);
+  });
+
+  it("rejects an archived customer when setting soldCustomerId", async () => {
+    const productId = "HM-000003";
+    const productRef = { path: `products/${productId}` };
+    const categoryRef = { path: "categories/cat-a" };
+    const customerRef = { path: "customers/cus_archived" };
+    const transaction = {
+      get: vi.fn(async (reference: unknown) => {
+        if (reference === productRef) {
+          return createDocumentSnapshot({
+            categoryId: "cat-a",
+            createdAt: createTimestamp("2026-04-18T08:00:00.000Z"),
+            deletedAt: null,
+            description: "Display pin",
+            images: [],
+            isDeleted: false,
+            name: "Display Pin",
+            price: 2600,
+            productId,
+            qrCodeValue: productId,
+            soldAt: null,
+            status: "onDisplay",
+            tagIds: [],
+            updatedAt: createTimestamp("2026-04-18T09:00:00.000Z")
+          });
+        }
+
+        if (reference === categoryRef) {
+          return createDocumentSnapshot({ categoryId: "cat-a" });
+        }
+
+        if (reference === customerRef) {
+          return createDocumentSnapshot({
+            customerId: "cus_archived",
+            isArchived: true,
+            name: "Archived Customer"
+          });
+        }
+
+        throw new Error("Unexpected transaction reference");
+      }),
+      set: vi.fn()
+    };
+    const db = {
+      collection: vi.fn((collectionName: string) => {
+        if (collectionName === "products") {
+          return {
+            doc: vi.fn(() => productRef)
+          };
+        }
+
+        if (collectionName === "categories") {
+          return {
+            doc: vi.fn(() => categoryRef)
+          };
+        }
+
+        if (collectionName === "customers") {
+          return {
+            doc: vi.fn(() => customerRef)
+          };
+        }
+
+        if (collectionName === "tags") {
+          return {
+            doc: vi.fn()
+          };
+        }
+
+        throw new Error(`Unexpected collection ${collectionName}`);
+      }),
+      runTransaction: vi.fn(async (callback) => callback(transaction as never))
+    };
+
+    await expect(
+      updateProduct(
+        productId,
+        {
+          categoryId: "cat-a",
+          description: "Sold pin",
+          name: "Display Pin",
+          price: 2600,
+          primaryImageId: null,
+          soldCustomerId: "cus_archived",
+          status: "sold",
+          tagIds: []
+        },
+        {
+          db: db as never
+        }
+      )
+    ).rejects.toMatchObject({
+      code: "CUSTOMER_ARCHIVED",
+      details: [
+        {
+          field: "soldCustomerId"
+        }
+      ],
+      statusCode: 400
+    });
+
+    expect(transaction.set).not.toHaveBeenCalled();
   });
 
   it("keeps soldAt when re-saving a sold product", async () => {
@@ -261,6 +482,7 @@ describe("updateProduct", () => {
           name: "Sold Pin",
           price: 3200,
           primaryImageId: null,
+          soldCustomerId: null,
           status: "sold",
           tagIds: []
         },
@@ -288,6 +510,8 @@ describe("updateProduct", () => {
       price: 3200,
       productId,
       qrCodeValue: productId,
+      soldCustomerId: null,
+      soldCustomerNameSnapshot: null,
       status: "sold",
       tagIds: []
     });
@@ -318,6 +542,8 @@ describe("updateProduct", () => {
             productId,
             qrCodeValue: productId,
             soldAt,
+            soldCustomerId: "cus_000001",
+            soldCustomerNameSnapshot: "山田 花子",
             status: "sold",
             tagIds: [],
             updatedAt: createTimestamp("2026-04-18T10:00:00.000Z")
@@ -366,6 +592,7 @@ describe("updateProduct", () => {
           name: "Fancy Pin",
           price: 3200,
           primaryImageId: null,
+          soldCustomerId: null,
           status: "onDisplay",
           tagIds: []
         },
@@ -393,6 +620,8 @@ describe("updateProduct", () => {
       price: 3200,
       productId,
       qrCodeValue: productId,
+      soldCustomerId: null,
+      soldCustomerNameSnapshot: null,
       status: "onDisplay",
       tagIds: []
     });
@@ -477,6 +706,7 @@ describe("updateProduct", () => {
           name: "Fancy Pin",
           price: 3200,
           primaryImageId: "missing",
+          soldCustomerId: null,
           status: "onDisplay",
           tagIds: []
         },
@@ -536,6 +766,7 @@ describe("updateProduct", () => {
           name: "Fancy Pin",
           price: 3200,
           primaryImageId: null,
+          soldCustomerId: null,
           status: "onDisplay",
           tagIds: []
         },
@@ -601,6 +832,7 @@ describe("updateProduct", () => {
           name: "Fancy Pin",
           price: 3200,
           primaryImageId: null,
+          soldCustomerId: null,
           status: "onDisplay",
           tagIds: []
         },

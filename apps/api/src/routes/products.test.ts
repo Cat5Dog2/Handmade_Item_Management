@@ -149,6 +149,8 @@ describe("products routes", () => {
         price: 2800,
         productId: "HM-000001",
         soldAt: null,
+        soldCustomerId: null,
+        soldCustomerNameSnapshot: null,
         status: "onDisplay",
         tagIds: ["tag-a"],
         tagNames: ["Spring"],
@@ -185,6 +187,8 @@ describe("products routes", () => {
           price: 2800,
           productId: "HM-000001",
           soldAt: null,
+          soldCustomerId: null,
+          soldCustomerNameSnapshot: null,
           status: "onDisplay",
           tagIds: ["tag-a"],
           tagNames: ["Spring"],
@@ -232,6 +236,7 @@ describe("products routes", () => {
         name: "Fancy Pin",
         price: 3000,
         primaryImageId: null,
+        soldCustomerId: null,
         status: "onDisplay",
         tagIds: ["tag-a"]
       });
@@ -249,6 +254,7 @@ describe("products routes", () => {
       name: "Fancy Pin",
       price: 3000,
       primaryImageId: null,
+      soldCustomerId: null,
       status: "onDisplay",
       tagIds: ["tag-a"]
     });

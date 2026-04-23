@@ -30,9 +30,16 @@ interface ProductDocument {
   productId: string;
   qrCodeValue: string;
   soldAt: Timestamp | null;
+  soldCustomerId?: string | null;
+  soldCustomerNameSnapshot?: string | null;
   status: ProductStatus;
   tagIds: string[];
   updatedAt: Timestamp;
+}
+
+interface CustomerDocument {
+  isArchived: boolean;
+  name: string;
 }
 
 interface SnapshotLike<T> {
@@ -79,6 +86,46 @@ async function assertDocumentExists(
       message
     });
   }
+}
+
+async function getAvailableCustomerSnapshot(
+  transaction: FirestoreTransactionLike,
+  reference: unknown
+) {
+  const snapshot = await transaction.get(reference);
+
+  if (!snapshot.exists) {
+    throw createApiError({
+      statusCode: 400,
+      code: "CUSTOMER_NOT_FOUND",
+      details: [
+        {
+          field: "soldCustomerId",
+          message: "指定した顧客が見つかりません。"
+        }
+      ],
+      message: "指定した顧客が見つかりません。顧客を選び直してください。"
+    });
+  }
+
+  const customer = snapshot.data() as CustomerDocument;
+
+  if (customer.isArchived) {
+    throw createApiError({
+      statusCode: 400,
+      code: "CUSTOMER_ARCHIVED",
+      details: [
+        {
+          field: "soldCustomerId",
+          message: "アーカイブ済み顧客は指定できません。"
+        }
+      ],
+      message:
+        "選択した顧客は現在利用できません。別の顧客を選び直してください。"
+    });
+  }
+
+  return customer;
 }
 
 function createPrimaryImageError() {
@@ -186,6 +233,17 @@ export async function updateProduct(
     const updatedAt = now();
     const soldAt =
       parsedInput.data.status === "sold" ? product.soldAt ?? updatedAt : null;
+    const soldCustomerId =
+      parsedInput.data.status === "sold" ? parsedInput.data.soldCustomerId : null;
+    const soldCustomerNameSnapshot =
+      parsedInput.data.status === "sold" && soldCustomerId
+        ? (
+            await getAvailableCustomerSnapshot(
+              typedTransaction,
+              db.collection("customers").doc(soldCustomerId)
+            )
+          ).name
+        : null;
 
     typedTransaction.set(productReference, {
       ...product,
@@ -195,6 +253,8 @@ export async function updateProduct(
       name: parsedInput.data.name,
       price: parsedInput.data.price,
       soldAt,
+      soldCustomerId,
+      soldCustomerNameSnapshot,
       status: parsedInput.data.status,
       tagIds,
       updatedAt

@@ -13,6 +13,7 @@ import {
 import { LoginRecordError, useAppAuth } from "./auth/auth-provider";
 import { useAuthSession } from "./auth/auth-session";
 import { CategoryManagementPage } from "./categories/category-management-page";
+import { CustomerListPage } from "./customers/customer-list-page";
 import { useZodForm } from "./forms/use-zod-form";
 import { AppProviders } from "./providers/app-providers";
 import { ProductCreatePage } from "./products/product-create-page";
@@ -86,6 +87,27 @@ const protectedRoutes: ProtectedRouteDefinition[] = [
     summary: "残り作業と納期を整理して進みやすくします。"
   },
   {
+    path: "/customers",
+    title: "顧客一覧",
+    summary: "顧客を検索し、最終購入情報と購入回数を確認します。",
+    navLabel: "顧客一覧"
+  },
+  {
+    path: "/customers/new",
+    title: "顧客登録",
+    summary: "新しい顧客情報を登録します。"
+  },
+  {
+    path: "/customers/:customerId",
+    title: "顧客詳細",
+    summary: "顧客情報と購入履歴を確認します。"
+  },
+  {
+    path: "/customers/:customerId/edit",
+    title: "顧客編集",
+    summary: "顧客情報を最新の内容へ整えます。"
+  },
+  {
     path: "/categories",
     title: "カテゴリ管理",
     summary: "分類の並び順と使い分けを整えます。",
@@ -109,7 +131,10 @@ const backEnabledPaths = new Set([
   "/products/new",
   "/products/:productId",
   "/products/:productId/edit",
-  "/products/:productId/tasks"
+  "/products/:productId/tasks",
+  "/customers/new",
+  "/customers/:customerId",
+  "/customers/:customerId/edit"
 ]);
 
 function findProtectedRoute(pathname: string) {
@@ -499,6 +524,8 @@ export default function App() {
                   <ProductListPage />
                 ) : route.path === "/products/new" ? (
                   <ProductCreatePage />
+                ) : route.path === "/customers" ? (
+                  <CustomerListPage />
                 ) : route.path === "/categories" ? (
                   <CategoryManagementPage />
                 ) : route.path === "/tags" ? (

@@ -6,8 +6,8 @@ import type {
 } from "@handmade/shared";
 import { getCustomerPath, getCustomerPurchasesPath } from "@handmade/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ApiClientError } from "../api/api-client";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
@@ -136,11 +136,37 @@ function CustomerPurchaseCard({ purchase }: { purchase: CustomerPurchaseItem }) 
 
 export function CustomerDetailPage() {
   const apiClient = useApiClient();
+  const location = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { customerId } = useParams();
   const [notice, setNotice] = useState<PageNotice | null>(null);
   const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const nextNotice =
+      typeof location.state === "object" &&
+      location.state !== null &&
+      "notice" in location.state
+        ? (location.state.notice as PageNotice | null | undefined)
+        : null;
+
+    if (!nextNotice) {
+      return;
+    }
+
+    setNotice(nextNotice);
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search
+      },
+      {
+        replace: true,
+        state: null
+      }
+    );
+  }, [location.pathname, location.search, location.state, navigate]);
 
   const customerDetailQuery = useQuery({
     enabled: Boolean(customerId),

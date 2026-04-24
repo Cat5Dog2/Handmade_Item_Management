@@ -633,6 +633,43 @@ input {
   font-size: 0.875rem;
 }
 
+.customer-form__memo,
+.customer-form__sns-group {
+  grid-column: 1 / -1;
+}
+
+.customer-form__textarea {
+  min-height: 104px;
+  resize: vertical;
+}
+
+.customer-form__sns-group {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.customer-form__sns-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.customer-form__sns-list {
+  display: grid;
+  gap: 12px;
+}
+
+.customer-form__sns-url,
+.customer-form__sns-note {
+  grid-column: 1 / -1;
+}
+
 .product-create-form__description {
   grid-column: 1 / -1;
 }

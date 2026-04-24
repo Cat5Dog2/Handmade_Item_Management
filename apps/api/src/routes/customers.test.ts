@@ -6,6 +6,8 @@ import { createRequireAuth } from "../middlewares/auth";
 const createCustomerMock = vi.hoisted(() => vi.fn());
 const getCustomerMock = vi.hoisted(() => vi.fn());
 const listCustomersMock = vi.hoisted(() => vi.fn());
+const updateCustomerMock = vi.hoisted(() => vi.fn());
+const writeOperationLogMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../customers/create-customer", () => ({
   createCustomer: createCustomerMock
@@ -17,6 +19,14 @@ vi.mock("../customers/get-customer", () => ({
 
 vi.mock("../customers/list-customers", () => ({
   listCustomers: listCustomersMock
+}));
+
+vi.mock("../customers/update-customer", () => ({
+  updateCustomer: updateCustomerMock
+}));
+
+vi.mock("../operation-logs/write-operation-log", () => ({
+  writeOperationLog: writeOperationLogMock
 }));
 
 function createTestApp({
@@ -43,6 +53,8 @@ describe("customers routes", () => {
     createCustomerMock.mockReset();
     getCustomerMock.mockReset();
     listCustomersMock.mockReset();
+    updateCustomerMock.mockReset();
+    writeOperationLogMock.mockReset();
   });
 
   it("returns AUTH_REQUIRED for unauthenticated customer list requests", async () => {
@@ -254,6 +266,67 @@ describe("customers routes", () => {
     expect(createCustomerMock).toHaveBeenCalledWith({
       name: "Hanako Handmade",
       customerStyle: "Natural"
+    });
+  });
+
+  it("returns AUTH_REQUIRED for unauthenticated customer update requests", async () => {
+    const response = await request(createTestApp()).put(
+      "/api/customers/cus_000001"
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.body).toMatchObject({
+      code: "AUTH_REQUIRED"
+    });
+    expect(updateCustomerMock).not.toHaveBeenCalled();
+    expect(writeOperationLogMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the customer update envelope and records CUSTOMER_UPDATED", async () => {
+    updateCustomerMock.mockResolvedValue({
+      customerId: "cus_000001",
+      updatedAt: "2026-04-24T09:00:00.000Z",
+      changedFields: ["name", "memo"]
+    });
+    writeOperationLogMock.mockResolvedValue({
+      logId: "log-001"
+    });
+
+    const response = await request(
+      createTestApp({
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .put("/api/customers/cus_000001")
+      .set("Authorization", "Bearer valid-token")
+      .send({
+        name: "Hanako Handmade",
+        memo: "Updated memo"
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        customerId: "cus_000001",
+        updatedAt: "2026-04-24T09:00:00.000Z"
+      }
+    });
+    expect(updateCustomerMock).toHaveBeenCalledWith("cus_000001", {
+      name: "Hanako Handmade",
+      memo: "Updated memo"
+    });
+    expect(writeOperationLogMock).toHaveBeenCalledWith({
+      eventType: "CUSTOMER_UPDATED",
+      targetId: "cus_000001",
+      summary: "顧客情報を更新しました",
+      actorUid: "uid-1",
+      detail: {
+        result: "success",
+        changedFields: ["name", "memo"]
+      }
     });
   });
 });

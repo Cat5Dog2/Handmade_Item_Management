@@ -1504,6 +1504,7 @@ QRコード読取値から商品を特定し、販売済更新可否を返す。
 - `beforeProduction` / `inProduction` / `completed` は更新不可
 - 論理削除済み商品は無効QR扱い
 - `POST /api/qr/lookup` は通常参照系APIの 404 ルールの例外とし、`PRODUCT_DELETED` / `PRODUCT_NOT_FOUND` も HTTP 200 + `reasonCode` で返す
+- `PRODUCT_NOT_FOUND` の場合、商品実体がないため `productId` / `name` / `status` は `null` とする
 
 ### レスポンス
 ```json

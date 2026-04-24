@@ -396,14 +396,23 @@ export interface QrLookupInput {
   qrCodeValue: string;
 }
 
-export interface QrLookupData {
-  productId: string;
-  name: string;
-  status: ProductStatus;
-  canSell: boolean;
-  reasonCode: QrLookupReasonCode;
-  message: string;
-}
+export type QrLookupData =
+  | {
+      productId: string;
+      name: string;
+      status: ProductStatus;
+      canSell: boolean;
+      reasonCode: Exclude<QrLookupReasonCode, "PRODUCT_NOT_FOUND">;
+      message: string;
+    }
+  | {
+      productId: null;
+      name: null;
+      status: null;
+      canSell: false;
+      reasonCode: "PRODUCT_NOT_FOUND";
+      message: string;
+    };
 
 export interface QrSellInput {
   customerId?: string | null;

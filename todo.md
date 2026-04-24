@@ -1199,18 +1199,18 @@ Next:
   - `feat(web): implement customer form pages`
 
 ### DASH-01 Dashboard API を実装する
-- 状態: [ ]
+- 状態: [x]
 - 優先度: P1
 - 依存: `PRODUCT-05A`, `TASK-01A`, `API-BASE-02`
 - 作業:
-  - [ ] `GET /api/dashboard` を実装する
-  - [ ] ステータス別件数集計を実装する
-  - [ ] 販売済件数集計を実装する
-  - [ ] 未完了タスク件数集計を実装する
-  - [ ] 納期が近いタスク抽出を実装する
-  - [ ] 最近更新商品取得を実装する
+  - [x] `GET /api/dashboard` を実装する
+  - [x] ステータス別件数集計を実装する
+  - [x] 販売済件数集計を実装する
+  - [x] 未完了タスク件数集計を実装する
+  - [x] 納期が近いタスク抽出を実装する
+  - [x] 最近更新商品取得を実装する
 - Done:
-  - [ ] API 仕様どおりの集計が返る
+  - [x] API 仕様どおりの集計が返る
 - 推奨コミット:
   - `feat(api): implement dashboard endpoint`
 
@@ -1521,13 +1521,13 @@ Next:
 Ready Queue は、**依存を満たしていて、かつ未完了のタスクだけ** を指す。  
 Codex は毎回、まず `[~]` の再開対象があるかを確認し、なければ Ready Queue を確認したうえで、**この節の番号付き一覧で最上位の 1件だけ** を選んで着手する。
 
-現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` / `LOG-01A` / `LOG-01B` / `PRODUCT-01` / `PRODUCT-02` / `PRODUCT-03` / `PRODUCT-04` / `PRODUCT-05A` / `PRODUCT-05B` / `PRODUCT-05C` / `CUSTOMER-00` / `CUSTOMER-01A` / `CUSTOMER-01B` / `CUSTOMER-01C` / `CUSTOMER-01D` / `CUSTOMER-01E` / `CUSTOMER-01F` / `CUSTOMER-02A` / `CUSTOMER-02B` / `CUSTOMER-02C` は完了** である。  
-`CUSTOMER-02C` の完了により、`/customers/new` と `/customers/:customerId/edit` で顧客登録・編集フォーム、validation、保存後の詳細遷移が利用できるようになった。
-現時点では `[~]` の再開対象はないため、**次に着手するタスクは Ready Queue 上で最上位の `DASH-01`** とする。
+現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` / `LOG-01A` / `LOG-01B` / `PRODUCT-01` / `PRODUCT-02` / `PRODUCT-03` / `PRODUCT-04` / `PRODUCT-05A` / `PRODUCT-05B` / `PRODUCT-05C` / `CUSTOMER-00` / `CUSTOMER-01A` / `CUSTOMER-01B` / `CUSTOMER-01C` / `CUSTOMER-01D` / `CUSTOMER-01E` / `CUSTOMER-01F` / `CUSTOMER-02A` / `CUSTOMER-02B` / `CUSTOMER-02C` / `DASH-01` は完了** である。  
+`DASH-01` の完了により、`GET /api/dashboard` でステータス別件数、販売済件数、未完了タスク件数、納期が近いタスク、最近更新商品が取得できるようになった。
+現時点では `[~]` の再開対象はないため、**次に着手するタスクは Ready Queue 上で最上位の `DASH-02`** とする。
 
-- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`, `LOG-01B`, `PRODUCT-01`, `PRODUCT-02`, `PRODUCT-03`, `PRODUCT-04`, `PRODUCT-05A`, `PRODUCT-05B`, `PRODUCT-05C`, `CUSTOMER-00`, `CUSTOMER-01A`, `CUSTOMER-01B`, `CUSTOMER-01C`, `CUSTOMER-01D`, `CUSTOMER-01E`, `CUSTOMER-01F`, `CUSTOMER-02A`, `CUSTOMER-02B`, `CUSTOMER-02C`
+- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`, `LOG-01B`, `PRODUCT-01`, `PRODUCT-02`, `PRODUCT-03`, `PRODUCT-04`, `PRODUCT-05A`, `PRODUCT-05B`, `PRODUCT-05C`, `CUSTOMER-00`, `CUSTOMER-01A`, `CUSTOMER-01B`, `CUSTOMER-01C`, `CUSTOMER-01D`, `CUSTOMER-01E`, `CUSTOMER-01F`, `CUSTOMER-02A`, `CUSTOMER-02B`, `CUSTOMER-02C`, `DASH-01`
 - 現在の再開候補: なし
-- 現在の最優先: `DASH-01`
+- 現在の最優先: `DASH-02`
 - 現在の保留理由: なし
 
 以下の番号付き一覧は、**依存関係を満たした後の推奨実行順** を示す。  

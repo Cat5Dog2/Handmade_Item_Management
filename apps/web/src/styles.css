@@ -567,6 +567,99 @@ input {
   font-weight: 600;
 }
 
+.dashboard-count-grid,
+.dashboard-page__columns {
+  display: grid;
+  gap: 12px;
+}
+
+.dashboard-count-card {
+  display: grid;
+  gap: 8px;
+  min-height: 112px;
+  padding: 16px;
+  border: 1px solid #d5e2d8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.dashboard-count-card__label,
+.dashboard-link-card__id {
+  margin: 0;
+  color: #52606d;
+  font-size: 0.875rem;
+}
+
+.dashboard-count-card__value {
+  margin: 0;
+  color: #1f2933;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.dashboard-link-card {
+  color: inherit;
+  text-decoration: none;
+}
+
+.dashboard-link-card:focus-visible,
+.dashboard-recent-product:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+
+.dashboard-recent-product {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #d5e2d8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: inherit;
+  text-decoration: none;
+}
+
+.dashboard-recent-product__image {
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border: 1px solid #d5e2d8;
+  border-radius: 8px;
+  background: #f7fbf8;
+}
+
+.dashboard-recent-product__image-element {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dashboard-recent-product__image-placeholder {
+  display: grid;
+  place-items: center;
+  min-height: 84px;
+  padding: 8px;
+  color: #52606d;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+.dashboard-recent-product__body {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dashboard-recent-product__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
 .customer-list-card {
   color: inherit;
   text-decoration: none;
@@ -922,6 +1015,20 @@ input {
 
   .management-card__actions {
     justify-content: flex-end;
+  }
+
+  .dashboard-count-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .dashboard-page__columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .dashboard-page__columns .management-page__section {
+    padding-bottom: 0;
+    border-bottom: 0;
   }
 
   .product-list-card {

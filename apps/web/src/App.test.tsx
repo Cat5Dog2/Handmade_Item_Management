@@ -68,14 +68,33 @@ const authMock = vi.hoisted(() => {
 
 const fetchMock = vi.hoisted(() =>
   vi.fn(async (input: unknown, init?: unknown) => {
-    void input;
     void init;
+    const pathname = new URL(String(input), "http://localhost").pathname;
+    const payload =
+      pathname === "/api/dashboard"
+        ? {
+            data: {
+              dueSoonTasks: [],
+              openTaskCount: 0,
+              recentProducts: [],
+              soldCount: 0,
+              statusCounts: {
+                beforeProduction: 0,
+                completed: 0,
+                inProduction: 0,
+                inStock: 0,
+                onDisplay: 0,
+                sold: 0
+              }
+            }
+          }
+        : { data: { recorded: true } };
 
-    return new Response(JSON.stringify({ data: { recorded: true } }), {
+    return new Response(JSON.stringify(payload), {
       headers: {
         "Content-Type": "application/json"
       },
-      status: 201
+      status: pathname === "/api/auth/login-record" ? 201 : 200
     });
   })
 );
@@ -193,10 +212,13 @@ describe("App routing", () => {
         "owner@example.com",
         "password123"
       );
-      expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
-    const loginRecordRequest = fetchMock.mock.calls[0];
+    const loginRecordRequest = fetchMock.mock.calls.find(
+      ([input]) =>
+        new URL(String(input), "http://localhost").pathname ===
+        "/api/auth/login-record"
+    );
     expect(loginRecordRequest).toBeDefined();
     expect(new URL(String(loginRecordRequest?.[0])).pathname).toBe(
       "/api/auth/login-record"

@@ -20,6 +20,7 @@ import { DashboardPage } from "./dashboard/dashboard-page";
 import { useZodForm } from "./forms/use-zod-form";
 import { AppProviders } from "./providers/app-providers";
 import { ProductCreatePage } from "./products/product-create-page";
+import { ProductDetailPage } from "./products/product-detail-page";
 import { ProductListPage } from "./products/product-list-page";
 import { TagManagementPage } from "./tags/tag-management-page";
 
@@ -529,6 +530,8 @@ export default function App() {
                   <DashboardPage />
                 ) : route.path === "/products/new" ? (
                   <ProductCreatePage />
+                ) : route.path === "/products/:productId" ? (
+                  <ProductDetailPage />
                 ) : route.path === "/customers" ? (
                   <CustomerListPage />
                 ) : route.path === "/customers/new" ||

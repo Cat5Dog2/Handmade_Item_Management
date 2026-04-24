@@ -4,6 +4,7 @@ import type {
   CustomerDetailData,
   CustomerListData,
   CustomerListMeta,
+  CustomerPurchasesData,
   CustomerUpdateData
 } from "@handmade/shared";
 import type { Router } from "express";
@@ -14,6 +15,7 @@ import {
 } from "../customers/archive-customer";
 import { createCustomer } from "../customers/create-customer";
 import { getCustomer } from "../customers/get-customer";
+import { getCustomerPurchases } from "../customers/get-customer-purchases";
 import { listCustomers } from "../customers/list-customers";
 import {
   updateCustomer,
@@ -33,6 +35,9 @@ interface RegisterCustomerRoutesOptions {
   ) => Promise<CustomerArchiveResult>;
   createCustomerHandler?: (input: unknown) => Promise<CustomerCreateData>;
   getCustomerHandler?: (customerId: string) => Promise<CustomerDetailData>;
+  getCustomerPurchasesHandler?: (
+    customerId: string
+  ) => Promise<CustomerPurchasesData>;
   listCustomersHandler?: (input: unknown) => Promise<CustomerListResult>;
   updateCustomerHandler?: (
     customerId: string,
@@ -48,6 +53,8 @@ export function registerCustomerRoutes(
   const archiveCustomerHandler = options.archiveCustomerHandler ?? archiveCustomer;
   const createCustomerHandler = options.createCustomerHandler ?? createCustomer;
   const getCustomerHandler = options.getCustomerHandler ?? getCustomer;
+  const getCustomerPurchasesHandler =
+    options.getCustomerPurchasesHandler ?? getCustomerPurchases;
   const listCustomersHandler = options.listCustomersHandler ?? listCustomers;
   const updateCustomerHandler = options.updateCustomerHandler ?? updateCustomer;
 
@@ -75,6 +82,21 @@ export function registerCustomerRoutes(
         sendSuccess(
           response,
           await getCustomerHandler(request.params.customerId)
+        );
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  router.get(
+    "/customers/:customerId/purchases",
+    context.requireAuthMiddleware,
+    async (request, response, next) => {
+      try {
+        sendSuccess(
+          response,
+          await getCustomerPurchasesHandler(request.params.customerId)
         );
       } catch (error) {
         next(error);

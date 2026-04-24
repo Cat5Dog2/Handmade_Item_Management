@@ -6,6 +6,7 @@ import { createRequireAuth } from "../middlewares/auth";
 const createCustomerMock = vi.hoisted(() => vi.fn());
 const archiveCustomerMock = vi.hoisted(() => vi.fn());
 const getCustomerMock = vi.hoisted(() => vi.fn());
+const getCustomerPurchasesMock = vi.hoisted(() => vi.fn());
 const listCustomersMock = vi.hoisted(() => vi.fn());
 const updateCustomerMock = vi.hoisted(() => vi.fn());
 const writeOperationLogMock = vi.hoisted(() => vi.fn());
@@ -20,6 +21,10 @@ vi.mock("../customers/create-customer", () => ({
 
 vi.mock("../customers/get-customer", () => ({
   getCustomer: getCustomerMock
+}));
+
+vi.mock("../customers/get-customer-purchases", () => ({
+  getCustomerPurchases: getCustomerPurchasesMock
 }));
 
 vi.mock("../customers/list-customers", () => ({
@@ -58,6 +63,7 @@ describe("customers routes", () => {
     archiveCustomerMock.mockReset();
     createCustomerMock.mockReset();
     getCustomerMock.mockReset();
+    getCustomerPurchasesMock.mockReset();
     listCustomersMock.mockReset();
     updateCustomerMock.mockReset();
     writeOperationLogMock.mockReset();
@@ -227,6 +233,57 @@ describe("customers routes", () => {
       }
     });
     expect(getCustomerMock).toHaveBeenCalledWith("cus_000001");
+  });
+
+  it("returns AUTH_REQUIRED for unauthenticated customer purchase requests", async () => {
+    const response = await request(createTestApp()).get(
+      "/api/customers/cus_000001/purchases"
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.body).toMatchObject({
+      code: "AUTH_REQUIRED"
+    });
+    expect(getCustomerPurchasesMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the customer purchases envelope for authenticated requests", async () => {
+    getCustomerPurchasesMock.mockResolvedValue({
+      items: [
+        {
+          productId: "HM-000010",
+          name: "Flower Brooch",
+          price: 2800,
+          soldAt: "2026-04-20T08:30:00.000Z"
+        }
+      ]
+    });
+
+    const response = await request(
+      createTestApp({
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .get("/api/customers/cus_000001/purchases")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        items: [
+          {
+            productId: "HM-000010",
+            name: "Flower Brooch",
+            price: 2800,
+            soldAt: "2026-04-20T08:30:00.000Z"
+          }
+        ]
+      }
+    });
+    expect(getCustomerPurchasesMock).toHaveBeenCalledWith("cus_000001");
   });
 
   it("returns AUTH_REQUIRED for unauthenticated customer create requests", async () => {

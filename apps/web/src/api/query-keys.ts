@@ -6,7 +6,10 @@ export const queryKeys = {
     list: ["categories", "list"] as const
   },
   customers: {
-    list: (filters: unknown) => ["customers", "list", filters] as const
+    detail: (customerId: string) => ["customers", "detail", customerId] as const,
+    list: (filters: unknown) => ["customers", "list", filters] as const,
+    purchases: (customerId: string) =>
+      ["customers", "purchases", customerId] as const
   },
   dashboard: {
     root: ["dashboard"] as const

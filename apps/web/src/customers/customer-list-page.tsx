@@ -8,10 +8,15 @@ import type {
 import { API_PATHS, customerListQuerySchema } from "@handmade/shared";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { ApiClientError } from "../api/api-client";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
+
+interface PageNotice {
+  message: string;
+  type: "error" | "success";
+}
 
 interface CustomerListFilterState {
   keyword: string;
@@ -140,12 +145,15 @@ function isDefaultFilterState(filters: CustomerListFilterState) {
 
 export function CustomerListPage() {
   const apiClient = useApiClient();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchParamsString = searchParams.toString();
   const currentQuery = useMemo(
     () => parseCustomerListQuery(new URLSearchParams(searchParamsString)),
     [searchParamsString]
   );
+  const [notice, setNotice] = useState<PageNotice | null>(null);
   const [draftFilters, setDraftFilters] = useState<CustomerListFilterState>(() =>
     toFilterState(currentQuery)
   );
@@ -153,6 +161,31 @@ export function CustomerListPage() {
   useEffect(() => {
     setDraftFilters(toFilterState(currentQuery));
   }, [currentQuery]);
+
+  useEffect(() => {
+    const nextNotice =
+      typeof location.state === "object" &&
+      location.state !== null &&
+      "notice" in location.state
+        ? (location.state.notice as PageNotice | null | undefined)
+        : null;
+
+    if (!nextNotice) {
+      return;
+    }
+
+    setNotice(nextNotice);
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search
+      },
+      {
+        replace: true,
+        state: null
+      }
+    );
+  }, [location.pathname, location.search, location.state, navigate]);
 
   const customersQuery = useQuery({
     queryKey: queryKeys.customers.list(currentQuery),
@@ -295,6 +328,18 @@ export function CustomerListPage() {
           <p className="management-page__sync" role="status">
             最新の一覧を更新中です...
           </p>
+        ) : null}
+        {notice ? (
+          <div
+            className={
+              notice.type === "success"
+                ? "management-page__notice is-success"
+                : "management-page__notice is-error"
+            }
+            role={notice.type === "success" ? "status" : "alert"}
+          >
+            <p>{notice.message}</p>
+          </div>
         ) : null}
       </div>
 

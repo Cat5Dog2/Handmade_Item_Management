@@ -379,12 +379,12 @@ Next:
   - `firebase`
   - ルート `package.json`
 - 作業:
-  - [ ] npm workspaces を設定する
-  - [ ] ルート scripts を作成する
-  - [ ] 各 workspace の `package.json` を作成する
+  - [x] npm workspaces を設定する
+  - [x] ルート scripts を作成する
+  - [x] 各 workspace の `package.json` を作成する
 - Done:
-  - [ ] `npm install` が通る
-  - [ ] workspace 解決ができる
+  - [x] `npm install` が通る
+  - [x] workspace 解決ができる
 - 推奨コミット:
   - `chore: initialize monorepo workspace structure`
 
@@ -394,14 +394,14 @@ Next:
 - 依存: `BOOT-01`
 - 現状メモ: ルート `tsconfig.json`・workspace 別 `tsconfig`・ESLint・Prettier 設定を追加し、`lint` / `typecheck` / `test` / `build` の起動確認まで完了。
 - 作業:
-  - [ ] ルート `tsconfig` を作成する
-  - [ ] `apps/web` / `apps/api` / `packages/shared` の tsconfig を分ける
-  - [ ] ESLint 設定を追加する
-  - [ ] Prettier 設定を追加する
-  - [ ] `.gitignore` を整備する
+  - [x] ルート `tsconfig` を作成する
+  - [x] `apps/web` / `apps/api` / `packages/shared` の tsconfig を分ける
+  - [x] ESLint 設定を追加する
+  - [x] Prettier 設定を追加する
+  - [x] `.gitignore` を整備する
 - Done:
-  - [ ] `npm run lint` が失敗せず起動する
-  - [ ] `npm run typecheck` が失敗せず起動する
+  - [x] `npm run lint` が失敗せず起動する
+  - [x] `npm run typecheck` が失敗せず起動する
 - 推奨コミット:
   - `chore: add typescript and lint configuration`
 
@@ -411,13 +411,13 @@ Next:
 - 依存: `BOOT-01`
 - 現状メモ: `.env.example` に Web/API/Firebase/画像/デプロイ関連の変数整理が入っている。
 - 作業:
-  - [ ] `.env.example` を最新方針に合わせる
-  - [ ] Web 用公開変数を整理する
-  - [ ] API 用秘密変数を整理する
-  - [ ] ローカルと本番の役割をコメントで明記する
+  - [x] `.env.example` を最新方針に合わせる
+  - [x] Web 用公開変数を整理する
+  - [x] API 用秘密変数を整理する
+  - [x] ローカルと本番の役割をコメントで明記する
 - Done:
-  - [ ] `VITE_` 付き変数のみがフロント想定になっている
-  - [ ] API 用変数が分離されている
+  - [x] `VITE_` 付き変数のみがフロント想定になっている
+  - [x] API 用変数が分離されている
 - 推奨コミット:
   - `chore: organize environment variable templates`
 
@@ -427,13 +427,13 @@ Next:
 - 依存: `BOOT-01`
 - 現状メモ: 商品ステータス・表示名マップ・API パス定数（customers 含む）・エラーコード（CUSTOMER_* 含む）・日付フォーマットを `packages/shared` に集約済み。
 - 作業:
-  - [ ] 商品ステータス定数を定義する
-  - [ ] ステータス表示名マップを定義する
-  - [ ] API パス定数を定義する
-  - [ ] エラーコード定数を定義する
-  - [ ] 日付表示フォーマット定数を定義する
+  - [x] 商品ステータス定数を定義する
+  - [x] ステータス表示名マップを定義する
+  - [x] API パス定数を定義する
+  - [x] エラーコード定数を定義する
+  - [x] 日付表示フォーマット定数を定義する
 - Done:
-  - [ ] Web / API の双方から import できる
+  - [x] Web / API の双方から import できる
 - 推奨コミット:
   - `feat(shared): add common constants and status definitions`
 
@@ -443,14 +443,14 @@ Next:
 - 依存: `SHARED-01`
 - 現状メモ: Product / Task / Category / Tag / Dashboard / QR の API 契約型と関連 request / response data 型を `packages/shared` に集約済み。Product 詳細 / 更新と QR 販売更新の顧客紐付け項目は反映済み。顧客管理API本体の型は `CUSTOMER-00` で継続する。
 - 作業:
-  - [ ] Product 系型を作成する
-  - [ ] Task 系型を作成する
-  - [ ] Category / Tag 系型を作成する
-  - [ ] Dashboard 系型を作成する
-  - [ ] QR 系型を作成する
-  - [ ] API response / error 型を作成する
+  - [x] Product 系型を作成する
+  - [x] Task 系型を作成する
+  - [x] Category / Tag 系型を作成する
+  - [x] Dashboard 系型を作成する
+  - [x] QR 系型を作成する
+  - [x] API response / error 型を作成する
 - Done:
-  - [ ] API 契約に沿った型が shared に集約されている
+  - [x] API 契約に沿った型が shared に集約されている
 - 推奨コミット:
   - `feat(shared): add domain and api contract types`
 
@@ -460,14 +460,14 @@ Next:
 - 依存: `SHARED-02`
 - 現状メモ: Product / Task / Category / Tag / QR / 一覧 query の入力 schema と再利用用の正規化 util を `packages/shared` に集約済み。Product 更新の `soldCustomerId` と QR 販売更新の任意 `customerId` は反映済み。顧客管理API本体の schema は `CUSTOMER-00` で継続する。
 - 作業:
-  - [ ] 商品入力スキーマを作成する
-  - [ ] タスク入力スキーマを作成する
-  - [ ] カテゴリ / タグ入力スキーマを作成する
-  - [ ] 検索キーワードスキーマを作成する
-  - [ ] 文字列正規化 util を作成する
-  - [ ] 検索キーワード正規化 util を作成する
+  - [x] 商品入力スキーマを作成する
+  - [x] タスク入力スキーマを作成する
+  - [x] カテゴリ / タグ入力スキーマを作成する
+  - [x] 検索キーワードスキーマを作成する
+  - [x] 文字列正規化 util を作成する
+  - [x] 検索キーワード正規化 util を作成する
 - Done:
-  - [ ] API と Web の両方で再利用できる
+  - [x] API と Web の両方で再利用できる
 - 推奨コミット:
   - `feat(shared): add zod schemas and normalization utilities`
 
@@ -477,15 +477,15 @@ Next:
 - 依存: `BOOT-01`, `SHARED-01`
 - 現状メモ: Express 初期化、`/api` ベースパス、`GET /api/health`、404 ハンドラ、request logging、共通 error handler を実装済み。
 - 作業:
-  - [ ] Express アプリを初期化する
-  - [ ] `/api` ベースパスを設定する
-  - [ ] `GET /api/health` を実装する
-  - [ ] 404 ハンドラを実装する
-  - [ ] 共通エラーハンドラを実装する
-  - [ ] request logging を追加する
+  - [x] Express アプリを初期化する
+  - [x] `/api` ベースパスを設定する
+  - [x] `GET /api/health` を実装する
+  - [x] 404 ハンドラを実装する
+  - [x] 共通エラーハンドラを実装する
+  - [x] request logging を追加する
 - Done:
-  - [ ] `GET /api/health` が 200 を返す
-  - [ ] 未定義ルートが 404 を返す
+  - [x] `GET /api/health` が 200 を返す
+  - [x] 未定義ルートが 404 を返す
 - 推奨コミット:
   - `feat(api): bootstrap express app and health endpoint`
 
@@ -495,12 +495,12 @@ Next:
 - 依存: `API-BASE-01`
 - 現状メモ: Firebase Admin 初期化、Auth / Firestore / Storage の shared client、認証 middleware、公開 / 保護ルート境界を実装済み。
 - 作業:
-  - [ ] Firebase Admin 初期化処理を作成する
-  - [ ] Firestore / Storage クライアントを共有化する
-  - [ ] Auth token 検証ミドルウェアを実装する
-  - [ ] 認証必須 / 認証不要ルートの境界を整理する
+  - [x] Firebase Admin 初期化処理を作成する
+  - [x] Firestore / Storage クライアントを共有化する
+  - [x] Auth token 検証ミドルウェアを実装する
+  - [x] 認証必須 / 認証不要ルートの境界を整理する
 - Done:
-  - [ ] 認証必須 API にトークン検証を適用できる
+  - [x] 認証必須 API にトークン検証を適用できる
 - 推奨コミット:
   - `feat(api): add firebase admin initialization and auth middleware`
 
@@ -510,12 +510,12 @@ Next:
 - 依存: `API-BASE-01`, `SHARED-02`
 - 現状メモ: `{ data, meta }` / `{ code, message, details }` helper、`VALIDATION_ERROR` 生成、`AUTH_REQUIRED` / `AUTH_FORBIDDEN` 応答の統一を実装済み。
 - 作業:
-  - [ ] `{ data, meta }` レスポンス helper を作成する
-  - [ ] `{ code, message, details }` エラー helper を作成する
-  - [ ] `VALIDATION_ERROR` 生成を共通化する
-  - [ ] `AUTH_REQUIRED` / `AUTH_FORBIDDEN` 応答を統一する
+  - [x] `{ data, meta }` レスポンス helper を作成する
+  - [x] `{ code, message, details }` エラー helper を作成する
+  - [x] `VALIDATION_ERROR` 生成を共通化する
+  - [x] `AUTH_REQUIRED` / `AUTH_FORBIDDEN` 応答を統一する
 - Done:
-  - [ ] サンプル API で統一形式が返る
+  - [x] サンプル API で統一形式が返る
 - 推奨コミット:
   - `feat(api): add shared response and error helpers`
 
@@ -1063,18 +1063,18 @@ Next:
 ## 4. Phase C: 周辺機能
 
 ### CUSTOMER-00 顧客管理の shared 契約を整備する
-- 状態: [~]
+- 状態: [x]
 - 優先度: P1
 - 依存: `SHARED-03`
-- 現状メモ: customers API パス、CUSTOMER_* エラーコード、商品詳細 / 商品更新 / QR 販売更新の顧客紐付け項目は反映済み。顧客管理API本体の request / response 型と schema は未実装。
+- 現状メモ: customers API パス、CUSTOMER_* エラーコード、顧客一覧 / 詳細 / 登録 / 更新 / 購入履歴の request / response 型、顧客入力 schema、顧客一覧 query schema、shared テストを反映済み。
 - 作業:
   - [x] `API_PATHS.customers` / `getCustomerPath` / `getCustomerPurchasesPath` を追加する
   - [x] `CUSTOMER_NOT_FOUND` / `CUSTOMER_ARCHIVED` をエラーコードへ追加する
   - [x] Product 詳細 / 更新と QR 販売更新の顧客紐付け型・schema を追加する
-  - [ ] 顧客一覧 / 詳細 / 登録 / 更新 / 購入履歴の API 契約型を追加する
-  - [ ] 顧客入力 schema / 顧客一覧 query schema と shared テストを追加する
+  - [x] 顧客一覧 / 詳細 / 登録 / 更新 / 購入履歴の API 契約型を追加する
+  - [x] 顧客入力 schema / 顧客一覧 query schema と shared テストを追加する
 - Done:
-  - [ ] 顧客API・画面実装で shared 契約を再利用できる
+  - [x] 顧客API・画面実装で shared 契約を再利用できる
 - 推奨コミット:
   - `feat(shared): add customer api contracts`
 
@@ -1521,14 +1521,13 @@ Next:
 Ready Queue は、**依存を満たしていて、かつ未完了のタスクだけ** を指す。  
 Codex は毎回、まず `[~]` の再開対象があるかを確認し、なければ Ready Queue を確認したうえで、**この節の番号付き一覧で最上位の 1件だけ** を選んで着手する。
 
-現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` / `LOG-01A` / `LOG-01B` / `PRODUCT-01` / `PRODUCT-02` / `PRODUCT-03` / `PRODUCT-04` / `PRODUCT-05A` / `PRODUCT-05B` / `PRODUCT-05C` は完了** である。  
-`CUSTOMER-00` は、customers API パス / CUSTOMER_* エラーコード / 商品・QR 顧客紐付け契約までは反映済みだが、顧客管理API本体の型・schema が未完了のため `[~]` とする。
-そのため、**次に再開するタスクは `[~]` の `CUSTOMER-00`** とする。
-`CUSTOMER-00` では顧客管理API・画面で再利用する shared 契約を完成させる。
+現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` / `LOG-01A` / `LOG-01B` / `PRODUCT-01` / `PRODUCT-02` / `PRODUCT-03` / `PRODUCT-04` / `PRODUCT-05A` / `PRODUCT-05B` / `PRODUCT-05C` / `CUSTOMER-00` は完了** である。  
+`CUSTOMER-00` の完了により、顧客管理API・画面で再利用する shared 契約はそろった。
+現時点では `[~]` の再開対象はないため、**次に着手するタスクは Ready Queue 上で最上位の `CUSTOMER-01A`** とする。
 
-- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`, `LOG-01B`, `PRODUCT-01`, `PRODUCT-02`, `PRODUCT-03`, `PRODUCT-04`, `PRODUCT-05A`, `PRODUCT-05B`, `PRODUCT-05C`
-- 現在の再開候補: `CUSTOMER-00`
-- 現在の最優先: `CUSTOMER-00`
+- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`, `LOG-01B`, `PRODUCT-01`, `PRODUCT-02`, `PRODUCT-03`, `PRODUCT-04`, `PRODUCT-05A`, `PRODUCT-05B`, `PRODUCT-05C`, `CUSTOMER-00`
+- 現在の再開候補: なし
+- 現在の最優先: `CUSTOMER-01A`
 - 現在の保留理由: なし
 
 以下の番号付き一覧は、**依存関係を満たした後の推奨実行順** を示す。  

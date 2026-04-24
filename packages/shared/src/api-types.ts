@@ -5,6 +5,7 @@ export type IsoDateString = string;
 export type IsoDateTimeString = string;
 export type SortOrder = "asc" | "desc";
 export type ProductSortBy = "updatedAt" | "name";
+export type CustomerSortBy = "updatedAt" | "lastPurchaseAt" | "name";
 export type QrLookupReasonCode =
   | "CAN_SELL"
   | "ALREADY_SOLD"
@@ -266,6 +267,103 @@ export interface TagInput {
 
 export interface TagMutationData {
   tagId: string;
+}
+
+export type CustomerListMeta = ProductListMeta;
+
+export interface CustomerSnsAccount {
+  platform?: string | null;
+  accountName?: string | null;
+  url?: string | null;
+  note?: string | null;
+}
+
+export interface CustomerPurchaseSummary {
+  lastPurchaseAt: IsoDateTimeString | null;
+  lastPurchaseProductId: string | null;
+  lastPurchaseProductName: string | null;
+  purchaseCount: number;
+}
+
+export interface CustomerListQuery {
+  page?: number;
+  pageSize?: number;
+  keyword?: string;
+  sortBy?: CustomerSortBy;
+  sortOrder?: SortOrder;
+}
+
+export interface CustomerListItem extends CustomerPurchaseSummary {
+  customerId: string;
+  name: string;
+  gender: string | null;
+  ageGroup: string | null;
+  customerStyle: string | null;
+  updatedAt: IsoDateTimeString;
+}
+
+export interface CustomerListData {
+  items: CustomerListItem[];
+}
+
+export interface CustomerInput {
+  name: string;
+  gender?: string | null;
+  ageGroup?: string | null;
+  customerStyle?: string | null;
+  snsAccounts?: CustomerSnsAccount[];
+  memo?: string | null;
+}
+
+export type CustomerCreateInput = CustomerInput;
+
+export type CustomerUpdateInput = CustomerInput;
+
+export interface CustomerCreateData {
+  customerId: string;
+  createdAt: IsoDateTimeString;
+  updatedAt: IsoDateTimeString;
+}
+
+export interface CustomerUpdateData {
+  customerId: string;
+  updatedAt: IsoDateTimeString;
+}
+
+export interface CustomerArchiveData {
+  customerId: string;
+  archivedAt: IsoDateTimeString;
+  updatedAt: IsoDateTimeString;
+}
+
+export interface CustomerDetail {
+  customerId: string;
+  name: string;
+  gender: string | null;
+  ageGroup: string | null;
+  customerStyle: string | null;
+  snsAccounts: CustomerSnsAccount[];
+  memo: string | null;
+  isArchived: boolean;
+  archivedAt: IsoDateTimeString | null;
+  createdAt: IsoDateTimeString;
+  updatedAt: IsoDateTimeString;
+}
+
+export interface CustomerDetailData {
+  customer: CustomerDetail;
+  summary: CustomerPurchaseSummary;
+}
+
+export interface CustomerPurchaseItem {
+  productId: string;
+  name: string;
+  price: number;
+  soldAt: IsoDateTimeString;
+}
+
+export interface CustomerPurchasesData {
+  items: CustomerPurchaseItem[];
 }
 
 export type DashboardStatusCounts = Record<ProductStatus, number>;

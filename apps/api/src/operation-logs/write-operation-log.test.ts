@@ -16,6 +16,7 @@ describe("writeOperationLog", () => {
       "PRODUCT_UPDATED",
       "PRODUCT_DELETED",
       "CUSTOMER_UPDATED",
+      "CUSTOMER_ARCHIVED",
       "QR_SOLD",
       "ERROR"
     ]);

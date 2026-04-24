@@ -4,10 +4,15 @@ import { createApp } from "../app";
 import { createRequireAuth } from "../middlewares/auth";
 
 const createCustomerMock = vi.hoisted(() => vi.fn());
+const archiveCustomerMock = vi.hoisted(() => vi.fn());
 const getCustomerMock = vi.hoisted(() => vi.fn());
 const listCustomersMock = vi.hoisted(() => vi.fn());
 const updateCustomerMock = vi.hoisted(() => vi.fn());
 const writeOperationLogMock = vi.hoisted(() => vi.fn());
+
+vi.mock("../customers/archive-customer", () => ({
+  archiveCustomer: archiveCustomerMock
+}));
 
 vi.mock("../customers/create-customer", () => ({
   createCustomer: createCustomerMock
@@ -50,6 +55,7 @@ function createTestApp({
 
 describe("customers routes", () => {
   beforeEach(() => {
+    archiveCustomerMock.mockReset();
     createCustomerMock.mockReset();
     getCustomerMock.mockReset();
     listCustomersMock.mockReset();
@@ -328,5 +334,90 @@ describe("customers routes", () => {
         changedFields: ["name", "memo"]
       }
     });
+  });
+
+  it("returns AUTH_REQUIRED for unauthenticated customer archive requests", async () => {
+    const response = await request(createTestApp()).delete(
+      "/api/customers/cus_000001"
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.body).toMatchObject({
+      code: "AUTH_REQUIRED"
+    });
+    expect(archiveCustomerMock).not.toHaveBeenCalled();
+    expect(writeOperationLogMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the customer archive envelope and records CUSTOMER_ARCHIVED", async () => {
+    archiveCustomerMock.mockResolvedValue({
+      customerId: "cus_000001",
+      archivedAt: "2026-04-24T10:00:00.000Z",
+      updatedAt: "2026-04-24T10:00:00.000Z",
+      didArchive: true
+    });
+    writeOperationLogMock.mockResolvedValue({
+      logId: "log-archive-001"
+    });
+
+    const response = await request(
+      createTestApp({
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .delete("/api/customers/cus_000001")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        customerId: "cus_000001",
+        archivedAt: "2026-04-24T10:00:00.000Z",
+        updatedAt: "2026-04-24T10:00:00.000Z"
+      }
+    });
+    expect(archiveCustomerMock).toHaveBeenCalledWith("cus_000001");
+    expect(writeOperationLogMock).toHaveBeenCalledWith({
+      eventType: "CUSTOMER_ARCHIVED",
+      targetId: "cus_000001",
+      summary: "顧客をアーカイブしました",
+      actorUid: "uid-1",
+      detail: {
+        result: "success"
+      }
+    });
+  });
+
+  it("skips CUSTOMER_ARCHIVED logging when the customer was already archived", async () => {
+    archiveCustomerMock.mockResolvedValue({
+      customerId: "cus_000010",
+      archivedAt: "2026-04-20T08:00:00.000Z",
+      updatedAt: "2026-04-20T08:00:00.000Z",
+      didArchive: false
+    });
+
+    const response = await request(
+      createTestApp({
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .delete("/api/customers/cus_000010")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        customerId: "cus_000010",
+        archivedAt: "2026-04-20T08:00:00.000Z",
+        updatedAt: "2026-04-20T08:00:00.000Z"
+      }
+    });
+    expect(writeOperationLogMock).not.toHaveBeenCalled();
   });
 });

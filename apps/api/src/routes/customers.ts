@@ -1,4 +1,5 @@
 import type {
+  CustomerArchiveData,
   CustomerCreateData,
   CustomerDetailData,
   CustomerListData,
@@ -7,6 +8,10 @@ import type {
 } from "@handmade/shared";
 import type { Router } from "express";
 import type { CreateProtectedAppContext } from "../app";
+import {
+  archiveCustomer,
+  type CustomerArchiveResult
+} from "../customers/archive-customer";
 import { createCustomer } from "../customers/create-customer";
 import { getCustomer } from "../customers/get-customer";
 import { listCustomers } from "../customers/list-customers";
@@ -23,6 +28,9 @@ interface CustomerListResult {
 }
 
 interface RegisterCustomerRoutesOptions {
+  archiveCustomerHandler?: (
+    customerId: string
+  ) => Promise<CustomerArchiveResult>;
   createCustomerHandler?: (input: unknown) => Promise<CustomerCreateData>;
   getCustomerHandler?: (customerId: string) => Promise<CustomerDetailData>;
   listCustomersHandler?: (input: unknown) => Promise<CustomerListResult>;
@@ -37,6 +45,7 @@ export function registerCustomerRoutes(
   context: CreateProtectedAppContext,
   options: RegisterCustomerRoutesOptions = {}
 ) {
+  const archiveCustomerHandler = options.archiveCustomerHandler ?? archiveCustomer;
   const createCustomerHandler = options.createCustomerHandler ?? createCustomer;
   const getCustomerHandler = options.getCustomerHandler ?? getCustomer;
   const listCustomersHandler = options.listCustomersHandler ?? listCustomers;
@@ -111,6 +120,38 @@ export function registerCustomerRoutes(
             changedFields: result.changedFields
           }
         });
+
+        sendSuccess(response, responseData);
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  router.delete(
+    "/customers/:customerId",
+    context.requireAuthMiddleware,
+    async (request, response, next) => {
+      try {
+        const result = await archiveCustomerHandler(request.params.customerId);
+        const responseData: CustomerArchiveData = {
+          customerId: result.customerId,
+          archivedAt: result.archivedAt,
+          updatedAt: result.updatedAt
+        };
+
+        if (result.didArchive) {
+          await writeOperationLog({
+            eventType: "CUSTOMER_ARCHIVED",
+            targetId: result.customerId,
+            summary:
+              "\u9867\u5ba2\u3092\u30a2\u30fc\u30ab\u30a4\u30d6\u3057\u307e\u3057\u305f",
+            actorUid: request.authContext?.actorUid ?? null,
+            detail: {
+              result: "success"
+            }
+          });
+        }
 
         sendSuccess(response, responseData);
       } catch (error) {

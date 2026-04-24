@@ -13,6 +13,7 @@ import {
 import { LoginRecordError, useAppAuth } from "./auth/auth-provider";
 import { useAuthSession } from "./auth/auth-session";
 import { CategoryManagementPage } from "./categories/category-management-page";
+import { CustomerDetailPage } from "./customers/customer-detail-page";
 import { CustomerListPage } from "./customers/customer-list-page";
 import { useZodForm } from "./forms/use-zod-form";
 import { AppProviders } from "./providers/app-providers";
@@ -526,6 +527,8 @@ export default function App() {
                   <ProductCreatePage />
                 ) : route.path === "/customers" ? (
                   <CustomerListPage />
+                ) : route.path === "/customers/:customerId" ? (
+                  <CustomerDetailPage />
                 ) : route.path === "/categories" ? (
                   <CategoryManagementPage />
                 ) : route.path === "/tags" ? (

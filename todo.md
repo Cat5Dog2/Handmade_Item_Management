@@ -1093,28 +1093,28 @@ Next:
   - `feat(api): implement customer list endpoint`
 
 ### CUSTOMER-01B Customers API 登録を実装する
-- 状態: [ ]
+- 状態: [x]
 - 優先度: P1
 - 依存: `CUSTOMER-00`, `API-BASE-02`
 - 作業:
-  - [ ] `POST /api/customers` を実装する
-  - [ ] `counters/customer` で `cus_000001` 形式の顧客IDを採番する
-  - [ ] 顧客入力値の正規化と validation を実装する
+  - [x] `POST /api/customers` を実装する
+  - [x] `counters/customer` で `cus_000001` 形式の顧客IDを採番する
+  - [x] 顧客入力値の正規化と validation を実装する
 - Done:
-  - [ ] 顧客を登録でき、採番済みIDを再利用しない
+  - [x] 顧客を登録でき、採番済みIDを再利用しない
 - 推奨コミット:
   - `feat(api): implement customer creation endpoint`
 
 ### CUSTOMER-01C Customers API 詳細取得を実装する
-- 状態: [ ]
+- 状態: [x]
 - 優先度: P1
 - 依存: `CUSTOMER-01A`, `API-BASE-02`
 - 作業:
-  - [ ] `GET /api/customers/:customerId` を実装する
-  - [ ] 未存在 / アーカイブ済み顧客の扱いを仕様どおり統一する
-  - [ ] 販売済商品の `soldCustomerId` から購入サマリを導出する
+  - [x] `GET /api/customers/:customerId` を実装する
+  - [x] 未存在 / アーカイブ済み顧客の扱いを仕様どおり統一する
+  - [x] 販売済商品の `soldCustomerId` から購入サマリを導出する
 - Done:
-  - [ ] 顧客詳細と購入サマリが API 契約どおり取得できる
+  - [x] 顧客詳細と購入サマリが API 契約どおり取得できる
 - 推奨コミット:
   - `feat(api): implement customer detail endpoint`
 
@@ -1521,13 +1521,13 @@ Next:
 Ready Queue は、**依存を満たしていて、かつ未完了のタスクだけ** を指す。  
 Codex は毎回、まず `[~]` の再開対象があるかを確認し、なければ Ready Queue を確認したうえで、**この節の番号付き一覧で最上位の 1件だけ** を選んで着手する。
 
-現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` / `LOG-01A` / `LOG-01B` / `PRODUCT-01` / `PRODUCT-02` / `PRODUCT-03` / `PRODUCT-04` / `PRODUCT-05A` / `PRODUCT-05B` / `PRODUCT-05C` / `CUSTOMER-00` / `CUSTOMER-01A` は完了** である。  
-`CUSTOMER-01A` の完了により、顧客一覧 API の query / meta / 購入サマリ導出まで実装された。
-現時点では `[~]` の再開対象はないため、**次に着手するタスクは Ready Queue 上で最上位の `CUSTOMER-01B`** とする。
+現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` / `LOG-01A` / `LOG-01B` / `PRODUCT-01` / `PRODUCT-02` / `PRODUCT-03` / `PRODUCT-04` / `PRODUCT-05A` / `PRODUCT-05B` / `PRODUCT-05C` / `CUSTOMER-00` / `CUSTOMER-01A` / `CUSTOMER-01B` / `CUSTOMER-01C` は完了** である。  
+`CUSTOMER-01C` の完了により、顧客詳細 API でアーカイブ済み顧客を含む詳細取得と、販売済商品からの購入サマリ導出まで実装された。
+現時点では `[~]` の再開対象はないため、**次に着手するタスクは Ready Queue 上で最上位の `CUSTOMER-01D`** とする。
 
-- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`, `LOG-01B`, `PRODUCT-01`, `PRODUCT-02`, `PRODUCT-03`, `PRODUCT-04`, `PRODUCT-05A`, `PRODUCT-05B`, `PRODUCT-05C`, `CUSTOMER-00`, `CUSTOMER-01A`
+- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`, `LOG-01B`, `PRODUCT-01`, `PRODUCT-02`, `PRODUCT-03`, `PRODUCT-04`, `PRODUCT-05A`, `PRODUCT-05B`, `PRODUCT-05C`, `CUSTOMER-00`, `CUSTOMER-01A`, `CUSTOMER-01B`, `CUSTOMER-01C`
 - 現在の再開候補: なし
-- 現在の最優先: `CUSTOMER-01B`
+- 現在の最優先: `CUSTOMER-01D`
 - 現在の保留理由: なし
 
 以下の番号付き一覧は、**依存関係を満たした後の推奨実行順** を示す。  

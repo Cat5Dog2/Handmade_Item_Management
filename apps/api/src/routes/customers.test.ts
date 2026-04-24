@@ -3,7 +3,17 @@ import { vi } from "vitest";
 import { createApp } from "../app";
 import { createRequireAuth } from "../middlewares/auth";
 
+const createCustomerMock = vi.hoisted(() => vi.fn());
+const getCustomerMock = vi.hoisted(() => vi.fn());
 const listCustomersMock = vi.hoisted(() => vi.fn());
+
+vi.mock("../customers/create-customer", () => ({
+  createCustomer: createCustomerMock
+}));
+
+vi.mock("../customers/get-customer", () => ({
+  getCustomer: getCustomerMock
+}));
 
 vi.mock("../customers/list-customers", () => ({
   listCustomers: listCustomersMock
@@ -30,6 +40,8 @@ function createTestApp({
 
 describe("customers routes", () => {
   beforeEach(() => {
+    createCustomerMock.mockReset();
+    getCustomerMock.mockReset();
     listCustomersMock.mockReset();
   });
 
@@ -48,14 +60,14 @@ describe("customers routes", () => {
       data: {
         items: [
           {
-            ageGroup: "30代",
+            ageGroup: "30s",
             customerId: "cus_000001",
-            customerStyle: "ナチュラル系",
-            gender: "女性",
+            customerStyle: "Natural",
+            gender: "female",
             lastPurchaseAt: "2026-04-20T08:30:00.000Z",
             lastPurchaseProductId: "HM-000010",
-            lastPurchaseProductName: "青のブローチ",
-            name: "山田 花子",
+            lastPurchaseProductName: "Flower Brooch",
+            name: "Hanako Handmade",
             purchaseCount: 2,
             updatedAt: "2026-04-18T12:00:00.000Z"
           }
@@ -85,14 +97,14 @@ describe("customers routes", () => {
       data: {
         items: [
           {
-            ageGroup: "30代",
+            ageGroup: "30s",
             customerId: "cus_000001",
-            customerStyle: "ナチュラル系",
-            gender: "女性",
+            customerStyle: "Natural",
+            gender: "female",
             lastPurchaseAt: "2026-04-20T08:30:00.000Z",
             lastPurchaseProductId: "HM-000010",
-            lastPurchaseProductName: "青のブローチ",
-            name: "山田 花子",
+            lastPurchaseProductName: "Flower Brooch",
+            name: "Hanako Handmade",
             purchaseCount: 2,
             updatedAt: "2026-04-18T12:00:00.000Z"
           }
@@ -109,6 +121,139 @@ describe("customers routes", () => {
       page: "2",
       pageSize: "1",
       sortBy: "name"
+    });
+  });
+
+  it("returns AUTH_REQUIRED for unauthenticated customer detail requests", async () => {
+    const response = await request(createTestApp()).get(
+      "/api/customers/cus_000001"
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.body).toMatchObject({
+      code: "AUTH_REQUIRED"
+    });
+    expect(getCustomerMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the customer detail envelope for authenticated requests", async () => {
+    getCustomerMock.mockResolvedValue({
+      customer: {
+        archivedAt: null,
+        createdAt: "2026-04-18T09:00:00.000Z",
+        customerId: "cus_000001",
+        customerStyle: "Natural",
+        gender: "female",
+        ageGroup: "30s",
+        isArchived: false,
+        memo: "First visit memo",
+        name: "Hanako Handmade",
+        snsAccounts: [
+          {
+            accountName: "hanako_handmade",
+            note: null,
+            platform: "Instagram",
+            url: "https://instagram.com/hanako_handmade"
+          }
+        ],
+        updatedAt: "2026-04-20T09:00:00.000Z"
+      },
+      summary: {
+        lastPurchaseAt: "2026-04-20T08:30:00.000Z",
+        lastPurchaseProductId: "HM-000010",
+        lastPurchaseProductName: "Flower Brooch",
+        purchaseCount: 2
+      }
+    });
+
+    const response = await request(
+      createTestApp({
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .get("/api/customers/cus_000001")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        customer: {
+          archivedAt: null,
+          createdAt: "2026-04-18T09:00:00.000Z",
+          customerId: "cus_000001",
+          customerStyle: "Natural",
+          gender: "female",
+          ageGroup: "30s",
+          isArchived: false,
+          memo: "First visit memo",
+          name: "Hanako Handmade",
+          snsAccounts: [
+            {
+              accountName: "hanako_handmade",
+              note: null,
+              platform: "Instagram",
+              url: "https://instagram.com/hanako_handmade"
+            }
+          ],
+          updatedAt: "2026-04-20T09:00:00.000Z"
+        },
+        summary: {
+          lastPurchaseAt: "2026-04-20T08:30:00.000Z",
+          lastPurchaseProductId: "HM-000010",
+          lastPurchaseProductName: "Flower Brooch",
+          purchaseCount: 2
+        }
+      }
+    });
+    expect(getCustomerMock).toHaveBeenCalledWith("cus_000001");
+  });
+
+  it("returns AUTH_REQUIRED for unauthenticated customer create requests", async () => {
+    const response = await request(createTestApp()).post("/api/customers");
+
+    expect(response.status).toBe(401);
+    expect(response.body).toMatchObject({
+      code: "AUTH_REQUIRED"
+    });
+    expect(createCustomerMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the customer create envelope for authenticated requests", async () => {
+    createCustomerMock.mockResolvedValue({
+      customerId: "cus_000001",
+      createdAt: "2026-04-20T09:00:00.000Z",
+      updatedAt: "2026-04-20T09:00:00.000Z"
+    });
+
+    const response = await request(
+      createTestApp({
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .post("/api/customers")
+      .set("Authorization", "Bearer valid-token")
+      .send({
+        name: "Hanako Handmade",
+        customerStyle: "Natural"
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({
+      data: {
+        customerId: "cus_000001",
+        createdAt: "2026-04-20T09:00:00.000Z",
+        updatedAt: "2026-04-20T09:00:00.000Z"
+      }
+    });
+    expect(createCustomerMock).toHaveBeenCalledWith({
+      name: "Hanako Handmade",
+      customerStyle: "Natural"
     });
   });
 });

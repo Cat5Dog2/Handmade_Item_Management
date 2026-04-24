@@ -1243,19 +1243,19 @@ Next:
   - `feat(api): implement qr lookup endpoint`
 
 ### QR-01B QR sell API を実装する
-- 状態: [ ]
+- 状態: [x]
 - 優先度: P1
 - 依存: `QR-01A`, `CUSTOMER-00`, `API-BASE-02`
 - 作業:
-  - [ ] `POST /api/qr/sell` を実装する
-  - [ ] `onDisplay` / `inStock` のみ更新可にする
-  - [ ] `sold` の重複更新防止を実装する
-  - [ ] 任意 `customerId` を受け取り、未指定でも販売済更新できる
-  - [ ] 顧客指定時は存在する未アーカイブ顧客のみ許可する
-  - [ ] `soldCustomerId` / `soldCustomerNameSnapshot` を更新し、レスポンスへ返す
+  - [x] `POST /api/qr/sell` を実装する
+  - [x] `onDisplay` / `inStock` のみ更新可にする
+  - [x] `sold` の重複更新防止を実装する
+  - [x] 任意 `customerId` を受け取り、未指定でも販売済更新できる
+  - [x] 顧客指定時は存在する未アーカイブ顧客のみ許可する
+  - [x] `soldCustomerId` / `soldCustomerNameSnapshot` を更新し、レスポンスへ返す
 - Done:
-  - [ ] QR 販売済更新の業務ルールが通る
-  - [ ] QR 販売済更新時の任意顧客紐付けが仕様どおり動く
+  - [x] QR 販売済更新の業務ルールが通る
+  - [x] QR 販売済更新時の任意顧客紐付けが仕様どおり動く
 - 推奨コミット:
   - `feat(api): implement qr sell endpoint`
 
@@ -1521,15 +1521,16 @@ Next:
 Ready Queue は、**依存を満たしていて、かつ未完了のタスクだけ** を指す。  
 Codex は毎回、まず `[~]` の再開対象があるかを確認し、なければ Ready Queue を確認したうえで、**この節の番号付き一覧で最上位の 1件だけ** を選んで着手する。
 
-現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` / `LOG-01A` / `LOG-01B` / `PRODUCT-01` / `PRODUCT-02` / `PRODUCT-03` / `PRODUCT-04` / `PRODUCT-05A` / `PRODUCT-05B` / `PRODUCT-05C` / `CUSTOMER-00` / `CUSTOMER-01A` / `CUSTOMER-01B` / `CUSTOMER-01C` / `CUSTOMER-01D` / `CUSTOMER-01E` / `CUSTOMER-01F` / `CUSTOMER-02A` / `CUSTOMER-02B` / `CUSTOMER-02C` / `DASH-01` / `DASH-02` / `QR-01A` は完了** である。
+現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` / `LOG-01A` / `LOG-01B` / `PRODUCT-01` / `PRODUCT-02` / `PRODUCT-03` / `PRODUCT-04` / `PRODUCT-05A` / `PRODUCT-05B` / `PRODUCT-05C` / `CUSTOMER-00` / `CUSTOMER-01A` / `CUSTOMER-01B` / `CUSTOMER-01C` / `CUSTOMER-01D` / `CUSTOMER-01E` / `CUSTOMER-01F` / `CUSTOMER-02A` / `CUSTOMER-02B` / `CUSTOMER-02C` / `DASH-01` / `DASH-02` / `QR-01A` / `QR-01B` は完了** である。
 `DASH-01` の完了により、`GET /api/dashboard` でステータス別件数、販売済件数、未完了タスク件数、納期が近いタスク、最近更新商品が取得できるようになった。
 `DASH-02` の完了により、`/dashboard` で件数カード、納期が近いタスク、最近更新商品、再試行導線、詳細 / タスク管理導線を表示できるようになった。
 `QR-01A` の完了により、`POST /api/qr/lookup` で商品特定、更新可否、`reasonCode` を返せるようになった。
-現時点では `[~]` の再開対象はないため、**次に着手するタスクは Ready Queue 上で最上位の `QR-01B`** とする。
+`QR-01B` の完了により、`POST /api/qr/sell` で QR 販売済更新、重複更新防止、任意顧客紐付けができるようになった。
+現時点では `[~]` の再開対象はないため、**次に着手するタスクは Ready Queue 上で最上位の `QR-02A`** とする。
 
-- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`, `LOG-01B`, `PRODUCT-01`, `PRODUCT-02`, `PRODUCT-03`, `PRODUCT-04`, `PRODUCT-05A`, `PRODUCT-05B`, `PRODUCT-05C`, `CUSTOMER-00`, `CUSTOMER-01A`, `CUSTOMER-01B`, `CUSTOMER-01C`, `CUSTOMER-01D`, `CUSTOMER-01E`, `CUSTOMER-01F`, `CUSTOMER-02A`, `CUSTOMER-02B`, `CUSTOMER-02C`, `DASH-01`, `DASH-02`, `QR-01A`
+- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`, `LOG-01B`, `PRODUCT-01`, `PRODUCT-02`, `PRODUCT-03`, `PRODUCT-04`, `PRODUCT-05A`, `PRODUCT-05B`, `PRODUCT-05C`, `CUSTOMER-00`, `CUSTOMER-01A`, `CUSTOMER-01B`, `CUSTOMER-01C`, `CUSTOMER-01D`, `CUSTOMER-01E`, `CUSTOMER-01F`, `CUSTOMER-02A`, `CUSTOMER-02B`, `CUSTOMER-02C`, `DASH-01`, `DASH-02`, `QR-01A`, `QR-01B`
 - 現在の再開候補: なし
-- 現在の最優先: `QR-01B`
+- 現在の最優先: `QR-02A`
 - 現在の保留理由: なし
 
 以下の番号付き一覧は、**依存関係を満たした後の推奨実行順** を示す。  

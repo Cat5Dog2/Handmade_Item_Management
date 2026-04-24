@@ -1,5 +1,7 @@
 import {
   categoryInputSchema,
+  customerInputSchema,
+  customerListQuerySchema,
   isoDateSchema,
   productCreateInputSchema,
   productListQuerySchema,
@@ -157,5 +159,91 @@ describe("shared schemas", () => {
       customerId: null,
       productId: "HM-000001"
     });
+  });
+
+  it("normalizes customer input for shared reuse", () => {
+    expect(
+      customerInputSchema.parse({
+        name: "  山田 花子  ",
+        gender: " ",
+        ageGroup: " 30代 ",
+        customerStyle: " ナチュラル系 ",
+        snsAccounts: [
+          {
+            platform: " Instagram ",
+            accountName: " hanako_handmade ",
+            url: " https://instagram.com/hanako_handmade ",
+            note: "DM購入あり\r\nメモ"
+          },
+          {
+            platform: "",
+            accountName: "",
+            url: "",
+            note: ""
+          }
+        ],
+        memo: " 初回来店\r\nメモ "
+      })
+    ).toEqual({
+      name: "山田 花子",
+      gender: null,
+      ageGroup: "30代",
+      customerStyle: "ナチュラル系",
+      snsAccounts: [
+        {
+          platform: "Instagram",
+          accountName: "hanako_handmade",
+          url: "https://instagram.com/hanako_handmade",
+          note: "DM購入あり\nメモ"
+        },
+        {
+          platform: null,
+          accountName: null,
+          url: null,
+          note: null
+        }
+      ],
+      memo: " 初回来店\nメモ "
+    });
+  });
+
+  it("coerces customer list query strings into normalized values", () => {
+    expect(
+      customerListQuerySchema.parse({
+        page: "2",
+        pageSize: "25",
+        keyword: "  Hanako\t Instagram  ",
+        sortBy: "lastPurchaseAt",
+        sortOrder: "asc"
+      })
+    ).toEqual({
+      page: 2,
+      pageSize: 25,
+      keyword: "hanako instagram",
+      sortBy: "lastPurchaseAt",
+      sortOrder: "asc"
+    });
+  });
+
+  it("rejects customer input outside supported boundaries", () => {
+    expect(() =>
+      customerInputSchema.parse({
+        name: ""
+      })
+    ).toThrow();
+
+    expect(() =>
+      customerInputSchema.parse({
+        name: "山田 花子",
+        customerStyle: "a".repeat(101)
+      })
+    ).toThrow();
+
+    expect(() =>
+      customerInputSchema.parse({
+        name: "山田 花子",
+        memo: "a".repeat(1001)
+      })
+    ).toThrow();
   });
 });

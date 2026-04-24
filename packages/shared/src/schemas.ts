@@ -9,11 +9,13 @@ import {
 import { PRODUCT_STATUSES } from "./statuses";
 
 const PRODUCT_SORT_FIELDS = ["updatedAt", "name"] as const;
+const CUSTOMER_SORT_FIELDS = ["updatedAt", "lastPurchaseAt", "name"] as const;
 const SORT_ORDERS = ["asc", "desc"] as const;
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 export const productStatusSchema = z.enum(PRODUCT_STATUSES);
 export const productSortBySchema = z.enum(PRODUCT_SORT_FIELDS);
+export const customerSortBySchema = z.enum(CUSTOMER_SORT_FIELDS);
 export const sortOrderSchema = z.enum(SORT_ORDERS);
 
 export const apiErrorCodeSchema = z.enum(API_ERROR_CODES);
@@ -111,6 +113,27 @@ const requiredSingleLineTextSchema = (maxLength: number) =>
     z.string().min(1).max(maxLength)
   );
 
+const optionalNullableSingleLineTextSchema = (maxLength?: number) =>
+  z.preprocess(
+    (value) => {
+      if (value === undefined) {
+        return undefined;
+      }
+
+      if (value === null || value === "") {
+        return null;
+      }
+
+      const normalized = normalizeStringInput(value, normalizeSingleLineText);
+
+      return normalized === "" ? null : normalized;
+    },
+    (maxLength === undefined
+      ? z.union([z.string(), z.null()])
+      : z.union([z.string().max(maxLength), z.null()])
+    ).optional()
+  );
+
 const optionalMultilineTextSchema = (maxLength: number) =>
   z.preprocess(
     (value) => normalizeStringInput(value, normalizeMultilineText),
@@ -121,6 +144,27 @@ const requiredMultilineTextSchema = (maxLength: number) =>
   z.preprocess(
     (value) => normalizeStringInput(value, normalizeMultilineText),
     z.string().max(maxLength)
+  );
+
+const optionalNullableMultilineTextSchema = (maxLength?: number) =>
+  z.preprocess(
+    (value) => {
+      if (value === undefined) {
+        return undefined;
+      }
+
+      if (value === null || value === "") {
+        return null;
+      }
+
+      const normalized = normalizeStringInput(value, normalizeMultilineText);
+
+      return normalized === "" ? null : normalized;
+    },
+    (maxLength === undefined
+      ? z.union([z.string(), z.null()])
+      : z.union([z.string().max(maxLength), z.null()])
+    ).optional()
   );
 
 const nonNegativeIntegerSchema = z.preprocess(
@@ -218,6 +262,17 @@ export const productListQuerySchema = z.object({
   includeSold: optionalBooleanSchema
 });
 
+export const customerListQuerySchema = z.object({
+  page: optionalPositiveIntegerSchema,
+  pageSize: z.preprocess(
+    emptyStringToUndefined,
+    z.coerce.number().int().min(1).max(100).optional()
+  ),
+  keyword: optionalSearchKeywordSchema,
+  sortBy: z.preprocess(emptyStringToUndefined, customerSortBySchema.optional()),
+  sortOrder: z.preprocess(emptyStringToUndefined, sortOrderSchema.optional())
+});
+
 export const productCreateInputSchema = z.object({
   name: requiredSingleLineTextSchema(100),
   description: optionalMultilineTextSchema(2000),
@@ -269,6 +324,26 @@ export const categoryInputSchema = z.object({
 export const tagInputSchema = z.object({
   name: requiredSingleLineTextSchema(50)
 });
+
+export const customerSnsAccountInputSchema = z.object({
+  platform: optionalNullableSingleLineTextSchema(),
+  accountName: optionalNullableSingleLineTextSchema(),
+  url: optionalNullableSingleLineTextSchema(),
+  note: optionalNullableMultilineTextSchema()
+});
+
+export const customerInputSchema = z.object({
+  name: requiredSingleLineTextSchema(100),
+  gender: optionalNullableSingleLineTextSchema(),
+  ageGroup: optionalNullableSingleLineTextSchema(),
+  customerStyle: optionalNullableSingleLineTextSchema(100),
+  snsAccounts: z.array(customerSnsAccountInputSchema).optional(),
+  memo: optionalNullableMultilineTextSchema(1000)
+});
+
+export const customerCreateInputSchema = customerInputSchema;
+
+export const customerUpdateInputSchema = customerInputSchema;
 
 export const qrLookupInputSchema = z.object({
   qrCodeValue: identifierSchema

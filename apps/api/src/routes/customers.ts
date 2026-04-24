@@ -2,13 +2,19 @@ import type {
   CustomerCreateData,
   CustomerDetailData,
   CustomerListData,
-  CustomerListMeta
+  CustomerListMeta,
+  CustomerUpdateData
 } from "@handmade/shared";
 import type { Router } from "express";
 import type { CreateProtectedAppContext } from "../app";
 import { createCustomer } from "../customers/create-customer";
 import { getCustomer } from "../customers/get-customer";
 import { listCustomers } from "../customers/list-customers";
+import {
+  updateCustomer,
+  type CustomerUpdateResult
+} from "../customers/update-customer";
+import { writeOperationLog } from "../operation-logs/write-operation-log";
 import { sendSuccess } from "../responses/api-response";
 
 interface CustomerListResult {
@@ -20,6 +26,10 @@ interface RegisterCustomerRoutesOptions {
   createCustomerHandler?: (input: unknown) => Promise<CustomerCreateData>;
   getCustomerHandler?: (customerId: string) => Promise<CustomerDetailData>;
   listCustomersHandler?: (input: unknown) => Promise<CustomerListResult>;
+  updateCustomerHandler?: (
+    customerId: string,
+    input: unknown
+  ) => Promise<CustomerUpdateResult>;
 }
 
 export function registerCustomerRoutes(
@@ -30,6 +40,7 @@ export function registerCustomerRoutes(
   const createCustomerHandler = options.createCustomerHandler ?? createCustomer;
   const getCustomerHandler = options.getCustomerHandler ?? getCustomer;
   const listCustomersHandler = options.listCustomersHandler ?? listCustomers;
+  const updateCustomerHandler = options.updateCustomerHandler ?? updateCustomer;
 
   router.get(
     "/customers",
@@ -70,6 +81,38 @@ export function registerCustomerRoutes(
         sendSuccess(response, await createCustomerHandler(request.body), {
           statusCode: 201
         });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  router.put(
+    "/customers/:customerId",
+    context.requireAuthMiddleware,
+    async (request, response, next) => {
+      try {
+        const result = await updateCustomerHandler(
+          request.params.customerId,
+          request.body
+        );
+        const responseData: CustomerUpdateData = {
+          customerId: result.customerId,
+          updatedAt: result.updatedAt
+        };
+
+        await writeOperationLog({
+          eventType: "CUSTOMER_UPDATED",
+          targetId: result.customerId,
+          summary: "顧客情報を更新しました",
+          actorUid: request.authContext?.actorUid ?? null,
+          detail: {
+            result: "success",
+            changedFields: result.changedFields
+          }
+        });
+
+        sendSuccess(response, responseData);
       } catch (error) {
         next(error);
       }

@@ -7,6 +7,7 @@ export const OPERATION_LOG_EVENT_TYPES = [
   "LOGIN",
   "PRODUCT_UPDATED",
   "PRODUCT_DELETED",
+  "CUSTOMER_UPDATED",
   "QR_SOLD",
   "ERROR"
 ] as const;

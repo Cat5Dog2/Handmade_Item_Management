@@ -16,6 +16,7 @@ import { CategoryManagementPage } from "./categories/category-management-page";
 import { CustomerDetailPage } from "./customers/customer-detail-page";
 import { CustomerFormPage } from "./customers/customer-form-page";
 import { CustomerListPage } from "./customers/customer-list-page";
+import { DashboardPage } from "./dashboard/dashboard-page";
 import { useZodForm } from "./forms/use-zod-form";
 import { AppProviders } from "./providers/app-providers";
 import { ProductCreatePage } from "./products/product-create-page";
@@ -524,6 +525,8 @@ export default function App() {
               element={
                 route.path === "/products" ? (
                   <ProductListPage />
+                ) : route.path === "/dashboard" ? (
+                  <DashboardPage />
                 ) : route.path === "/products/new" ? (
                   <ProductCreatePage />
                 ) : route.path === "/customers" ? (

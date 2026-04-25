@@ -16,7 +16,9 @@ export const queryKeys = {
   },
   products: {
     detail: (productId: string) => ["products", "detail", productId] as const,
-    list: (filters: unknown) => ["products", "list", filters] as const
+    list: (filters: unknown) => ["products", "list", filters] as const,
+    tasks: (productId: string, filters: unknown) =>
+      ["products", "tasks", productId, filters] as const
   },
   tags: {
     list: ["tags", "list"] as const

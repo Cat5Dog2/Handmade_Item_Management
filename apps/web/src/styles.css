@@ -633,6 +633,41 @@ input {
   white-space: pre-wrap;
 }
 
+.product-detail-page__inline-link {
+  color: #0f766e;
+  font-weight: 700;
+}
+
+.product-detail-page__task-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: #52606d;
+  font-weight: 700;
+}
+
+.product-detail-page__task-summary span {
+  padding: 6px 10px;
+  border: 1px solid #d5e2d8;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.product-detail-page__task-list {
+  gap: 12px;
+}
+
+.product-detail-page__task-card {
+  min-width: 0;
+}
+
+.product-detail-page__task-content {
+  margin: 0;
+  color: #1f2933;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
 .product-detail-page__qr-panel {
   display: grid;
   gap: 16px;

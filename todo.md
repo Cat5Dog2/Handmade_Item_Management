@@ -888,22 +888,46 @@ Next:
   - `feat(api): implement task completion endpoint`
 
 ### PRODUCT-06A 商品詳細画面 UI を実装する
-- 状態: [~]
+- 状態: [x]
 - 優先度: P1
 - 依存: `PRODUCT-05A`, `WEB-BASE-03`
 - 作業:
   - [x] `/products/:productId` を実装する
   - [x] 基本情報表示を実装する
-  - [ ] 販売済かつ購入者紐付けありの場合は購入者名と顧客詳細導線を表示する
+  - [x] 販売済かつ購入者紐付けありの場合は購入者名と顧客詳細導線を表示する
   - [x] 代表画像 / プレースホルダー表示を実装する
-  - [ ] 関連タスク一覧の参照表示を実装する
+  - [x] 関連タスク一覧の参照表示を実装する
   - [x] タスク管理 / 編集 / QR への導線を配置する
 - Done:
-  - [ ] 商品詳細の参照系 UI が成立する
-  - [ ] 商品詳細で購入者情報を確認できる
-  - [ ] 商品一覧 → 商品詳細導線がつながる
+  - [x] 商品詳細の参照系 UI が成立する
+  - [x] 商品詳細で購入者情報を確認できる
+  - [x] 商品一覧 → 商品詳細導線がつながる
 - 推奨コミット:
   - `feat(web): implement product detail page`
+
+実行メモ:
+```md
+Task: PRODUCT-06A
+Status: Done
+Changed files:
+- apps/web/src/api/query-keys.ts
+- apps/web/src/products/product-detail-page.tsx
+- apps/web/src/products/product-detail-page.test.tsx
+- apps/web/src/styles.css
+- todo.md
+Checks:
+- npm --workspace apps/web run test -- product-detail-page.test.tsx
+- npm run lint
+- npm run typecheck
+- npm run test
+- npm run build:web
+Notes:
+- 販売済みかつ顧客紐付け済みの場合だけ購入者詳細リンクを表示する。
+- 関連タスク欄は `GET /api/products/:productId/tasks?showCompleted=false` の契約に接続し、取得失敗時は詳細画面全体を落とさず再試行できる。
+- 商品削除やタスク完了切替などの quick action は PRODUCT-06C に残す。
+Next:
+- PRODUCT-06B
+```
 
 ### PRODUCT-06B 商品編集画面 UI を実装する
 - 状態: [ ]
@@ -1547,19 +1571,19 @@ Next:
 Ready Queue は、**依存を満たしていて、かつ未完了のタスクだけ** を指す。  
 Codex は毎回、まず `[~]` の再開対象があるかを確認し、なければ Ready Queue を確認したうえで、**この節の番号付き一覧で最上位の 1件だけ** を選んで着手する。
 
-現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` / `LOG-01A` / `LOG-01B` / `PRODUCT-01` / `PRODUCT-02` / `PRODUCT-03` / `PRODUCT-04` / `PRODUCT-05A` / `PRODUCT-05B` / `PRODUCT-05C` / `CUSTOMER-00` / `CUSTOMER-01A` / `CUSTOMER-01B` / `CUSTOMER-01C` / `CUSTOMER-01D` / `CUSTOMER-01E` / `CUSTOMER-01F` / `CUSTOMER-02A` / `CUSTOMER-02B` / `CUSTOMER-02C` / `DASH-01` / `DASH-02` / `QR-01A` / `QR-01B` / `QR-02A` は完了** である。
+現時点のリポジトリでは、**`BOOT-01` / `BOOT-02` / `BOOT-03` / `SHARED-01` / `SHARED-02` / `SHARED-03` / `API-BASE-01` / `API-BASE-02` / `API-BASE-03` / `WEB-BASE-01` / `WEB-BASE-02` / `WEB-BASE-03` / `MASTER-01A` / `MASTER-01B` / `MASTER-01C` / `MASTER-01D` / `MASTER-02A` / `MASTER-02B` / `MASTER-02C` / `MASTER-02D` / `MASTER-03A` / `MASTER-03B` / `TEST-01` / `SEC-01` / `LOG-00` / `LOG-01A` / `LOG-01B` / `PRODUCT-01` / `PRODUCT-02` / `PRODUCT-03` / `PRODUCT-04` / `PRODUCT-05A` / `PRODUCT-05B` / `PRODUCT-05C` / `PRODUCT-06A` / `CUSTOMER-00` / `CUSTOMER-01A` / `CUSTOMER-01B` / `CUSTOMER-01C` / `CUSTOMER-01D` / `CUSTOMER-01E` / `CUSTOMER-01F` / `CUSTOMER-02A` / `CUSTOMER-02B` / `CUSTOMER-02C` / `DASH-01` / `DASH-02` / `QR-01A` / `QR-01B` / `QR-02A` は完了** である。
 `DASH-01` の完了により、`GET /api/dashboard` でステータス別件数、販売済件数、未完了タスク件数、納期が近いタスク、最近更新商品が取得できるようになった。
 `DASH-02` の完了により、`/dashboard` で件数カード、納期が近いタスク、最近更新商品、再試行導線、詳細 / タスク管理導線を表示できるようになった。
 `QR-01A` の完了により、`POST /api/qr/lookup` で商品特定、更新可否、`reasonCode` を返せるようになった。
 `QR-01B` の完了により、`POST /api/qr/sell` で QR 販売済更新、重複更新防止、任意顧客紐付けができるようになった。
 `QR-02A` の完了により、`/products/:productId` で商品識別用 QR コードを `qrcode` から SVG 生成して表示できるようになった。
-`PRODUCT-06A` は QR 表示に必要な範囲を先行実装したため `[~]` とし、購入者詳細導線と関連タスク一覧表示は未完了として残す。
-現時点では `[~]` の再開対象があるため、**次に着手するタスクは `PRODUCT-06A`** とする。
+`PRODUCT-06A` の完了により、商品詳細で基本情報、代表画像、購入者詳細導線、関連タスク一覧、QR表示、編集 / タスク管理 / QR 読み取り導線を参照できるようになった。
+現時点では `[~]` の再開対象はないため、**次に着手するタスクは Ready Queue 上で最上位の `PRODUCT-06B`** とする。
 
-- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`, `LOG-01B`, `PRODUCT-01`, `PRODUCT-02`, `PRODUCT-03`, `PRODUCT-04`, `PRODUCT-05A`, `PRODUCT-05B`, `PRODUCT-05C`, `CUSTOMER-00`, `CUSTOMER-01A`, `CUSTOMER-01B`, `CUSTOMER-01C`, `CUSTOMER-01D`, `CUSTOMER-01E`, `CUSTOMER-01F`, `CUSTOMER-02A`, `CUSTOMER-02B`, `CUSTOMER-02C`, `DASH-01`, `DASH-02`, `QR-01A`, `QR-01B`, `QR-02A`
-- 現在の再開候補: `PRODUCT-06A`
-- 現在の最優先: `PRODUCT-06A`
-- 現在の保留理由: `QR-02B` は `PRODUCT-06A` 完了後に着手する
+- 現在の完了: `BOOT-01`, `BOOT-02`, `BOOT-03`, `SHARED-01`, `SHARED-02`, `SHARED-03`, `API-BASE-01`, `API-BASE-02`, `API-BASE-03`, `WEB-BASE-01`, `WEB-BASE-02`, `WEB-BASE-03`, `MASTER-01A`, `MASTER-01B`, `MASTER-01C`, `MASTER-01D`, `MASTER-02A`, `MASTER-02B`, `MASTER-02C`, `MASTER-02D`, `MASTER-03A`, `MASTER-03B`, `TEST-01`, `SEC-01`, `LOG-00`, `LOG-01A`, `LOG-01B`, `PRODUCT-01`, `PRODUCT-02`, `PRODUCT-03`, `PRODUCT-04`, `PRODUCT-05A`, `PRODUCT-05B`, `PRODUCT-05C`, `PRODUCT-06A`, `CUSTOMER-00`, `CUSTOMER-01A`, `CUSTOMER-01B`, `CUSTOMER-01C`, `CUSTOMER-01D`, `CUSTOMER-01E`, `CUSTOMER-01F`, `CUSTOMER-02A`, `CUSTOMER-02B`, `CUSTOMER-02C`, `DASH-01`, `DASH-02`, `QR-01A`, `QR-01B`, `QR-02A`
+- 現在の再開候補: なし
+- 現在の最優先: `PRODUCT-06B`
+- 現在の保留理由: なし
 
 以下の番号付き一覧は、**依存関係を満たした後の推奨実行順** を示す。  
 Codex は常に、依存を満たしているタスクのうち **この一覧で最上位の未完了タスク 1つ** に着手する。

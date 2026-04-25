@@ -1,8 +1,8 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { getProductPath, getProductTasksPath } from "@handmade/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getProductPath } from "@handmade/shared";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { ApiClientError } from "../api/api-client";
 import { createAppQueryClient } from "../api/query-client";
 import { ProductDetailPage } from "./product-detail-page";
@@ -80,7 +80,55 @@ const productWithoutImageResponse = {
   }
 };
 
-let detailMode: "success" | "emptyImage" | "error" | "notFound" = "success";
+const soldProductDetailResponse = {
+  data: {
+    ...productDetailResponse.data,
+    product: {
+      ...productDetailResponse.data.product,
+      soldAt: "2026-04-23T11:00:00Z",
+      soldCustomerId: "cus_000001",
+      soldCustomerNameSnapshot: "山田 花子",
+      status: "sold" as const
+    }
+  }
+};
+
+const tasksResponse = {
+  data: {
+    items: [
+      {
+        completedAt: null,
+        content: "イベント前に金具を確認する",
+        dueDate: "2026-04-30",
+        isCompleted: false,
+        memo: "",
+        name: "金具チェック",
+        taskId: "task_001",
+        updatedAt: "2026-04-23T09:00:00Z"
+      },
+      {
+        completedAt: null,
+        content: "",
+        dueDate: null,
+        isCompleted: false,
+        memo: "",
+        name: "値札を付ける",
+        taskId: "task_002",
+        updatedAt: "2026-04-22T09:00:00Z"
+      }
+    ]
+  }
+};
+
+const emptyTasksResponse = {
+  data: {
+    items: []
+  }
+};
+
+let detailMode: "success" | "emptyImage" | "sold" | "error" | "notFound" =
+  "success";
+let taskMode: "success" | "empty" | "error" = "success";
 
 function renderProductDetail(initialEntry = "/products/HM-000001") {
   const queryClient = createAppQueryClient();
@@ -105,11 +153,20 @@ function renderProductDetail(initialEntry = "/products/HM-000001") {
 describe("ProductDetailPage", () => {
   beforeEach(() => {
     detailMode = "success";
+    taskMode = "success";
     apiClientMock.get.mockReset();
     qrCodeMock.toString.mockReset();
     qrCodeMock.toString.mockResolvedValue("<svg viewBox=\"0 0 10 10\"></svg>");
 
     apiClientMock.get.mockImplementation(async (path: string) => {
+      if (path === getProductTasksPath("HM-000001")) {
+        if (taskMode === "error") {
+          throw new Error("boom");
+        }
+
+        return taskMode === "empty" ? emptyTasksResponse : tasksResponse;
+      }
+
       if (path !== getProductPath("HM-000001")) {
         throw new Error(`Unexpected path: ${path}`);
       }
@@ -125,13 +182,19 @@ describe("ProductDetailPage", () => {
         });
       }
 
-      return detailMode === "emptyImage"
-        ? productWithoutImageResponse
-        : productDetailResponse;
+      if (detailMode === "emptyImage") {
+        return productWithoutImageResponse;
+      }
+
+      if (detailMode === "sold") {
+        return soldProductDetailResponse;
+      }
+
+      return productDetailResponse;
     });
   });
 
-  it("renders product detail and generates an SVG QR code from qrCodeValue", async () => {
+  it("renders product detail, related tasks, and an SVG QR code from qrCodeValue", async () => {
     renderProductDetail();
 
     expect(await screen.findByRole("heading", { name: "Blue Ribbon" })).toBeInTheDocument();
@@ -144,11 +207,26 @@ describe("ProductDetailPage", () => {
     expect(screen.getAllByText("HM-000001")).toHaveLength(3);
     expect(screen.getByText("アクセサリー")).toBeInTheDocument();
     expect(screen.getByText("春, 一点もの")).toBeInTheDocument();
-    expect(screen.getByText("2件")).toBeInTheDocument();
+    expect(screen.getAllByText("2件").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByAltText("Blue Ribbon")).toHaveAttribute(
       "src",
       "https://example.com/display-primary.webp"
     );
+
+    await waitFor(() => {
+      expect(apiClientMock.get).toHaveBeenCalledWith(
+        getProductTasksPath("HM-000001"),
+        expect.objectContaining({
+          query: {
+            showCompleted: false
+          },
+          signal: expect.any(AbortSignal)
+        })
+      );
+    });
+    expect(await screen.findByText("金具チェック")).toBeInTheDocument();
+    expect(screen.getByText("イベント前に金具を確認する")).toBeInTheDocument();
+    expect(screen.getByText("値札を付ける")).toBeInTheDocument();
 
     await waitFor(() => {
       expect(qrCodeMock.toString).toHaveBeenCalledWith(
@@ -168,19 +246,53 @@ describe("ProductDetailPage", () => {
       "href",
       "/products/HM-000001/tasks"
     );
+    expect(screen.getByRole("link", { name: "タスク管理へ" })).toHaveAttribute(
+      "href",
+      "/products/HM-000001/tasks"
+    );
     expect(screen.getByRole("link", { name: "QR読み取りへ" })).toHaveAttribute(
       "href",
       "/qr"
     );
   });
 
-  it("shows empty states for missing image, tags, and description", async () => {
+  it("shows empty states for missing image, tags, description, and tasks", async () => {
     detailMode = "emptyImage";
+    taskMode = "empty";
     renderProductDetail();
 
     expect(await screen.findByText("画像は登録されていません")).toBeInTheDocument();
     expect(screen.getByText("タグなし")).toBeInTheDocument();
     expect(screen.getByText("説明はありません。")).toBeInTheDocument();
+    expect(
+      await screen.findByText("タスクはまだありません。必要な作業を追加してください。")
+    ).toBeInTheDocument();
+  });
+
+  it("shows a customer detail link for sold products with a linked customer", async () => {
+    detailMode = "sold";
+    renderProductDetail();
+
+    expect(await screen.findByRole("heading", { name: "Blue Ribbon" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "山田 花子" })).toHaveAttribute(
+      "href",
+      "/customers/cus_000001"
+    );
+  });
+
+  it("shows a retry action when related task loading fails", async () => {
+    taskMode = "error";
+    renderProductDetail();
+
+    expect(await screen.findByRole("heading", { name: "Blue Ribbon" })).toBeInTheDocument();
+    expect(
+      await screen.findByText("タスク一覧を取得できませんでした。再度お試しください。")
+    ).toBeInTheDocument();
+
+    taskMode = "success";
+    fireEvent.click(screen.getByRole("button", { name: "再試行" }));
+
+    expect(await screen.findByText("金具チェック")).toBeInTheDocument();
   });
 
   it("shows a retry action when product detail loading fails", async () => {

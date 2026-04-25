@@ -21,6 +21,7 @@ import { useZodForm } from "./forms/use-zod-form";
 import { AppProviders } from "./providers/app-providers";
 import { ProductCreatePage } from "./products/product-create-page";
 import { ProductDetailPage } from "./products/product-detail-page";
+import { ProductEditPage } from "./products/product-edit-page";
 import { ProductListPage } from "./products/product-list-page";
 import { TagManagementPage } from "./tags/tag-management-page";
 
@@ -532,6 +533,8 @@ export default function App() {
                   <ProductCreatePage />
                 ) : route.path === "/products/:productId" ? (
                   <ProductDetailPage />
+                ) : route.path === "/products/:productId/edit" ? (
+                  <ProductEditPage />
                 ) : route.path === "/customers" ? (
                   <CustomerListPage />
                 ) : route.path === "/customers/new" ||

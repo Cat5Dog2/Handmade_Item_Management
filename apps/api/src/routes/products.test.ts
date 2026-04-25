@@ -6,6 +6,7 @@ import { createRequireAuth } from "../middlewares/auth";
 const listProductsMock = vi.hoisted(() => vi.fn());
 const createProductMock = vi.hoisted(() => vi.fn());
 const getProductMock = vi.hoisted(() => vi.fn());
+const listProductTasksMock = vi.hoisted(() => vi.fn());
 const updateProductMock = vi.hoisted(() => vi.fn());
 const deleteProductMock = vi.hoisted(() => vi.fn());
 
@@ -19,6 +20,10 @@ vi.mock("../products/create-product", () => ({
 
 vi.mock("../products/get-product", () => ({
   getProduct: getProductMock
+}));
+
+vi.mock("../tasks/list-product-tasks", () => ({
+  listProductTasks: listProductTasksMock
 }));
 
 vi.mock("../products/update-product", () => ({
@@ -53,6 +58,7 @@ describe("products routes", () => {
     listProductsMock.mockReset();
     createProductMock.mockReset();
     getProductMock.mockReset();
+    listProductTasksMock.mockReset();
     updateProductMock.mockReset();
     deleteProductMock.mockReset();
   });
@@ -202,6 +208,67 @@ describe("products routes", () => {
       }
     });
     expect(getProductMock).toHaveBeenCalledWith("HM-000001");
+  });
+
+  it("returns AUTH_REQUIRED for unauthenticated product task list requests", async () => {
+    const response = await request(createTestApp()).get(
+      "/api/products/HM-000001/tasks"
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.body).toMatchObject({
+      code: "AUTH_REQUIRED"
+    });
+    expect(listProductTasksMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the product task list envelope for authenticated requests", async () => {
+    listProductTasksMock.mockResolvedValue({
+      items: [
+        {
+          completedAt: null,
+          content: "Prepare the label",
+          dueDate: "2026-04-22",
+          isCompleted: false,
+          memo: "",
+          name: "Label",
+          taskId: "task_001",
+          updatedAt: "2026-04-18T10:00:00.000Z"
+        }
+      ]
+    });
+
+    const response = await request(
+      createTestApp({
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .get("/api/products/HM-000001/tasks?showCompleted=true")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        items: [
+          {
+            completedAt: null,
+            content: "Prepare the label",
+            dueDate: "2026-04-22",
+            isCompleted: false,
+            memo: "",
+            name: "Label",
+            taskId: "task_001",
+            updatedAt: "2026-04-18T10:00:00.000Z"
+          }
+        ]
+      }
+    });
+    expect(listProductTasksMock).toHaveBeenCalledWith("HM-000001", {
+      showCompleted: "true"
+    });
   });
 
   it("returns AUTH_REQUIRED for unauthenticated product update requests", async () => {

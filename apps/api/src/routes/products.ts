@@ -4,7 +4,8 @@ import type {
   ProductDetailData,
   ProductListData,
   ProductListMeta,
-  ProductUpdateData
+  ProductUpdateData,
+  TaskListData
 } from "@handmade/shared";
 import type { Router } from "express";
 import type { CreateProtectedAppContext } from "../app";
@@ -14,6 +15,7 @@ import { getProduct } from "../products/get-product";
 import { updateProduct } from "../products/update-product";
 import { sendSuccess } from "../responses/api-response";
 import { listProducts } from "../products/list-products";
+import { listProductTasks } from "../tasks/list-product-tasks";
 
 interface ProductListResult {
   data: ProductListData;
@@ -24,6 +26,10 @@ interface RegisterProductRoutesOptions {
   createProductHandler?: (input: unknown) => Promise<ProductCreateData>;
   deleteProductHandler?: (productId: string) => Promise<ProductDeleteData>;
   getProductHandler?: (productId: string) => Promise<ProductDetailData>;
+  listProductTasksHandler?: (
+    productId: string,
+    input: unknown
+  ) => Promise<TaskListData>;
   updateProductHandler?: (
     productId: string,
     input: unknown
@@ -39,6 +45,8 @@ export function registerProductRoutes(
   const createProductHandler = options.createProductHandler ?? createProduct;
   const deleteProductHandler = options.deleteProductHandler ?? deleteProduct;
   const getProductHandler = options.getProductHandler ?? getProduct;
+  const listProductTasksHandler =
+    options.listProductTasksHandler ?? listProductTasks;
   const updateProductHandler = options.updateProductHandler ?? updateProduct;
   const listProductsHandler = options.listProductsHandler ?? listProducts;
 
@@ -52,6 +60,24 @@ export function registerProductRoutes(
         sendSuccess(response, result.data, {
           meta: result.meta
         });
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  router.get(
+    "/products/:productId/tasks",
+    context.requireAuthMiddleware,
+    async (request, response, next) => {
+      try {
+        sendSuccess(
+          response,
+          await listProductTasksHandler(
+            request.params.productId,
+            request.query
+          )
+        );
       } catch (error) {
         next(error);
       }

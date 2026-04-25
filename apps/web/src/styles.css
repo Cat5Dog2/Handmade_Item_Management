@@ -428,6 +428,7 @@ input {
 }
 
 .product-list-page__header-row,
+.product-detail-page__header-row,
 .customer-list-page__header-row {
   display: flex;
   flex-wrap: wrap;
@@ -565,6 +566,110 @@ input {
   margin: 0;
   color: #52606d;
   font-weight: 600;
+}
+
+.product-detail-page__product-id {
+  margin: 0 0 4px;
+  color: #52606d;
+  font-weight: 700;
+}
+
+.product-detail-page__action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.product-detail-page__overview {
+  display: grid;
+  gap: 16px;
+}
+
+.product-detail-page__image {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border: 1px solid #d5e2d8;
+  border-radius: 8px;
+  background: #f7fbf8;
+}
+
+.product-detail-page__image-element {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-detail-page__image-placeholder {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  padding: 16px;
+  color: #52606d;
+  text-align: center;
+}
+
+.product-detail-page__summary {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.product-detail-page__description-block {
+  display: grid;
+  gap: 8px;
+}
+
+.product-detail-page__subheading {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.product-detail-page__description {
+  margin: 0;
+  color: #1f2933;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.product-detail-page__qr-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.product-detail-page__qr-code {
+  display: grid;
+  place-items: center;
+  width: min(100%, 224px);
+  aspect-ratio: 1 / 1;
+  padding: 16px;
+  border: 1px solid #d5e2d8;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.product-detail-page__qr-svg,
+.product-detail-page__qr-svg svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.product-detail-page__qr-status {
+  margin: 0;
+  color: #52606d;
+  text-align: center;
+}
+
+.product-detail-page__qr-detail {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.product-detail-page__qr-value {
+  overflow-wrap: anywhere;
 }
 
 .dashboard-count-grid,
@@ -1033,6 +1138,16 @@ input {
 
   .product-list-card {
     grid-template-columns: 120px minmax(0, 1fr);
+  }
+
+  .product-detail-page__overview {
+    grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .product-detail-page__qr-panel {
+    grid-template-columns: 224px minmax(0, 1fr);
+    align-items: start;
   }
 
   .product-list-pagination {

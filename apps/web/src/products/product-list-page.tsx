@@ -25,6 +25,7 @@ import {
   ScreenErrorState,
   ScreenLoadingState
 } from "../components/screen-states";
+import { APP_NAME, PRODUCT_ERROR_MESSAGES } from "../messages/display-messages";
 
 interface ProductListFilterState {
   categoryId: string;
@@ -36,7 +37,6 @@ interface ProductListFilterState {
   tagId: string;
 }
 
-const APP_NAME = "Handmade Item Management";
 const DEFAULT_PAGE_SIZE = 50;
 const DEFAULT_QUERY: Required<
   Pick<ProductListQuery, "includeSold" | "page" | "pageSize" | "sortBy" | "sortOrder">
@@ -376,7 +376,7 @@ export function ProductListPage() {
         </div>
         <ScreenErrorState
           message={getApiErrorDisplayMessage(productsQuery.error, {
-            fallbackMessage: "商品一覧の取得に失敗しました。再度お試しください。"
+            fallbackMessage: PRODUCT_ERROR_MESSAGES.listFetchFailed
           })}
           onRetry={() => {
             void productsQuery.refetch();

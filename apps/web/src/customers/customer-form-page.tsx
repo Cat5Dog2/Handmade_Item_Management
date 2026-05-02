@@ -26,6 +26,11 @@ import {
   ScreenLoadingState
 } from "../components/screen-states";
 import { useZodForm } from "../forms/use-zod-form";
+import {
+  APP_NAME,
+  CUSTOMER_ERROR_MESSAGES,
+  CUSTOMER_FORM_ERROR_MESSAGE_OVERRIDES
+} from "../messages/display-messages";
 
 interface PageNotice {
   message: string;
@@ -41,13 +46,6 @@ type CustomerFormFieldName =
   | "memo"
   | "name"
   | "snsAccounts";
-
-const APP_NAME = "Handmade Item Management";
-const CUSTOMER_FORM_ERROR_MESSAGES = {
-  CUSTOMER_ARCHIVED:
-    "アーカイブ済みの顧客は編集できません。詳細画面で内容をご確認ください。",
-  CUSTOMER_NOT_FOUND: "対象の顧客が見つかりません。"
-} as const;
 
 const emptyCustomerFormValues: CustomerFormInput = {
   ageGroup: "",
@@ -275,8 +273,8 @@ export function CustomerFormPage() {
         if (!hasFieldError) {
           setNotice({
             message: getApiErrorDisplayMessage(error, {
-              codeMessages: CUSTOMER_FORM_ERROR_MESSAGES,
-              fallbackMessage: "顧客を登録できませんでした。"
+              codeMessages: CUSTOMER_FORM_ERROR_MESSAGE_OVERRIDES,
+              fallbackMessage: CUSTOMER_ERROR_MESSAGES.createFailed
             }),
             type: "error"
           });
@@ -288,7 +286,7 @@ export function CustomerFormPage() {
 
     if (!customerId) {
       setNotice({
-        message: "対象の顧客が見つかりません。",
+        message: CUSTOMER_ERROR_MESSAGES.notFound,
         type: "error"
       });
       return;
@@ -312,8 +310,8 @@ export function CustomerFormPage() {
       if (!hasFieldError) {
         setNotice({
           message: getApiErrorDisplayMessage(error, {
-            codeMessages: CUSTOMER_FORM_ERROR_MESSAGES,
-            fallbackMessage: "顧客情報を更新できませんでした。"
+            codeMessages: CUSTOMER_FORM_ERROR_MESSAGE_OVERRIDES,
+            fallbackMessage: CUSTOMER_ERROR_MESSAGES.updateFailed
           }),
           type: "error"
         });
@@ -364,8 +362,8 @@ export function CustomerFormPage() {
         </div>
         <ScreenErrorState
           message={getApiErrorDisplayMessage(loadError, {
-            codeMessages: CUSTOMER_FORM_ERROR_MESSAGES,
-            fallbackMessage: "顧客情報を取得できませんでした。"
+            codeMessages: CUSTOMER_FORM_ERROR_MESSAGE_OVERRIDES,
+            fallbackMessage: CUSTOMER_ERROR_MESSAGES.detailFetchFailed
           })}
           onRetry={() => {
             void customerDetailQuery.refetch();
@@ -402,9 +400,7 @@ export function CustomerFormPage() {
         ) : null}
         {isArchivedCustomer ? (
           <div className="management-page__notice is-error" role="alert">
-            <p>
-              アーカイブ済みの顧客は編集できません。詳細画面で内容をご確認ください。
-            </p>
+            <p>{CUSTOMER_ERROR_MESSAGES.archivedEditUnavailable}</p>
             <Link
               className="secondary-button button-link"
               to={`/customers/${customer?.customerId}`}

@@ -21,6 +21,7 @@ import {
   ScreenLoadingState
 } from "../components/screen-states";
 import { useZodForm } from "../forms/use-zod-form";
+import { APP_NAME, CATEGORY_ERROR_MESSAGES } from "../messages/display-messages";
 
 interface PageNotice {
   message: string;
@@ -187,7 +188,7 @@ export function CategoryManagementPage() {
         if (!hasFieldError) {
           setNotice({
             message: getApiErrorDisplayMessage(error, {
-              fallbackMessage: "カテゴリを登録できませんでした。"
+              fallbackMessage: CATEGORY_ERROR_MESSAGES.createFailed
             }),
             type: "error"
           });
@@ -218,7 +219,7 @@ export function CategoryManagementPage() {
       if (!hasFieldError) {
         setNotice({
           message: getApiErrorDisplayMessage(error, {
-            fallbackMessage: "カテゴリを更新できませんでした。"
+            fallbackMessage: CATEGORY_ERROR_MESSAGES.updateFailed
           }),
           type: "error"
         });
@@ -260,7 +261,7 @@ export function CategoryManagementPage() {
 
       setNotice({
         message: getApiErrorDisplayMessage(error, {
-          fallbackMessage: "カテゴリを削除できませんでした。"
+          fallbackMessage: CATEGORY_ERROR_MESSAGES.deleteFailed
         }),
         type: "error"
       });
@@ -271,7 +272,7 @@ export function CategoryManagementPage() {
     return (
       <section className="management-page" aria-labelledby="categories-title">
         <div className="management-page__header">
-          <p className="management-page__eyebrow">Handmade Item Management</p>
+          <p className="management-page__eyebrow">{APP_NAME}</p>
           <h1 id="categories-title">カテゴリ管理</h1>
           <p className="management-page__lead">
             一覧の確認と、新規登録、更新、未使用カテゴリの削除をまとめて進めます。
@@ -286,14 +287,14 @@ export function CategoryManagementPage() {
     return (
       <section className="management-page" aria-labelledby="categories-title">
         <div className="management-page__header">
-          <p className="management-page__eyebrow">Handmade Item Management</p>
+          <p className="management-page__eyebrow">{APP_NAME}</p>
           <h1 id="categories-title">カテゴリ管理</h1>
           <p className="management-page__lead">
             一覧の確認と、新規登録、更新、未使用カテゴリの削除をまとめて進めます。
           </p>
         </div>
         <ScreenErrorState
-          message="カテゴリ一覧を取得できませんでした。"
+          message={CATEGORY_ERROR_MESSAGES.listFetchFailed}
           onRetry={() => {
             void categoriesQuery.refetch();
           }}
@@ -307,7 +308,7 @@ export function CategoryManagementPage() {
   return (
     <section className="management-page" aria-labelledby="categories-title">
       <div className="management-page__header">
-        <p className="management-page__eyebrow">Handmade Item Management</p>
+        <p className="management-page__eyebrow">{APP_NAME}</p>
         <h1 id="categories-title">カテゴリ管理</h1>
         <p className="management-page__lead">
           一覧の確認と、新規登録、更新、未使用カテゴリの削除をまとめて進めます。

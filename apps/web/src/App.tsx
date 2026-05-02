@@ -18,6 +18,7 @@ import { CustomerFormPage } from "./customers/customer-form-page";
 import { CustomerListPage } from "./customers/customer-list-page";
 import { DashboardPage } from "./dashboard/dashboard-page";
 import { useZodForm } from "./forms/use-zod-form";
+import { APP_NAME, AUTH_MESSAGES } from "./messages/display-messages";
 import { AppProviders } from "./providers/app-providers";
 import { ProductCreatePage } from "./products/product-create-page";
 import { ProductDetailPage } from "./products/product-detail-page";
@@ -31,15 +32,6 @@ interface ProtectedRouteDefinition {
   summary: string;
   title: string;
 }
-
-const APP_NAME = "Handmade Item Management";
-const LOGIN_RECORD_ERROR_MESSAGE =
-  "ログイン記録の送信に失敗しました。しばらくしてから再度お試しください。";
-const LOGIN_ERROR_MESSAGE = "メールアドレスまたはパスワードが正しくありません。";
-const PASSWORD_RESET_ERROR_MESSAGE =
-  "パスワード再設定メールを送信できませんでした。入力内容を確認してください。";
-const PASSWORD_RESET_SUCCESS_MESSAGE =
-  "パスワード再設定メールを送信しました。";
 
 const loginFormSchema = z.object({
   email: z
@@ -207,8 +199,8 @@ function LoginPage() {
     } catch (error) {
       setLoginError(
         error instanceof LoginRecordError
-          ? LOGIN_RECORD_ERROR_MESSAGE
-          : LOGIN_ERROR_MESSAGE
+          ? AUTH_MESSAGES.loginRecordFailed
+          : AUTH_MESSAGES.loginFailed
       );
     }
   });
@@ -219,9 +211,9 @@ function LoginPage() {
 
     try {
       await sendPasswordResetEmail(values.email);
-      setPasswordResetMessage(PASSWORD_RESET_SUCCESS_MESSAGE);
+      setPasswordResetMessage(AUTH_MESSAGES.passwordResetSucceeded);
     } catch {
-      setPasswordResetError(PASSWORD_RESET_ERROR_MESSAGE);
+      setPasswordResetError(AUTH_MESSAGES.passwordResetFailed);
     }
   });
 

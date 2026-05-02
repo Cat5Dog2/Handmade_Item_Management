@@ -23,6 +23,7 @@ import {
   ScreenLoadingState
 } from "../components/screen-states";
 import { useZodForm } from "../forms/use-zod-form";
+import { APP_NAME, PRODUCT_ERROR_MESSAGES } from "../messages/display-messages";
 
 interface PageNotice {
   message: string;
@@ -36,8 +37,6 @@ type ProductCreateFieldName =
   | "categoryId"
   | "tagIds"
   | "status";
-
-const APP_NAME = "Handmade Item Management";
 
 const defaultProductFormValues = {
   categoryId: "",
@@ -139,7 +138,7 @@ export function ProductCreatePage() {
       if (!hasFieldError) {
         setNotice({
           message: getApiErrorDisplayMessage(error, {
-            fallbackMessage: "商品を登録できませんでした。"
+            fallbackMessage: PRODUCT_ERROR_MESSAGES.createFailed
           }),
           type: "error"
         });

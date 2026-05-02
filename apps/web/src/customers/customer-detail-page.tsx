@@ -16,17 +16,16 @@ import {
   ScreenErrorState,
   ScreenLoadingState
 } from "../components/screen-states";
+import {
+  APP_NAME,
+  CUSTOMER_ERROR_MESSAGE_OVERRIDES,
+  CUSTOMER_ERROR_MESSAGES
+} from "../messages/display-messages";
 
 interface PageNotice {
   message: string;
   type: "error" | "success";
 }
-
-const APP_NAME = "Handmade Item Management";
-const CUSTOMER_NOT_FOUND_MESSAGE = "対象の顧客が見つかりません。";
-const CUSTOMER_ERROR_MESSAGES = {
-  CUSTOMER_NOT_FOUND: CUSTOMER_NOT_FOUND_MESSAGE
-} as const;
 
 const dateFormatter = new Intl.DateTimeFormat("ja-JP", {
   day: "2-digit",
@@ -236,7 +235,7 @@ export function CustomerDetailPage() {
             顧客情報と購入履歴を確認します。
           </p>
         </div>
-        <ScreenErrorState message={CUSTOMER_NOT_FOUND_MESSAGE} />
+        <ScreenErrorState message={CUSTOMER_ERROR_MESSAGES.notFound} />
       </section>
     );
   }
@@ -271,8 +270,8 @@ export function CustomerDetailPage() {
       setIsArchiveDialogOpen(false);
       setNotice({
         message: getApiErrorDisplayMessage(error, {
-          codeMessages: CUSTOMER_ERROR_MESSAGES,
-          fallbackMessage: "顧客をアーカイブできませんでした。"
+          codeMessages: CUSTOMER_ERROR_MESSAGE_OVERRIDES,
+          fallbackMessage: CUSTOMER_ERROR_MESSAGES.archiveFailed
         }),
         type: "error"
       });
@@ -306,8 +305,8 @@ export function CustomerDetailPage() {
         </div>
         <ScreenErrorState
           message={getApiErrorDisplayMessage(loadError, {
-            codeMessages: CUSTOMER_ERROR_MESSAGES,
-            fallbackMessage: "顧客情報を取得できませんでした。"
+            codeMessages: CUSTOMER_ERROR_MESSAGE_OVERRIDES,
+            fallbackMessage: CUSTOMER_ERROR_MESSAGES.detailFetchFailed
           })}
           onRetry={handleRetry}
         />

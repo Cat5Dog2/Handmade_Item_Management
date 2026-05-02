@@ -17,6 +17,7 @@ import {
   ScreenLoadingState
 } from "../components/screen-states";
 import { useZodForm } from "../forms/use-zod-form";
+import { APP_NAME, TAG_ERROR_MESSAGES } from "../messages/display-messages";
 
 interface PageNotice {
   message: string;
@@ -176,7 +177,7 @@ export function TagManagementPage() {
         if (!hasFieldError) {
           setNotice({
             message: getApiErrorDisplayMessage(error, {
-              fallbackMessage: "タグを登録できませんでした。"
+              fallbackMessage: TAG_ERROR_MESSAGES.createFailed
             }),
             type: "error"
           });
@@ -207,7 +208,7 @@ export function TagManagementPage() {
       if (!hasFieldError) {
         setNotice({
           message: getApiErrorDisplayMessage(error, {
-            fallbackMessage: "タグを更新できませんでした。"
+            fallbackMessage: TAG_ERROR_MESSAGES.updateFailed
           }),
           type: "error"
         });
@@ -249,7 +250,7 @@ export function TagManagementPage() {
 
       setNotice({
         message: getApiErrorDisplayMessage(error, {
-          fallbackMessage: "タグを削除できませんでした。"
+          fallbackMessage: TAG_ERROR_MESSAGES.deleteFailed
         }),
         type: "error"
       });
@@ -260,7 +261,7 @@ export function TagManagementPage() {
     return (
       <section className="management-page" aria-labelledby="tags-title">
         <div className="management-page__header">
-          <p className="management-page__eyebrow">Handmade Item Management</p>
+          <p className="management-page__eyebrow">{APP_NAME}</p>
           <h1 id="tags-title">タグ管理</h1>
           <p className="management-page__lead">
             一覧の確認と、新規登録、更新、未使用タグの削除をまとめて進めます。
@@ -275,14 +276,14 @@ export function TagManagementPage() {
     return (
       <section className="management-page" aria-labelledby="tags-title">
         <div className="management-page__header">
-          <p className="management-page__eyebrow">Handmade Item Management</p>
+          <p className="management-page__eyebrow">{APP_NAME}</p>
           <h1 id="tags-title">タグ管理</h1>
           <p className="management-page__lead">
             一覧の確認と、新規登録、更新、未使用タグの削除をまとめて進めます。
           </p>
         </div>
         <ScreenErrorState
-          message="タグ一覧を取得できませんでした。"
+          message={TAG_ERROR_MESSAGES.listFetchFailed}
           onRetry={() => {
             void tagsQuery.refetch();
           }}
@@ -296,7 +297,7 @@ export function TagManagementPage() {
   return (
     <section className="management-page" aria-labelledby="tags-title">
       <div className="management-page__header">
-        <p className="management-page__eyebrow">Handmade Item Management</p>
+        <p className="management-page__eyebrow">{APP_NAME}</p>
         <h1 id="tags-title">タグ管理</h1>
         <p className="management-page__lead">
           一覧の確認と、新規登録、更新、未使用タグの削除をまとめて進めます。

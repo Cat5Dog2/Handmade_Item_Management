@@ -27,6 +27,11 @@ import {
   ScreenLoadingState
 } from "../components/screen-states";
 import { useZodForm } from "../forms/use-zod-form";
+import {
+  APP_NAME,
+  PRODUCT_ERROR_MESSAGES,
+  PRODUCT_ERROR_MESSAGE_OVERRIDES
+} from "../messages/display-messages";
 
 interface PageNotice {
   message: string;
@@ -44,16 +49,6 @@ type ProductUpdateFieldName =
   | "status"
   | "soldCustomerId";
 
-const APP_NAME = "Handmade Item Management";
-const PRODUCT_EDIT_ERROR_MESSAGE =
-  "商品編集に必要な情報を取得できませんでした。再試行してください。";
-const PRODUCT_UPDATE_ERROR_MESSAGE = "商品を更新できませんでした。";
-const PRODUCT_NOT_FOUND_MESSAGE = "対象の商品が見つかりません。";
-const PRODUCT_DELETED_MESSAGE = "対象の商品は削除済みです。";
-const PRODUCT_ERROR_MESSAGES = {
-  PRODUCT_DELETED: PRODUCT_DELETED_MESSAGE,
-  PRODUCT_NOT_FOUND: PRODUCT_NOT_FOUND_MESSAGE
-} as const;
 const SOLD_ROLLBACK_CONFIRM_MESSAGE =
   "販売済からステータスを戻すと販売日時が解除されます。よろしいですか？";
 
@@ -261,7 +256,7 @@ export function ProductEditPage() {
     async (input: ProductUpdateInput) => {
       if (!productId) {
         setNotice({
-          message: PRODUCT_NOT_FOUND_MESSAGE,
+          message: PRODUCT_ERROR_MESSAGES.notFound,
           type: "error"
         });
         return;
@@ -279,8 +274,8 @@ export function ProductEditPage() {
         if (!hasFieldError) {
           setNotice({
             message: getApiErrorDisplayMessage(error, {
-              codeMessages: PRODUCT_ERROR_MESSAGES,
-              fallbackMessage: PRODUCT_UPDATE_ERROR_MESSAGE
+              codeMessages: PRODUCT_ERROR_MESSAGE_OVERRIDES,
+              fallbackMessage: PRODUCT_ERROR_MESSAGES.updateFailed
             }),
             type: "error"
           });
@@ -385,8 +380,8 @@ export function ProductEditPage() {
         </div>
         <ScreenErrorState
           message={getApiErrorDisplayMessage(lookupError, {
-            codeMessages: PRODUCT_ERROR_MESSAGES,
-            fallbackMessage: PRODUCT_EDIT_ERROR_MESSAGE
+            codeMessages: PRODUCT_ERROR_MESSAGE_OVERRIDES,
+            fallbackMessage: PRODUCT_ERROR_MESSAGES.editLookupFailed
           })}
           onRetry={retryLookups}
         />

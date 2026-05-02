@@ -5,6 +5,7 @@ import type {
   ProductListData,
   ProductListMeta,
   ProductUpdateData,
+  TaskCreateData,
   TaskListData
 } from "@handmade/shared";
 import type { Router } from "express";
@@ -15,6 +16,7 @@ import { getProduct } from "../products/get-product";
 import { updateProduct } from "../products/update-product";
 import { sendSuccess } from "../responses/api-response";
 import { listProducts } from "../products/list-products";
+import { createProductTask } from "../tasks/create-product-task";
 import { listProductTasks } from "../tasks/list-product-tasks";
 
 interface ProductListResult {
@@ -24,6 +26,10 @@ interface ProductListResult {
 
 interface RegisterProductRoutesOptions {
   createProductHandler?: (input: unknown) => Promise<ProductCreateData>;
+  createProductTaskHandler?: (
+    productId: string,
+    input: unknown
+  ) => Promise<TaskCreateData>;
   deleteProductHandler?: (productId: string) => Promise<ProductDeleteData>;
   getProductHandler?: (productId: string) => Promise<ProductDetailData>;
   listProductTasksHandler?: (
@@ -43,6 +49,8 @@ export function registerProductRoutes(
   options: RegisterProductRoutesOptions = {}
 ) {
   const createProductHandler = options.createProductHandler ?? createProduct;
+  const createProductTaskHandler =
+    options.createProductTaskHandler ?? createProductTask;
   const deleteProductHandler = options.deleteProductHandler ?? deleteProduct;
   const getProductHandler = options.getProductHandler ?? getProduct;
   const listProductTasksHandler =
@@ -77,6 +85,27 @@ export function registerProductRoutes(
             request.params.productId,
             request.query
           )
+        );
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  router.post(
+    "/products/:productId/tasks",
+    context.requireAuthMiddleware,
+    async (request, response, next) => {
+      try {
+        sendSuccess(
+          response,
+          await createProductTaskHandler(
+            request.params.productId,
+            request.body
+          ),
+          {
+            statusCode: 201
+          }
         );
       } catch (error) {
         next(error);

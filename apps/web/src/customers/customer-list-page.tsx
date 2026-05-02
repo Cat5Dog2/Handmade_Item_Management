@@ -12,6 +12,11 @@ import { Link, useLocation, useNavigate, useSearchParams } from "react-router-do
 import { ApiClientError } from "../api/api-client";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
+import {
+  ScreenEmptyState,
+  ScreenErrorState,
+  ScreenLoadingState
+} from "../components/screen-states";
 
 interface PageNotice {
   message: string;
@@ -257,9 +262,7 @@ export function CustomerListPage() {
             </Link>
           </div>
         </div>
-        <div className="management-page__status" role="status">
-          顧客一覧を読み込んでいます...
-        </div>
+        <ScreenLoadingState message="顧客一覧を読み込んでいます..." />
       </section>
     );
   }
@@ -281,23 +284,15 @@ export function CustomerListPage() {
             </Link>
           </div>
         </div>
-        <div className="management-page__notice is-error" role="alert">
-          <p>
-            {getErrorMessage(
-              customersQuery.error,
-              "顧客一覧を取得できませんでした。"
-            )}
-          </p>
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={() => {
-              void customersQuery.refetch();
-            }}
-          >
-            再試行
-          </button>
-        </div>
+        <ScreenErrorState
+          message={getErrorMessage(
+            customersQuery.error,
+            "顧客一覧を取得できませんでした。"
+          )}
+          onRetry={() => {
+            void customersQuery.refetch();
+          }}
+        />
       </section>
     );
   }
@@ -448,8 +443,7 @@ export function CustomerListPage() {
         </div>
 
         {customerItems.length === 0 ? (
-          <div className="management-page__empty">
-            <p>条件に一致する顧客はありません。</p>
+          <ScreenEmptyState message="条件に一致する顧客はありません。">
             <div className="management-form__actions">
               <button className="secondary-button" type="button" onClick={clearFilters}>
                 条件をクリア
@@ -458,7 +452,7 @@ export function CustomerListPage() {
                 顧客登録
               </Link>
             </div>
-          </div>
+          </ScreenEmptyState>
         ) : (
           <>
             <div className="management-list" role="list">

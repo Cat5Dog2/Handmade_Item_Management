@@ -10,6 +10,11 @@ import { useCallback, useState } from "react";
 import { ApiClientError } from "../api/api-client";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
+import {
+  ScreenEmptyState,
+  ScreenErrorState,
+  ScreenLoadingState
+} from "../components/screen-states";
 import { useZodForm } from "../forms/use-zod-form";
 
 interface PageNotice {
@@ -262,9 +267,7 @@ export function TagManagementPage() {
             一覧の確認と、新規登録、更新、未使用タグの削除をまとめて進めます。
           </p>
         </div>
-        <div className="management-page__status" role="status">
-          タグ一覧を読み込んでいます...
-        </div>
+        <ScreenLoadingState message="タグ一覧を読み込んでいます..." />
       </section>
     );
   }
@@ -279,18 +282,12 @@ export function TagManagementPage() {
             一覧の確認と、新規登録、更新、未使用タグの削除をまとめて進めます。
           </p>
         </div>
-        <div className="management-page__notice is-error" role="alert">
-          <p>タグ一覧を取得できませんでした。</p>
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={() => {
-              void tagsQuery.refetch();
-            }}
-          >
-            再試行
-          </button>
-        </div>
+        <ScreenErrorState
+          message="タグ一覧を取得できませんでした。"
+          onRetry={() => {
+            void tagsQuery.refetch();
+          }}
+        />
       </section>
     );
   }
@@ -389,9 +386,7 @@ export function TagManagementPage() {
           </div>
         </div>
         {tags.length === 0 ? (
-          <div className="management-page__empty">
-            <p>タグはまだ登録されていません。最初のタグを登録してください。</p>
-          </div>
+          <ScreenEmptyState message="タグはまだ登録されていません。最初のタグを登録してください。" />
         ) : (
           <div className="management-list" role="list">
             {tags.map((tag) => (

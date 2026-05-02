@@ -14,6 +14,11 @@ import { Link } from "react-router-dom";
 import { ApiClientError } from "../api/api-client";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
+import {
+  ScreenEmptyState,
+  ScreenErrorState,
+  ScreenLoadingState
+} from "../components/screen-states";
 
 const APP_NAME = "Handmade Item Management";
 const DASHBOARD_FETCH_ERROR_MESSAGE = "ダッシュボードの取得に失敗しました。";
@@ -188,9 +193,7 @@ export function DashboardPage() {
     return (
       <section className="management-page dashboard-page" aria-labelledby="dashboard-title">
         <DashboardHeader />
-        <div className="management-page__status" role="status">
-          ダッシュボードを読み込んでいます...
-        </div>
+        <ScreenLoadingState message="ダッシュボードを読み込んでいます..." />
       </section>
     );
   }
@@ -199,18 +202,12 @@ export function DashboardPage() {
     return (
       <section className="management-page dashboard-page" aria-labelledby="dashboard-title">
         <DashboardHeader />
-        <div className="management-page__notice is-error" role="alert">
-          <p>{getDashboardErrorMessage(dashboardQuery.error)}</p>
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={() => {
-              void dashboardQuery.refetch();
-            }}
-          >
-            再試行
-          </button>
-        </div>
+        <ScreenErrorState
+          message={getDashboardErrorMessage(dashboardQuery.error)}
+          onRetry={() => {
+            void dashboardQuery.refetch();
+          }}
+        />
       </section>
     );
   }
@@ -263,9 +260,7 @@ export function DashboardPage() {
             </div>
           </div>
           {dashboard.dueSoonTasks.length === 0 ? (
-            <div className="management-page__empty">
-              <p>期限が近いタスクはありません。</p>
-            </div>
+            <ScreenEmptyState message="期限が近いタスクはありません。" />
           ) : (
             <div className="management-list" role="list">
               {dashboard.dueSoonTasks.map((task) => (
@@ -289,9 +284,7 @@ export function DashboardPage() {
             </div>
           </div>
           {dashboard.recentProducts.length === 0 ? (
-            <div className="management-page__empty">
-              <p>最近更新した商品はありません。</p>
-            </div>
+            <ScreenEmptyState message="最近更新した商品はありません。" />
           ) : (
             <div className="management-list" role="list">
               {dashboard.recentProducts.map((product) => (

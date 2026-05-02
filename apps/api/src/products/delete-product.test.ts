@@ -1,23 +1,10 @@
 import { vi } from "vitest";
+import {
+  createDocumentSnapshot,
+  createTimestamp,
+  expectTimestampLike
+} from "../test/firestore-test-helpers";
 import { deleteProduct } from "./delete-product";
-
-function createTimestamp(isoString: string) {
-  return {
-    toDate: () => new Date(isoString)
-  };
-}
-
-function expectTimestampLike(actual: { toDate: () => Date } | null, isoString: string) {
-  expect(actual).not.toBeNull();
-  expect(actual?.toDate().toISOString()).toBe(isoString);
-}
-
-function createDocumentSnapshot<T>(data: T, exists = true) {
-  return {
-    data: () => data,
-    exists
-  };
-}
 
 describe("deleteProduct", () => {
   it("marks a product as deleted and updates timestamps", async () => {

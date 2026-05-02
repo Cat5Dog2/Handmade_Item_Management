@@ -1,18 +1,10 @@
 import { PRODUCT_STATUSES } from "@handmade/shared";
 import { vi } from "vitest";
+import {
+  createDocumentSnapshot,
+  createTimestamp
+} from "../test/firestore-test-helpers";
 import { getDashboard } from "./get-dashboard";
-
-function createTimestamp(isoString: string) {
-  return {
-    toDate: () => new Date(isoString)
-  };
-}
-
-function createDocumentSnapshot<T>(data: T) {
-  return {
-    data: () => data
-  };
-}
 
 function createProduct(overrides: {
   images?: Array<{

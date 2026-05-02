@@ -1,17 +1,9 @@
 import { vi } from "vitest";
+import {
+  createDocumentSnapshot,
+  createTimestamp
+} from "../test/firestore-test-helpers";
 import { listProducts } from "./list-products";
-
-function createTimestamp(isoString: string) {
-  return {
-    toDate: () => new Date(isoString)
-  };
-}
-
-function createDocumentSnapshot<T>(data: T) {
-  return {
-    data: () => data
-  };
-}
 
 describe("listProducts", () => {
   it("returns filtered products with thumbnail URLs and pagination meta", async () => {

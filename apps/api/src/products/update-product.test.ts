@@ -1,27 +1,10 @@
 import { vi } from "vitest";
+import {
+  createDocumentSnapshot,
+  createTimestamp,
+  expectTimestampLike
+} from "../test/firestore-test-helpers";
 import { updateProduct } from "./update-product";
-
-type TimestampLike = {
-  toDate: () => Date;
-};
-
-function createTimestamp(isoString: string) {
-  return {
-    toDate: () => new Date(isoString)
-  };
-}
-
-function expectTimestampLike(actual: TimestampLike | null, isoString: string) {
-  expect(actual).not.toBeNull();
-  expect(actual?.toDate().toISOString()).toBe(isoString);
-}
-
-function createDocumentSnapshot<T>(data: T, exists = true) {
-  return {
-    data: () => data,
-    exists
-  };
-}
 
 describe("updateProduct", () => {
   it("updates a product and normalizes the primary image", async () => {

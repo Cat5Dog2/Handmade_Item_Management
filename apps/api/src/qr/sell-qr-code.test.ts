@@ -1,22 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import {
+  createDocumentSnapshot,
+  createTimestamp,
+  type TimestampLike
+} from "../test/firestore-test-helpers";
 import { sellQrCode } from "./sell-qr-code";
-
-type TimestampLike = {
-  toDate: () => Date;
-};
-
-function createTimestamp(isoString: string): TimestampLike {
-  return {
-    toDate: () => new Date(isoString)
-  };
-}
-
-function createDocumentSnapshot<T>(data: T, exists = true) {
-  return {
-    data: () => data,
-    exists
-  };
-}
 
 function createProduct(overrides: {
   isDeleted?: boolean;

@@ -1,18 +1,9 @@
 import { vi } from "vitest";
+import {
+  createDocumentSnapshot,
+  createTimestamp
+} from "../test/firestore-test-helpers";
 import { listProductTasks } from "./list-product-tasks";
-
-function createTimestamp(isoString: string) {
-  return {
-    toDate: () => new Date(isoString)
-  };
-}
-
-function createDocumentSnapshot<T>(data: T, exists = true) {
-  return {
-    data: () => data,
-    exists
-  };
-}
 
 function createTask(overrides: {
   completedAt?: ReturnType<typeof createTimestamp> | null;

@@ -1,17 +1,9 @@
 import { vi } from "vitest";
+import {
+  createDocumentSnapshot,
+  createTimestamp
+} from "../test/firestore-test-helpers";
 import { listTags } from "./list-tags";
-
-function createTimestamp(isoString: string) {
-  return {
-    toDate: () => new Date(isoString)
-  };
-}
-
-function createDocumentSnapshot<T>(data: T) {
-  return {
-    data: () => data
-  };
-}
 
 describe("listTags", () => {
   it("returns tags sorted by name with usage counts", async () => {

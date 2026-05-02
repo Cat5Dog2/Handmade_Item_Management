@@ -1,10 +1,5 @@
+import { createTimestamp } from "../test/firestore-test-helpers";
 import { updateTag } from "./update-tag";
-
-function createTimestamp(isoString: string) {
-  return {
-    toDate: () => new Date(isoString)
-  };
-}
 
 function createTagDocument(tagId: string, name: string) {
   return {

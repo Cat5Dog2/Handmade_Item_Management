@@ -30,6 +30,8 @@ cp .env.docker.example .env.docker
 docker compose --env-file .env.docker up --build
 ```
 
+Docker 用の Emulator 設定は `firebase.docker.json` を使い、通常のローカル開発向け `firebase.json` とは分けてあります。
+
 ## 公開ポート
 
 - Web: `http://localhost:5173`

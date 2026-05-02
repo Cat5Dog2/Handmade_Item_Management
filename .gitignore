@@ -76,6 +76,8 @@ temp/
 # Firebase local artifacts
 # =========================
 .firebase/
+.firebase-emulator-data/
+firebase-export-*/
 
 # =========================
 # Optional: uploaded/generated files

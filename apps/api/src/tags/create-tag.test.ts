@@ -1,10 +1,5 @@
+import { createTimestamp } from "../test/firestore-test-helpers";
 import { createTag } from "./create-tag";
-
-function createTimestamp(isoString: string) {
-  return {
-    toDate: () => new Date(isoString)
-  };
-}
 
 describe("createTag", () => {
   it("creates a tag with the normalized name", async () => {

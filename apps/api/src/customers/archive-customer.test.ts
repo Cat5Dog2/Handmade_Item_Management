@@ -1,18 +1,9 @@
 import { vi } from "vitest";
+import {
+  createDocumentSnapshot,
+  createTimestamp
+} from "../test/firestore-test-helpers";
 import { archiveCustomer } from "./archive-customer";
-
-function createTimestamp(isoString: string) {
-  return {
-    toDate: () => new Date(isoString)
-  };
-}
-
-function createDocumentSnapshot<T>(data: T, exists = true) {
-  return {
-    data: () => data,
-    exists
-  };
-}
 
 describe("archiveCustomer", () => {
   it("archives a customer without touching sold product linkage", async () => {

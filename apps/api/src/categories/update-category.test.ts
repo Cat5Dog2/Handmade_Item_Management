@@ -1,10 +1,5 @@
+import { createTimestamp } from "../test/firestore-test-helpers";
 import { updateCategory } from "./update-category";
-
-function createTimestamp(isoString: string) {
-  return {
-    toDate: () => new Date(isoString)
-  };
-}
 
 function createCategoryDocument(categoryId: string, name: string, sortOrder: number) {
   return {

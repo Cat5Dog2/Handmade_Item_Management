@@ -1,12 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import { createDocumentSnapshot } from "../test/firestore-test-helpers";
 import { lookupQrCode } from "./lookup-qr-code";
-
-function createDocumentSnapshot<T>(data: T, exists = true) {
-  return {
-    data: () => data,
-    exists
-  };
-}
 
 function createDb(productSnapshot: unknown) {
   const productGet = vi.fn().mockResolvedValue(productSnapshot);

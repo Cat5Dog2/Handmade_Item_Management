@@ -1,17 +1,9 @@
 import { vi } from "vitest";
+import {
+  createDocumentSnapshot,
+  createTimestamp
+} from "../test/firestore-test-helpers";
 import { listCategories } from "./list-categories";
-
-function createTimestamp(isoString: string) {
-  return {
-    toDate: () => new Date(isoString)
-  };
-}
-
-function createDocumentSnapshot<T>(data: T) {
-  return {
-    data: () => data
-  };
-}
 
 describe("listCategories", () => {
   it("returns categories sorted by sortOrder and name with usage counts", async () => {

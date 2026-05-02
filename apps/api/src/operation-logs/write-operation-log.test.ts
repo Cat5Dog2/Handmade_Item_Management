@@ -1,13 +1,8 @@
+import { createTimestamp } from "../test/firestore-test-helpers";
 import {
   OPERATION_LOG_EVENT_TYPES,
   writeOperationLog
 } from "./write-operation-log";
-
-function createTimestamp(isoString: string) {
-  return {
-    toDate: () => new Date(isoString)
-  };
-}
 
 describe("writeOperationLog", () => {
   it("fixes the MVP event types in code", () => {

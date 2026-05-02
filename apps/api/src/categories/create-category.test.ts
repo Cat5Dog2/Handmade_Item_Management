@@ -1,10 +1,5 @@
+import { createTimestamp } from "../test/firestore-test-helpers";
 import { createCategory } from "./create-category";
-
-function createTimestamp(isoString: string) {
-  return {
-    toDate: () => new Date(isoString)
-  };
-}
 
 describe("createCategory", () => {
   it("creates a category with the next sortOrder when omitted", async () => {

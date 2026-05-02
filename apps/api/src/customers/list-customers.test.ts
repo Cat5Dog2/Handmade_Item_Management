@@ -1,17 +1,9 @@
 import { vi } from "vitest";
+import {
+  createDocumentSnapshot,
+  createTimestamp
+} from "../test/firestore-test-helpers";
 import { listCustomers } from "./list-customers";
-
-function createTimestamp(isoString: string) {
-  return {
-    toDate: () => new Date(isoString)
-  };
-}
-
-function createDocumentSnapshot<T>(data: T) {
-  return {
-    data: () => data
-  };
-}
 
 describe("listCustomers", () => {
   it("returns filtered customers with purchase summaries and pagination meta", async () => {

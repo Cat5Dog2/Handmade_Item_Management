@@ -9,6 +9,11 @@ import { Timestamp as FirestoreTimestamp } from "firebase-admin/firestore";
 import type { ZodError } from "zod";
 import { createApiError, createValidationError } from "../errors/api-errors";
 import { getFirestoreDb } from "../firebase/firebase-admin";
+import {
+  assertDocumentExists,
+  getAvailableCustomer,
+  type SnapshotLike
+} from "../guards/firestore-business-guards";
 
 interface ProductImageDocument {
   displayPath: string;
@@ -37,16 +42,6 @@ interface ProductDocument {
   updatedAt: Timestamp;
 }
 
-interface CustomerDocument {
-  isArchived: boolean;
-  name: string;
-}
-
-interface SnapshotLike<T> {
-  data: () => T;
-  exists: boolean;
-}
-
 interface FirestoreTransactionLike {
   get(reference: unknown): Promise<SnapshotLike<unknown>>;
   set(reference: unknown, data: unknown): void;
@@ -62,70 +57,6 @@ function toValidationErrorDetails(error: ZodError<ProductUpdateInput>) {
     field: typeof issue.path[0] === "string" ? issue.path[0] : "requestBody",
     message: issue.message
   }));
-}
-
-async function assertDocumentExists(
-  transaction: FirestoreTransactionLike,
-  reference: unknown,
-  code: "CATEGORY_NOT_FOUND" | "TAG_NOT_FOUND",
-  field: "categoryId" | "tagIds",
-  message: string
-) {
-  const snapshot = await transaction.get(reference);
-
-  if (!snapshot.exists) {
-    throw createApiError({
-      statusCode: 400,
-      code,
-      details: [
-        {
-          field,
-          message
-        }
-      ],
-      message
-    });
-  }
-}
-
-async function getAvailableCustomerSnapshot(
-  transaction: FirestoreTransactionLike,
-  reference: unknown
-) {
-  const snapshot = await transaction.get(reference);
-
-  if (!snapshot.exists) {
-    throw createApiError({
-      statusCode: 400,
-      code: "CUSTOMER_NOT_FOUND",
-      details: [
-        {
-          field: "soldCustomerId",
-          message: "指定した顧客が見つかりません。"
-        }
-      ],
-      message: "指定した顧客が見つかりません。顧客を選び直してください。"
-    });
-  }
-
-  const customer = snapshot.data() as CustomerDocument;
-
-  if (customer.isArchived) {
-    throw createApiError({
-      statusCode: 400,
-      code: "CUSTOMER_ARCHIVED",
-      details: [
-        {
-          field: "soldCustomerId",
-          message: "アーカイブ済み顧客は指定できません。"
-        }
-      ],
-      message:
-        "選択した顧客は現在利用できません。別の顧客を選び直してください。"
-    });
-  }
-
-  return customer;
 }
 
 function createPrimaryImageError() {
@@ -210,18 +141,22 @@ export async function updateProduct(
     await assertDocumentExists(
       typedTransaction,
       categoryReference,
-      "CATEGORY_NOT_FOUND",
-      "categoryId",
-      "指定したカテゴリが見つかりません。"
+      {
+        code: "CATEGORY_NOT_FOUND",
+        field: "categoryId",
+        message: "指定したカテゴリが見つかりません。"
+      }
     );
 
     for (const tagReference of uniqueTagReferences) {
       await assertDocumentExists(
         typedTransaction,
         tagReference,
-        "TAG_NOT_FOUND",
-        "tagIds",
-        "指定したタグが見つかりません。"
+        {
+          code: "TAG_NOT_FOUND",
+          field: "tagIds",
+          message: "指定したタグが見つかりません。"
+        }
       );
     }
 
@@ -238,9 +173,18 @@ export async function updateProduct(
     const soldCustomerNameSnapshot =
       parsedInput.data.status === "sold" && soldCustomerId
         ? (
-            await getAvailableCustomerSnapshot(
+            await getAvailableCustomer(
               typedTransaction,
-              db.collection("customers").doc(soldCustomerId)
+              db.collection("customers").doc(soldCustomerId),
+              {
+                archivedDetailMessage: "アーカイブ済み顧客は指定できません。",
+                archivedMessage:
+                  "選択した顧客は現在利用できません。別の顧客を選び直してください。",
+                field: "soldCustomerId",
+                notFoundDetailMessage: "指定した顧客が見つかりません。",
+                notFoundMessage:
+                  "指定した顧客が見つかりません。顧客を選び直してください。"
+              }
             )
           ).name
         : null;

@@ -4,12 +4,12 @@ import { taskCreateInputSchema } from "@handmade/shared";
 import type { Firestore, Timestamp } from "firebase-admin/firestore";
 import { Timestamp as FirestoreTimestamp } from "firebase-admin/firestore";
 import type { ZodError } from "zod";
-import { createApiError, createValidationError } from "../errors/api-errors";
+import { createValidationError } from "../errors/api-errors";
 import { getFirestoreDb } from "../firebase/firebase-admin";
-
-interface ProductDocument {
-  isDeleted: boolean;
-}
+import {
+  assertRelatedProductAvailable,
+  type SnapshotLike
+} from "../guards/firestore-business-guards";
 
 interface TaskDocument {
   completedAt: Timestamp | null;
@@ -22,11 +22,6 @@ interface TaskDocument {
   productId: string;
   taskId: string;
   updatedAt: Timestamp;
-}
-
-interface SnapshotLike<T> {
-  data: () => T;
-  exists: boolean;
 }
 
 interface FirestoreTransactionLike {
@@ -51,22 +46,6 @@ function toValidationErrorDetails(error: ZodError<TaskCreateInput>) {
   }));
 }
 
-function createProductNotFoundError() {
-  return createApiError({
-    statusCode: 404,
-    code: "PRODUCT_NOT_FOUND",
-    message: "対象の商品が見つかりません。"
-  });
-}
-
-function createRelatedResourceUnavailableError() {
-  return createApiError({
-    statusCode: 404,
-    code: "PRODUCT_RELATED_RESOURCE_UNAVAILABLE",
-    message: "この商品の関連情報は表示できません。"
-  });
-}
-
 export async function createProductTask(
   productId: string,
   input: unknown,
@@ -87,16 +66,7 @@ export async function createProductTask(
   return db.runTransaction(async (transaction) => {
     const typedTransaction = transaction as unknown as FirestoreTransactionLike;
     const productSnapshot = await typedTransaction.get(productReference);
-
-    if (!productSnapshot.exists) {
-      throw createProductNotFoundError();
-    }
-
-    const product = productSnapshot.data() as ProductDocument;
-
-    if (product.isDeleted) {
-      throw createRelatedResourceUnavailableError();
-    }
+    assertRelatedProductAvailable(productSnapshot);
 
     const createdAt = now();
     const taskDocument: TaskDocument = {

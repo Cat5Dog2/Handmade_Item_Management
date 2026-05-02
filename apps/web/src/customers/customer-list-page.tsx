@@ -17,6 +17,7 @@ import {
   ScreenErrorState,
   ScreenLoadingState
 } from "../components/screen-states";
+import { APP_NAME, CUSTOMER_ERROR_MESSAGES } from "../messages/display-messages";
 
 interface PageNotice {
   message: string;
@@ -29,7 +30,6 @@ interface CustomerListFilterState {
   sortOrder: SortOrder;
 }
 
-const APP_NAME = "Handmade Item Management";
 const DEFAULT_PAGE_SIZE = 50;
 const DEFAULT_QUERY: Required<
   Pick<CustomerListQuery, "page" | "pageSize" | "sortBy" | "sortOrder">
@@ -278,7 +278,7 @@ export function CustomerListPage() {
         </div>
         <ScreenErrorState
           message={getApiErrorDisplayMessage(customersQuery.error, {
-            fallbackMessage: "顧客一覧を取得できませんでした。"
+            fallbackMessage: CUSTOMER_ERROR_MESSAGES.listFetchFailed
           })}
           onRetry={() => {
             void customersQuery.refetch();

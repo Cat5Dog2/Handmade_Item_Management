@@ -22,24 +22,12 @@ import {
   ScreenErrorState,
   ScreenLoadingState
 } from "../components/screen-states";
-
-const APP_NAME = "Handmade Item Management";
-const PRODUCT_DETAIL_ERROR_MESSAGE =
-  "商品詳細の取得に失敗しました。再度お試しください。";
-const PRODUCT_NOT_FOUND_MESSAGE = "対象の商品が見つかりません。";
-const PRODUCT_DELETED_MESSAGE = "対象の商品は削除済みです。";
-const PRODUCT_TASKS_ERROR_MESSAGE =
-  "タスク一覧を取得できませんでした。再度お試しください。";
-const PRODUCT_TASKS_UNAVAILABLE_MESSAGE =
-  "この商品のタスクは表示できません。";
-const PRODUCT_DETAIL_ERROR_MESSAGES = {
-  PRODUCT_DELETED: PRODUCT_DELETED_MESSAGE,
-  PRODUCT_NOT_FOUND: PRODUCT_NOT_FOUND_MESSAGE
-} as const;
-const PRODUCT_TASK_ERROR_MESSAGES = {
-  PRODUCT_NOT_FOUND: PRODUCT_NOT_FOUND_MESSAGE,
-  PRODUCT_RELATED_RESOURCE_UNAVAILABLE: PRODUCT_TASKS_UNAVAILABLE_MESSAGE
-} as const;
+import {
+  APP_NAME,
+  PRODUCT_ERROR_MESSAGES,
+  PRODUCT_ERROR_MESSAGE_OVERRIDES,
+  PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES
+} from "../messages/display-messages";
 
 const dateFormatter = new Intl.DateTimeFormat("ja-JP", {
   day: "2-digit",
@@ -254,7 +242,7 @@ export function ProductDetailPage() {
             商品情報とQRコードを確認します。
           </p>
         </div>
-        <ScreenErrorState message={PRODUCT_NOT_FOUND_MESSAGE} />
+        <ScreenErrorState message={PRODUCT_ERROR_MESSAGES.notFound} />
       </section>
     );
   }
@@ -300,8 +288,8 @@ export function ProductDetailPage() {
         </div>
         <ScreenErrorState
           message={getApiErrorDisplayMessage(productDetailQuery.error, {
-            codeMessages: PRODUCT_DETAIL_ERROR_MESSAGES,
-            fallbackMessage: PRODUCT_DETAIL_ERROR_MESSAGE
+            codeMessages: PRODUCT_ERROR_MESSAGE_OVERRIDES,
+            fallbackMessage: PRODUCT_ERROR_MESSAGES.detailFetchFailed
           })}
           onRetry={handleRetry}
         />
@@ -461,8 +449,8 @@ export function ProductDetailPage() {
         ) : taskListQuery.isError ? (
           <ScreenErrorState
             message={getApiErrorDisplayMessage(taskListQuery.error, {
-              codeMessages: PRODUCT_TASK_ERROR_MESSAGES,
-              fallbackMessage: PRODUCT_TASKS_ERROR_MESSAGE
+              codeMessages: PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES,
+              fallbackMessage: PRODUCT_ERROR_MESSAGES.tasksFetchFailed
             })}
             onRetry={handleTaskRetry}
           />

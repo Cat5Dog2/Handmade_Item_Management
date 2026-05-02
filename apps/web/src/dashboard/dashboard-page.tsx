@@ -19,9 +19,7 @@ import {
   ScreenErrorState,
   ScreenLoadingState
 } from "../components/screen-states";
-
-const APP_NAME = "Handmade Item Management";
-const DASHBOARD_FETCH_ERROR_MESSAGE = "ダッシュボードの取得に失敗しました。";
+import { APP_NAME, DASHBOARD_ERROR_MESSAGES } from "../messages/display-messages";
 
 const dashboardDateTimeFormatter = new Intl.DateTimeFormat("ja-JP", {
   day: "2-digit",
@@ -44,7 +42,7 @@ const productStatusBadgeClassNames: Record<ProductStatus, string> = {
 
 function getDashboardErrorMessage(error: unknown) {
   return getApiErrorDisplayMessage(error, {
-    fallbackMessage: DASHBOARD_FETCH_ERROR_MESSAGE,
+    fallbackMessage: DASHBOARD_ERROR_MESSAGES.fetchFailed,
     fallbackMessageCodes: ["INTERNAL_ERROR"]
   });
 }

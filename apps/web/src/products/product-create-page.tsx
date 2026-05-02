@@ -17,6 +17,10 @@ import { useNavigate } from "react-router-dom";
 import { ApiClientError } from "../api/api-client";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
+import {
+  ScreenErrorState,
+  ScreenLoadingState
+} from "../components/screen-states";
 import { useZodForm } from "../forms/use-zod-form";
 
 interface PageNotice {
@@ -158,9 +162,7 @@ export function ProductCreatePage() {
             商品の基本情報を登録します。画像は保存後に追加できます。
           </p>
         </div>
-        <div className="management-page__status" role="status">
-          カテゴリとタグを読み込んでいます...
-        </div>
+        <ScreenLoadingState message="カテゴリとタグを読み込んでいます..." />
       </section>
     );
   }
@@ -175,18 +177,12 @@ export function ProductCreatePage() {
             商品の基本情報を登録します。画像は保存後に追加できます。
           </p>
         </div>
-        <div className="management-page__notice is-error" role="alert">
-          <p>カテゴリまたはタグを読み込めませんでした。再試行してください。</p>
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={() => {
-              void Promise.all([categoriesQuery.refetch(), tagsQuery.refetch()]);
-            }}
-          >
-            再試行
-          </button>
-        </div>
+        <ScreenErrorState
+          message="カテゴリまたはタグを読み込めませんでした。再試行してください。"
+          onRetry={() => {
+            void Promise.all([categoriesQuery.refetch(), tagsQuery.refetch()]);
+          }}
+        />
       </section>
     );
   }

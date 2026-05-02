@@ -20,6 +20,11 @@ import { Link, useSearchParams } from "react-router-dom";
 import { ApiClientError } from "../api/api-client";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
+import {
+  ScreenEmptyState,
+  ScreenErrorState,
+  ScreenLoadingState
+} from "../components/screen-states";
 
 interface ProductListFilterState {
   categoryId: string;
@@ -355,9 +360,7 @@ export function ProductListPage() {
             </Link>
           </div>
         </div>
-        <div className="management-page__status" role="status">
-          商品一覧を読み込んでいます...
-        </div>
+        <ScreenLoadingState message="商品一覧を読み込んでいます..." />
       </section>
     );
   }
@@ -379,23 +382,15 @@ export function ProductListPage() {
             </Link>
           </div>
         </div>
-        <div className="management-page__notice is-error" role="alert">
-          <p>
-            {getErrorMessage(
-              productsQuery.error,
-              "商品一覧の取得に失敗しました。再度お試しください。"
-            )}
-          </p>
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={() => {
-              void productsQuery.refetch();
-            }}
-          >
-            再試行
-          </button>
-        </div>
+        <ScreenErrorState
+          message={getErrorMessage(
+            productsQuery.error,
+            "商品一覧の取得に失敗しました。再度お試しください。"
+          )}
+          onRetry={() => {
+            void productsQuery.refetch();
+          }}
+        />
       </section>
     );
   }
@@ -621,8 +616,7 @@ export function ProductListPage() {
         </div>
 
         {productItems.length === 0 ? (
-          <div className="management-page__empty">
-            <p>条件に合う商品が見つかりませんでした。</p>
+          <ScreenEmptyState message="条件に合う商品が見つかりませんでした。">
             <div className="management-form__actions">
               <button className="secondary-button" type="button" onClick={clearFilters}>
                 条件をクリア
@@ -631,7 +625,7 @@ export function ProductListPage() {
                 商品登録
               </Link>
             </div>
-          </div>
+          </ScreenEmptyState>
         ) : (
           <>
             <div className="product-list-grid" role="list">

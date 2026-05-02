@@ -17,6 +17,11 @@ import { Link, useParams } from "react-router-dom";
 import { ApiClientError } from "../api/api-client";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
+import {
+  ScreenEmptyState,
+  ScreenErrorState,
+  ScreenLoadingState
+} from "../components/screen-states";
 
 const APP_NAME = "Handmade Item Management";
 const PRODUCT_DETAIL_ERROR_MESSAGE =
@@ -273,9 +278,7 @@ export function ProductDetailPage() {
             商品情報とQRコードを確認します。
           </p>
         </div>
-        <div className="management-page__notice is-error" role="alert">
-          <p>{PRODUCT_NOT_FOUND_MESSAGE}</p>
-        </div>
+        <ScreenErrorState message={PRODUCT_NOT_FOUND_MESSAGE} />
       </section>
     );
   }
@@ -301,9 +304,7 @@ export function ProductDetailPage() {
             商品情報とQRコードを確認します。
           </p>
         </div>
-        <div className="management-page__status" role="status">
-          商品詳細を読み込んでいます...
-        </div>
+        <ScreenLoadingState message="商品詳細を読み込んでいます..." />
       </section>
     );
   }
@@ -321,12 +322,10 @@ export function ProductDetailPage() {
             商品情報とQRコードを確認します。
           </p>
         </div>
-        <div className="management-page__notice is-error" role="alert">
-          <p>{getErrorMessage(productDetailQuery.error)}</p>
-          <button className="secondary-button" type="button" onClick={handleRetry}>
-            再試行
-          </button>
-        </div>
+        <ScreenErrorState
+          message={getErrorMessage(productDetailQuery.error)}
+          onRetry={handleRetry}
+        />
       </section>
     );
   }
@@ -479,20 +478,14 @@ export function ProductDetailPage() {
           <span>{`完了 ${tasksSummary.completedCount}件`}</span>
         </div>
         {taskListQuery.isPending ? (
-          <div className="management-page__status" role="status">
-            関連タスクを読み込んでいます...
-          </div>
+          <ScreenLoadingState message="関連タスクを読み込んでいます..." />
         ) : taskListQuery.isError ? (
-          <div className="management-page__notice is-error" role="alert">
-            <p>{getTaskErrorMessage(taskListQuery.error)}</p>
-            <button className="secondary-button" type="button" onClick={handleTaskRetry}>
-              再試行
-            </button>
-          </div>
+          <ScreenErrorState
+            message={getTaskErrorMessage(taskListQuery.error)}
+            onRetry={handleTaskRetry}
+          />
         ) : taskItems.length === 0 ? (
-          <div className="management-page__empty">
-            <p>タスクはまだありません。必要な作業を追加してください。</p>
-          </div>
+          <ScreenEmptyState message="タスクはまだありません。必要な作業を追加してください。" />
         ) : (
           <div className="management-list product-detail-page__task-list" role="list">
             {taskItems.map((task) => (

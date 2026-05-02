@@ -14,6 +14,11 @@ import { useCallback, useState } from "react";
 import { ApiClientError } from "../api/api-client";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
+import {
+  ScreenEmptyState,
+  ScreenErrorState,
+  ScreenLoadingState
+} from "../components/screen-states";
 import { useZodForm } from "../forms/use-zod-form";
 
 interface PageNotice {
@@ -273,9 +278,7 @@ export function CategoryManagementPage() {
             一覧の確認と、新規登録、更新、未使用カテゴリの削除をまとめて進めます。
           </p>
         </div>
-        <div className="management-page__status" role="status">
-          カテゴリ一覧を読み込んでいます...
-        </div>
+        <ScreenLoadingState message="カテゴリ一覧を読み込んでいます..." />
       </section>
     );
   }
@@ -290,18 +293,12 @@ export function CategoryManagementPage() {
             一覧の確認と、新規登録、更新、未使用カテゴリの削除をまとめて進めます。
           </p>
         </div>
-        <div className="management-page__notice is-error" role="alert">
-          <p>カテゴリ一覧を取得できませんでした。</p>
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={() => {
-              void categoriesQuery.refetch();
-            }}
-          >
-            再試行
-          </button>
-        </div>
+        <ScreenErrorState
+          message="カテゴリ一覧を取得できませんでした。"
+          onRetry={() => {
+            void categoriesQuery.refetch();
+          }}
+        />
       </section>
     );
   }
@@ -432,9 +429,7 @@ export function CategoryManagementPage() {
           </div>
         </div>
         {categories.length === 0 ? (
-          <div className="management-page__empty">
-            <p>カテゴリはまだ登録されていません。最初のカテゴリを登録してください。</p>
-          </div>
+          <ScreenEmptyState message="カテゴリはまだ登録されていません。最初のカテゴリを登録してください。" />
         ) : (
           <div className="management-list" role="list">
             {categories.map((category) => (

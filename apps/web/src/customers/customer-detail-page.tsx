@@ -11,6 +11,11 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ApiClientError } from "../api/api-client";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
+import {
+  ScreenEmptyState,
+  ScreenErrorState,
+  ScreenLoadingState
+} from "../components/screen-states";
 
 interface PageNotice {
   message: string;
@@ -239,9 +244,7 @@ export function CustomerDetailPage() {
             顧客情報と購入履歴を確認します。
           </p>
         </div>
-        <div className="management-page__notice is-error" role="alert">
-          <p>対象の顧客が見つかりません。</p>
-        </div>
+        <ScreenErrorState message="対象の顧客が見つかりません。" />
       </section>
     );
   }
@@ -291,9 +294,7 @@ export function CustomerDetailPage() {
             顧客情報と購入履歴を確認します。
           </p>
         </div>
-        <div className="management-page__status" role="status">
-          顧客情報を読み込んでいます...
-        </div>
+        <ScreenLoadingState message="顧客情報を読み込んでいます..." />
       </section>
     );
   }
@@ -308,12 +309,10 @@ export function CustomerDetailPage() {
             顧客情報と購入履歴を確認します。
           </p>
         </div>
-        <div className="management-page__notice is-error" role="alert">
-          <p>{getErrorMessage(loadError, "顧客情報を取得できませんでした。")}</p>
-          <button className="secondary-button" type="button" onClick={handleRetry}>
-            再試行
-          </button>
-        </div>
+        <ScreenErrorState
+          message={getErrorMessage(loadError, "顧客情報を取得できませんでした。")}
+          onRetry={handleRetry}
+        />
       </section>
     );
   }
@@ -438,9 +437,7 @@ export function CustomerDetailPage() {
         </div>
 
         {customer.snsAccounts.length === 0 ? (
-          <div className="management-page__empty">
-            <p>SNSアカウントは登録されていません。</p>
-          </div>
+          <ScreenEmptyState message="SNSアカウントは登録されていません。" />
         ) : (
           <div className="management-list customer-detail-page__sns-list" role="list">
             {customer.snsAccounts.map((account, index) => (
@@ -543,9 +540,7 @@ export function CustomerDetailPage() {
           </div>
         </div>
         {purchaseItems.length === 0 ? (
-          <div className="management-page__empty">
-            <p>購入履歴はありません。</p>
-          </div>
+          <ScreenEmptyState message="購入履歴はありません。" />
         ) : (
           <div className="management-list" role="list">
             {purchaseItems.map((purchase) => (

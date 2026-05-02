@@ -20,6 +20,10 @@ import type { z } from "zod";
 import { ApiClientError } from "../api/api-client";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
+import {
+  ScreenErrorState,
+  ScreenLoadingState
+} from "../components/screen-states";
 import { useZodForm } from "../forms/use-zod-form";
 
 interface PageNotice {
@@ -347,9 +351,7 @@ export function CustomerFormPage() {
             顧客情報を登録・更新します。
           </p>
         </div>
-        <div className="management-page__status" role="status">
-          顧客情報を読み込んでいます...
-        </div>
+        <ScreenLoadingState message="顧客情報を読み込んでいます..." />
       </section>
     );
   }
@@ -364,18 +366,12 @@ export function CustomerFormPage() {
             顧客情報を登録・更新します。
           </p>
         </div>
-        <div className="management-page__notice is-error" role="alert">
-          <p>{getErrorMessage(loadError, "顧客情報を取得できませんでした。")}</p>
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={() => {
-              void customerDetailQuery.refetch();
-            }}
-          >
-            再試行
-          </button>
-        </div>
+        <ScreenErrorState
+          message={getErrorMessage(loadError, "顧客情報を取得できませんでした。")}
+          onRetry={() => {
+            void customerDetailQuery.refetch();
+          }}
+        />
       </section>
     );
   }

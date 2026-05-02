@@ -12,6 +12,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { ApiClientError } from "../api/api-client";
+import { getApiErrorDisplayMessage } from "../api/api-error-display";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
 import {
@@ -46,14 +47,6 @@ function formatUsageLabel(category: CategoryItem) {
   }
 
   return "未使用";
-}
-
-function getErrorMessage(error: unknown, fallbackMessage: string) {
-  if (error instanceof ApiClientError) {
-    return error.message;
-  }
-
-  return fallbackMessage;
 }
 
 export function CategoryManagementPage() {
@@ -193,7 +186,9 @@ export function CategoryManagementPage() {
 
         if (!hasFieldError) {
           setNotice({
-            message: getErrorMessage(error, "カテゴリを登録できませんでした。"),
+            message: getApiErrorDisplayMessage(error, {
+              fallbackMessage: "カテゴリを登録できませんでした。"
+            }),
             type: "error"
           });
         }
@@ -222,7 +217,9 @@ export function CategoryManagementPage() {
 
       if (!hasFieldError) {
         setNotice({
-          message: getErrorMessage(error, "カテゴリを更新できませんでした。"),
+          message: getApiErrorDisplayMessage(error, {
+            fallbackMessage: "カテゴリを更新できませんでした。"
+          }),
           type: "error"
         });
       }
@@ -262,7 +259,9 @@ export function CategoryManagementPage() {
       }
 
       setNotice({
-        message: getErrorMessage(error, "カテゴリを削除できませんでした。"),
+        message: getApiErrorDisplayMessage(error, {
+          fallbackMessage: "カテゴリを削除できませんでした。"
+        }),
         type: "error"
       });
     }

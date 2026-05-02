@@ -18,6 +18,7 @@ import { useFieldArray } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import type { z } from "zod";
 import { ApiClientError } from "../api/api-client";
+import { getApiErrorDisplayMessage } from "../api/api-error-display";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
 import {
@@ -42,6 +43,11 @@ type CustomerFormFieldName =
   | "snsAccounts";
 
 const APP_NAME = "Handmade Item Management";
+const CUSTOMER_FORM_ERROR_MESSAGES = {
+  CUSTOMER_ARCHIVED:
+    "アーカイブ済みの顧客は編集できません。詳細画面で内容をご確認ください。",
+  CUSTOMER_NOT_FOUND: "対象の顧客が見つかりません。"
+} as const;
 
 const emptyCustomerFormValues: CustomerFormInput = {
   ageGroup: "",
@@ -61,22 +67,6 @@ const emptySnsAccount: CustomerSnsAccount = {
 
 const genderOptions = ["女性", "男性", "その他"] as const;
 const ageGroupOptions = ["10代", "20代", "30代", "40代", "50代", "60代以上"] as const;
-
-function getErrorMessage(error: unknown, fallbackMessage: string) {
-  if (error instanceof ApiClientError) {
-    if (error.code === "CUSTOMER_NOT_FOUND") {
-      return "対象の顧客が見つかりません。";
-    }
-
-    if (error.code === "CUSTOMER_ARCHIVED") {
-      return "アーカイブ済みの顧客は編集できません。詳細画面で内容をご確認ください。";
-    }
-
-    return error.message;
-  }
-
-  return fallbackMessage;
-}
 
 function toFormText(value: string | null | undefined) {
   return value ?? "";
@@ -284,7 +274,10 @@ export function CustomerFormPage() {
 
         if (!hasFieldError) {
           setNotice({
-            message: getErrorMessage(error, "顧客を登録できませんでした。"),
+            message: getApiErrorDisplayMessage(error, {
+              codeMessages: CUSTOMER_FORM_ERROR_MESSAGES,
+              fallbackMessage: "顧客を登録できませんでした。"
+            }),
             type: "error"
           });
         }
@@ -318,7 +311,10 @@ export function CustomerFormPage() {
 
       if (!hasFieldError) {
         setNotice({
-          message: getErrorMessage(error, "顧客情報を更新できませんでした。"),
+          message: getApiErrorDisplayMessage(error, {
+            codeMessages: CUSTOMER_FORM_ERROR_MESSAGES,
+            fallbackMessage: "顧客情報を更新できませんでした。"
+          }),
           type: "error"
         });
       }
@@ -367,7 +363,10 @@ export function CustomerFormPage() {
           </p>
         </div>
         <ScreenErrorState
-          message={getErrorMessage(loadError, "顧客情報を取得できませんでした。")}
+          message={getApiErrorDisplayMessage(loadError, {
+            codeMessages: CUSTOMER_FORM_ERROR_MESSAGES,
+            fallbackMessage: "顧客情報を取得できませんでした。"
+          })}
           onRetry={() => {
             void customerDetailQuery.refetch();
           }}

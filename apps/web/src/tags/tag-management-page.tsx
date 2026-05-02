@@ -8,6 +8,7 @@ import { API_PATHS, getTagPath, tagInputSchema } from "@handmade/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { ApiClientError } from "../api/api-client";
+import { getApiErrorDisplayMessage } from "../api/api-error-display";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
 import {
@@ -41,14 +42,6 @@ function formatUsageLabel(tag: TagItem) {
   }
 
   return "未使用";
-}
-
-function getErrorMessage(error: unknown, fallbackMessage: string) {
-  if (error instanceof ApiClientError) {
-    return error.message;
-  }
-
-  return fallbackMessage;
 }
 
 export function TagManagementPage() {
@@ -182,7 +175,9 @@ export function TagManagementPage() {
 
         if (!hasFieldError) {
           setNotice({
-            message: getErrorMessage(error, "タグを登録できませんでした。"),
+            message: getApiErrorDisplayMessage(error, {
+              fallbackMessage: "タグを登録できませんでした。"
+            }),
             type: "error"
           });
         }
@@ -211,7 +206,9 @@ export function TagManagementPage() {
 
       if (!hasFieldError) {
         setNotice({
-          message: getErrorMessage(error, "タグを更新できませんでした。"),
+          message: getApiErrorDisplayMessage(error, {
+            fallbackMessage: "タグを更新できませんでした。"
+          }),
           type: "error"
         });
       }
@@ -251,7 +248,9 @@ export function TagManagementPage() {
       }
 
       setNotice({
-        message: getErrorMessage(error, "タグを削除できませんでした。"),
+        message: getApiErrorDisplayMessage(error, {
+          fallbackMessage: "タグを削除できませんでした。"
+        }),
         type: "error"
       });
     }

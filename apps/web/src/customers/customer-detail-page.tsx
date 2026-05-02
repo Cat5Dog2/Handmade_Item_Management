@@ -8,7 +8,7 @@ import { getCustomerPath, getCustomerPurchasesPath } from "@handmade/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { ApiClientError } from "../api/api-client";
+import { getApiErrorDisplayMessage } from "../api/api-error-display";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
 import {
@@ -23,6 +23,10 @@ interface PageNotice {
 }
 
 const APP_NAME = "Handmade Item Management";
+const CUSTOMER_NOT_FOUND_MESSAGE = "対象の顧客が見つかりません。";
+const CUSTOMER_ERROR_MESSAGES = {
+  CUSTOMER_NOT_FOUND: CUSTOMER_NOT_FOUND_MESSAGE
+} as const;
 
 const dateFormatter = new Intl.DateTimeFormat("ja-JP", {
   day: "2-digit",
@@ -41,18 +45,6 @@ const priceFormatter = new Intl.NumberFormat("ja-JP", {
   currency: "JPY",
   style: "currency"
 });
-
-function getErrorMessage(error: unknown, fallbackMessage: string) {
-  if (error instanceof ApiClientError) {
-    if (error.code === "CUSTOMER_NOT_FOUND") {
-      return "対象の顧客が見つかりません。";
-    }
-
-    return error.message;
-  }
-
-  return fallbackMessage;
-}
 
 function formatDate(value: string | null) {
   if (!value) {
@@ -244,7 +236,7 @@ export function CustomerDetailPage() {
             顧客情報と購入履歴を確認します。
           </p>
         </div>
-        <ScreenErrorState message="対象の顧客が見つかりません。" />
+        <ScreenErrorState message={CUSTOMER_NOT_FOUND_MESSAGE} />
       </section>
     );
   }
@@ -278,7 +270,10 @@ export function CustomerDetailPage() {
     } catch (error) {
       setIsArchiveDialogOpen(false);
       setNotice({
-        message: getErrorMessage(error, "顧客をアーカイブできませんでした。"),
+        message: getApiErrorDisplayMessage(error, {
+          codeMessages: CUSTOMER_ERROR_MESSAGES,
+          fallbackMessage: "顧客をアーカイブできませんでした。"
+        }),
         type: "error"
       });
     }
@@ -310,7 +305,10 @@ export function CustomerDetailPage() {
           </p>
         </div>
         <ScreenErrorState
-          message={getErrorMessage(loadError, "顧客情報を取得できませんでした。")}
+          message={getApiErrorDisplayMessage(loadError, {
+            codeMessages: CUSTOMER_ERROR_MESSAGES,
+            fallbackMessage: "顧客情報を取得できませんでした。"
+          })}
           onRetry={handleRetry}
         />
       </section>

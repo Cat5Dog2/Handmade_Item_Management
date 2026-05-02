@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { z } from "zod";
 import { ApiClientError } from "../api/api-client";
+import { getApiErrorDisplayMessage } from "../api/api-error-display";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
 import {
@@ -49,6 +50,10 @@ const PRODUCT_EDIT_ERROR_MESSAGE =
 const PRODUCT_UPDATE_ERROR_MESSAGE = "商品を更新できませんでした。";
 const PRODUCT_NOT_FOUND_MESSAGE = "対象の商品が見つかりません。";
 const PRODUCT_DELETED_MESSAGE = "対象の商品は削除済みです。";
+const PRODUCT_ERROR_MESSAGES = {
+  PRODUCT_DELETED: PRODUCT_DELETED_MESSAGE,
+  PRODUCT_NOT_FOUND: PRODUCT_NOT_FOUND_MESSAGE
+} as const;
 const SOLD_ROLLBACK_CONFIRM_MESSAGE =
   "販売済からステータスを戻すと販売日時が解除されます。よろしいですか？";
 
@@ -69,22 +74,6 @@ const emptyProductUpdateFormValues: ProductUpdateFormInput = {
   status: "" as unknown as ProductUpdateFormInput["status"],
   tagIds: []
 };
-
-function getErrorMessage(error: unknown, fallbackMessage: string) {
-  if (error instanceof ApiClientError) {
-    if (error.code === "PRODUCT_NOT_FOUND") {
-      return PRODUCT_NOT_FOUND_MESSAGE;
-    }
-
-    if (error.code === "PRODUCT_DELETED") {
-      return PRODUCT_DELETED_MESSAGE;
-    }
-
-    return error.message;
-  }
-
-  return fallbackMessage;
-}
 
 function selectPrimaryImage(images: ProductImageDetail[]) {
   return (
@@ -289,7 +278,10 @@ export function ProductEditPage() {
 
         if (!hasFieldError) {
           setNotice({
-            message: getErrorMessage(error, PRODUCT_UPDATE_ERROR_MESSAGE),
+            message: getApiErrorDisplayMessage(error, {
+              codeMessages: PRODUCT_ERROR_MESSAGES,
+              fallbackMessage: PRODUCT_UPDATE_ERROR_MESSAGE
+            }),
             type: "error"
           });
         }
@@ -392,7 +384,10 @@ export function ProductEditPage() {
           </p>
         </div>
         <ScreenErrorState
-          message={getErrorMessage(lookupError, PRODUCT_EDIT_ERROR_MESSAGE)}
+          message={getApiErrorDisplayMessage(lookupError, {
+            codeMessages: PRODUCT_ERROR_MESSAGES,
+            fallbackMessage: PRODUCT_EDIT_ERROR_MESSAGE
+          })}
           onRetry={retryLookups}
         />
       </section>

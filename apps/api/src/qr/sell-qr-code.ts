@@ -9,6 +9,10 @@ import { Timestamp as FirestoreTimestamp } from "firebase-admin/firestore";
 import type { ZodError } from "zod";
 import { createApiError, createValidationError } from "../errors/api-errors";
 import { getFirestoreDb } from "../firebase/firebase-admin";
+import {
+  getAvailableCustomer,
+  type SnapshotLike
+} from "../guards/firestore-business-guards";
 
 interface ProductDocument {
   isDeleted: boolean;
@@ -18,16 +22,6 @@ interface ProductDocument {
   soldCustomerNameSnapshot?: string | null;
   status: ProductStatus;
   updatedAt: Timestamp;
-}
-
-interface CustomerDocument {
-  isArchived: boolean;
-  name: string;
-}
-
-interface SnapshotLike<T> {
-  data: () => T;
-  exists: boolean;
 }
 
 interface FirestoreTransactionLike {
@@ -77,46 +71,6 @@ function assertSellableProduct(product: ProductDocument) {
   }
 }
 
-async function getAvailableCustomerSnapshot(
-  transaction: FirestoreTransactionLike,
-  reference: unknown
-) {
-  const snapshot = await transaction.get(reference);
-
-  if (!snapshot.exists) {
-    throw createApiError({
-      statusCode: 400,
-      code: "CUSTOMER_NOT_FOUND",
-      details: [
-        {
-          field: "customerId",
-          message: "指定した顧客が見つかりません。"
-        }
-      ],
-      message: "選択した顧客が見つかりません。顧客一覧を確認してください。"
-    });
-  }
-
-  const customer = snapshot.data() as CustomerDocument;
-
-  if (customer.isArchived) {
-    throw createApiError({
-      statusCode: 400,
-      code: "CUSTOMER_ARCHIVED",
-      details: [
-        {
-          field: "customerId",
-          message: "アーカイブ済み顧客は指定できません。"
-        }
-      ],
-      message:
-        "選択した顧客は現在利用できません。別の顧客を選択してください。"
-    });
-  }
-
-  return customer;
-}
-
 export async function sellQrCode(
   input: unknown,
   options: SellQrCodeOptions = {}
@@ -163,9 +117,18 @@ export async function sellQrCode(
     const soldCustomerId = parsedInput.data.customerId ?? null;
     const soldCustomerNameSnapshot = soldCustomerId
       ? (
-          await getAvailableCustomerSnapshot(
+          await getAvailableCustomer(
             typedTransaction,
-            db.collection("customers").doc(soldCustomerId)
+            db.collection("customers").doc(soldCustomerId),
+            {
+              archivedDetailMessage: "アーカイブ済み顧客は指定できません。",
+              archivedMessage:
+                "選択した顧客は現在利用できません。別の顧客を選択してください。",
+              field: "customerId",
+              notFoundDetailMessage: "指定した顧客が見つかりません。",
+              notFoundMessage:
+                "選択した顧客が見つかりません。顧客一覧を確認してください。"
+            }
           )
         ).name
       : null;

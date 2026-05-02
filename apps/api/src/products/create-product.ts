@@ -7,8 +7,9 @@ import { productCreateInputSchema } from "@handmade/shared";
 import type { Firestore, Timestamp } from "firebase-admin/firestore";
 import { Timestamp as FirestoreTimestamp } from "firebase-admin/firestore";
 import type { ZodError } from "zod";
-import { createApiError, createValidationError } from "../errors/api-errors";
+import { createValidationError } from "../errors/api-errors";
 import { getFirestoreDb } from "../firebase/firebase-admin";
+import { assertDocumentExists } from "../guards/firestore-business-guards";
 
 interface ProductImageDocument {
   displayPath: string;
@@ -93,30 +94,6 @@ function createProductId(productNumber: number) {
   return `${prefix}${String(productNumber).padStart(digits, "0")}`;
 }
 
-async function assertDocumentExists(
-  transaction: FirestoreTransactionLike,
-  reference: unknown,
-  code: "CATEGORY_NOT_FOUND" | "TAG_NOT_FOUND",
-  field: "categoryId" | "tagIds",
-  message: string
-) {
-  const snapshot = await transaction.get(reference);
-
-  if (!snapshot.exists) {
-    throw createApiError({
-      statusCode: 400,
-      code,
-      details: [
-        {
-          field,
-          message
-        }
-      ],
-      message
-    });
-  }
-}
-
 function toTagReferences(db: Firestore, tagIds: string[]) {
   return tagIds.map((tagId) => db.collection("tags").doc(tagId));
 }
@@ -167,18 +144,22 @@ export async function createProduct(
     await assertDocumentExists(
       transaction,
       categoryReference,
-      "CATEGORY_NOT_FOUND",
-      "categoryId",
-      "指定したカテゴリが見つかりません。カテゴリを選び直してください。"
+      {
+        code: "CATEGORY_NOT_FOUND",
+        field: "categoryId",
+        message: "指定したカテゴリが見つかりません。カテゴリを選び直してください。"
+      }
     );
 
     for (const tagReference of tagReferences) {
       await assertDocumentExists(
         transaction,
         tagReference,
-        "TAG_NOT_FOUND",
-        "tagIds",
-        "指定したタグが見つかりません。タグを選び直してください。"
+        {
+          code: "TAG_NOT_FOUND",
+          field: "tagIds",
+          message: "指定したタグが見つかりません。タグを選び直してください。"
+        }
       );
     }
 

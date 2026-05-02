@@ -6,12 +6,12 @@ import type {
   Timestamp
 } from "firebase-admin/firestore";
 import type { ZodError } from "zod";
-import { createApiError, createValidationError } from "../errors/api-errors";
+import { createValidationError } from "../errors/api-errors";
 import { getFirestoreDb } from "../firebase/firebase-admin";
-
-interface ProductDocument {
-  isDeleted: boolean;
-}
+import {
+  assertRelatedProductAvailable,
+  type SnapshotLike
+} from "../guards/firestore-business-guards";
 
 interface TaskDocument {
   completedAt?: Timestamp | null;
@@ -22,11 +22,6 @@ interface TaskDocument {
   name: string;
   taskId: string;
   updatedAt: Timestamp;
-}
-
-interface SnapshotLike<T> {
-  data: () => T;
-  exists: boolean;
 }
 
 interface ListProductTasksOptions {
@@ -79,22 +74,6 @@ function compareTasks(left: TaskItem, right: TaskItem) {
   return left.taskId.localeCompare(right.taskId);
 }
 
-function createProductNotFoundError() {
-  return createApiError({
-    statusCode: 404,
-    code: "PRODUCT_NOT_FOUND",
-    message: "対象の商品が見つかりません。"
-  });
-}
-
-function createRelatedResourceUnavailableError() {
-  return createApiError({
-    statusCode: 404,
-    code: "PRODUCT_RELATED_RESOURCE_UNAVAILABLE",
-    message: "この商品の関連情報は表示できません。"
-  });
-}
-
 export async function listProductTasks(
   productId: string,
   input: unknown,
@@ -110,17 +89,8 @@ export async function listProductTasks(
   const productSnapshot = (await db
     .collection("products")
     .doc(productId)
-    .get()) as unknown as SnapshotLike<ProductDocument>;
-
-  if (!productSnapshot.exists) {
-    throw createProductNotFoundError();
-  }
-
-  const product = productSnapshot.data();
-
-  if (product.isDeleted) {
-    throw createRelatedResourceUnavailableError();
-  }
+    .get()) as unknown as SnapshotLike<unknown>;
+  assertRelatedProductAvailable(productSnapshot);
 
   const taskSnapshot = (await db
     .collection("tasks")

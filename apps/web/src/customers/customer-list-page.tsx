@@ -9,7 +9,7 @@ import { API_PATHS, customerListQuerySchema } from "@handmade/shared";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { ApiClientError } from "../api/api-client";
+import { getApiErrorDisplayMessage } from "../api/api-error-display";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
 import {
@@ -52,14 +52,6 @@ const customerListDateFormatter = new Intl.DateTimeFormat("ja-JP", {
   timeZone: "Asia/Tokyo",
   year: "numeric"
 });
-
-function getErrorMessage(error: unknown, fallbackMessage: string) {
-  if (error instanceof ApiClientError) {
-    return error.message;
-  }
-
-  return fallbackMessage;
-}
 
 function formatLastPurchaseAt(lastPurchaseAt: string | null) {
   if (!lastPurchaseAt) {
@@ -285,10 +277,9 @@ export function CustomerListPage() {
           </div>
         </div>
         <ScreenErrorState
-          message={getErrorMessage(
-            customersQuery.error,
-            "顧客一覧を取得できませんでした。"
-          )}
+          message={getApiErrorDisplayMessage(customersQuery.error, {
+            fallbackMessage: "顧客一覧を取得できませんでした。"
+          })}
           onRetry={() => {
             void customersQuery.refetch();
           }}

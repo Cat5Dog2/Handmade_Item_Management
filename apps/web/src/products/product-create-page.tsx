@@ -15,6 +15,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ApiClientError } from "../api/api-client";
+import { getApiErrorDisplayMessage } from "../api/api-error-display";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
 import {
@@ -46,14 +47,6 @@ const defaultProductFormValues = {
   status: "" as unknown as ProductCreateInput["status"],
   tagIds: []
 };
-
-function getErrorMessage(error: unknown, fallbackMessage: string) {
-  if (error instanceof ApiClientError) {
-    return error.message;
-  }
-
-  return fallbackMessage;
-}
 
 export function ProductCreatePage() {
   const apiClient = useApiClient();
@@ -145,7 +138,9 @@ export function ProductCreatePage() {
 
       if (!hasFieldError) {
         setNotice({
-          message: getErrorMessage(error, "商品を登録できませんでした。"),
+          message: getApiErrorDisplayMessage(error, {
+            fallbackMessage: "商品を登録できませんでした。"
+          }),
           type: "error"
         });
       }

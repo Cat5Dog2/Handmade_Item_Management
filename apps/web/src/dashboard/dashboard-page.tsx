@@ -11,7 +11,7 @@ import {
 } from "@handmade/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { ApiClientError } from "../api/api-client";
+import { getApiErrorDisplayMessage } from "../api/api-error-display";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
 import {
@@ -43,11 +43,10 @@ const productStatusBadgeClassNames: Record<ProductStatus, string> = {
 };
 
 function getDashboardErrorMessage(error: unknown) {
-  if (error instanceof ApiClientError && error.code !== "INTERNAL_ERROR") {
-    return error.message;
-  }
-
-  return DASHBOARD_FETCH_ERROR_MESSAGE;
+  return getApiErrorDisplayMessage(error, {
+    fallbackMessage: DASHBOARD_FETCH_ERROR_MESSAGE,
+    fallbackMessageCodes: ["INTERNAL_ERROR"]
+  });
 }
 
 function formatDueDate(dueDate: string) {

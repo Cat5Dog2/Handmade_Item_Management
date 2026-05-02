@@ -14,7 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { toString as generateQRCodeSvg } from "qrcode";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ApiClientError } from "../api/api-client";
+import { getApiErrorDisplayMessage } from "../api/api-error-display";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
 import {
@@ -32,6 +32,14 @@ const PRODUCT_TASKS_ERROR_MESSAGE =
   "タスク一覧を取得できませんでした。再度お試しください。";
 const PRODUCT_TASKS_UNAVAILABLE_MESSAGE =
   "この商品のタスクは表示できません。";
+const PRODUCT_DETAIL_ERROR_MESSAGES = {
+  PRODUCT_DELETED: PRODUCT_DELETED_MESSAGE,
+  PRODUCT_NOT_FOUND: PRODUCT_NOT_FOUND_MESSAGE
+} as const;
+const PRODUCT_TASK_ERROR_MESSAGES = {
+  PRODUCT_NOT_FOUND: PRODUCT_NOT_FOUND_MESSAGE,
+  PRODUCT_RELATED_RESOURCE_UNAVAILABLE: PRODUCT_TASKS_UNAVAILABLE_MESSAGE
+} as const;
 
 const dateFormatter = new Intl.DateTimeFormat("ja-JP", {
   day: "2-digit",
@@ -59,38 +67,6 @@ const productStatusBadgeClassNames: Record<ProductStatus, string> = {
   onDisplay: "product-status-badge is-on-display",
   sold: "product-status-badge is-sold"
 };
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof ApiClientError) {
-    if (error.code === "PRODUCT_NOT_FOUND") {
-      return PRODUCT_NOT_FOUND_MESSAGE;
-    }
-
-    if (error.code === "PRODUCT_DELETED") {
-      return PRODUCT_DELETED_MESSAGE;
-    }
-
-    return error.message;
-  }
-
-  return PRODUCT_DETAIL_ERROR_MESSAGE;
-}
-
-function getTaskErrorMessage(error: unknown) {
-  if (error instanceof ApiClientError) {
-    if (error.code === "PRODUCT_RELATED_RESOURCE_UNAVAILABLE") {
-      return PRODUCT_TASKS_UNAVAILABLE_MESSAGE;
-    }
-
-    if (error.code === "PRODUCT_NOT_FOUND") {
-      return PRODUCT_NOT_FOUND_MESSAGE;
-    }
-
-    return error.message;
-  }
-
-  return PRODUCT_TASKS_ERROR_MESSAGE;
-}
 
 function formatDate(value: string | null) {
   if (!value) {
@@ -323,7 +299,10 @@ export function ProductDetailPage() {
           </p>
         </div>
         <ScreenErrorState
-          message={getErrorMessage(productDetailQuery.error)}
+          message={getApiErrorDisplayMessage(productDetailQuery.error, {
+            codeMessages: PRODUCT_DETAIL_ERROR_MESSAGES,
+            fallbackMessage: PRODUCT_DETAIL_ERROR_MESSAGE
+          })}
           onRetry={handleRetry}
         />
       </section>
@@ -481,7 +460,10 @@ export function ProductDetailPage() {
           <ScreenLoadingState message="関連タスクを読み込んでいます..." />
         ) : taskListQuery.isError ? (
           <ScreenErrorState
-            message={getTaskErrorMessage(taskListQuery.error)}
+            message={getApiErrorDisplayMessage(taskListQuery.error, {
+              codeMessages: PRODUCT_TASK_ERROR_MESSAGES,
+              fallbackMessage: PRODUCT_TASKS_ERROR_MESSAGE
+            })}
             onRetry={handleTaskRetry}
           />
         ) : taskItems.length === 0 ? (

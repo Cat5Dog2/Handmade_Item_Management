@@ -17,7 +17,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ApiClientError } from "../api/api-client";
+import { getApiErrorDisplayMessage } from "../api/api-error-display";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
 import {
@@ -76,14 +76,6 @@ const productStatusBadgeClassNames: Record<ProductStatus, string> = {
   onDisplay: "product-status-badge is-on-display",
   sold: "product-status-badge is-sold"
 };
-
-function getErrorMessage(error: unknown, fallbackMessage: string) {
-  if (error instanceof ApiClientError) {
-    return error.message;
-  }
-
-  return fallbackMessage;
-}
 
 function formatUpdatedAt(updatedAt: string) {
   return productListDateTimeFormatter.format(new Date(updatedAt));
@@ -383,10 +375,9 @@ export function ProductListPage() {
           </div>
         </div>
         <ScreenErrorState
-          message={getErrorMessage(
-            productsQuery.error,
-            "商品一覧の取得に失敗しました。再度お試しください。"
-          )}
+          message={getApiErrorDisplayMessage(productsQuery.error, {
+            fallbackMessage: "商品一覧の取得に失敗しました。再度お試しください。"
+          })}
           onRetry={() => {
             void productsQuery.refetch();
           }}

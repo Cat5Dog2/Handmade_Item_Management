@@ -6,6 +6,7 @@ import { createRequireAuth } from "../middlewares/auth";
 const listProductsMock = vi.hoisted(() => vi.fn());
 const createProductMock = vi.hoisted(() => vi.fn());
 const createProductTaskMock = vi.hoisted(() => vi.fn());
+const createProductImageMock = vi.hoisted(() => vi.fn());
 const getProductMock = vi.hoisted(() => vi.fn());
 const listProductTasksMock = vi.hoisted(() => vi.fn());
 const updateProductMock = vi.hoisted(() => vi.fn());
@@ -21,6 +22,10 @@ vi.mock("../products/create-product", () => ({
 
 vi.mock("../tasks/create-product-task", () => ({
   createProductTask: createProductTaskMock
+}));
+
+vi.mock("../products/create-product-image", () => ({
+  createProductImage: createProductImageMock
 }));
 
 vi.mock("../products/get-product", () => ({
@@ -63,6 +68,7 @@ describe("products routes", () => {
     listProductsMock.mockReset();
     createProductMock.mockReset();
     createProductTaskMock.mockReset();
+    createProductImageMock.mockReset();
     getProductMock.mockReset();
     listProductTasksMock.mockReset();
     updateProductMock.mockReset();
@@ -140,7 +146,9 @@ describe("products routes", () => {
   });
 
   it("returns AUTH_REQUIRED for unauthenticated product detail requests", async () => {
-    const response = await request(createTestApp()).get("/api/products/HM-000001");
+    const response = await request(createTestApp()).get(
+      "/api/products/HM-000001"
+    );
 
     expect(response.status).toBe(401);
     expect(response.body).toMatchObject({
@@ -214,6 +222,55 @@ describe("products routes", () => {
       }
     });
     expect(getProductMock).toHaveBeenCalledWith("HM-000001");
+  });
+
+  it("returns AUTH_REQUIRED for unauthenticated product image create requests", async () => {
+    const response = await request(createTestApp()).post(
+      "/api/products/HM-000001/images"
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.body).toMatchObject({
+      code: "AUTH_REQUIRED"
+    });
+    expect(createProductImageMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the product image create envelope for authenticated requests", async () => {
+    createProductImageMock.mockResolvedValue({
+      imageId: "img_abcdef123456",
+      updatedAt: "2026-04-18T09:15:00.000Z"
+    });
+
+    const response = await request(
+      createTestApp({
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .post("/api/products/HM-000001/images")
+      .set("Authorization", "Bearer valid-token")
+      .attach("file", Buffer.from("sample-image"), {
+        filename: "sample.png",
+        contentType: "image/png"
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({
+      data: {
+        imageId: "img_abcdef123456",
+        updatedAt: "2026-04-18T09:15:00.000Z"
+      }
+    });
+    expect(createProductImageMock).toHaveBeenCalledWith(
+      "HM-000001",
+      expect.objectContaining({
+        fieldname: "file",
+        mimetype: "image/png"
+      })
+    );
   });
 
   it("returns AUTH_REQUIRED for unauthenticated product task list requests", async () => {
@@ -327,7 +384,9 @@ describe("products routes", () => {
   });
 
   it("returns AUTH_REQUIRED for unauthenticated product update requests", async () => {
-    const response = await request(createTestApp()).put("/api/products/HM-000001");
+    const response = await request(createTestApp()).put(
+      "/api/products/HM-000001"
+    );
 
     expect(response.status).toBe(401);
     expect(response.body).toMatchObject({
@@ -383,7 +442,9 @@ describe("products routes", () => {
   });
 
   it("returns AUTH_REQUIRED for unauthenticated product delete requests", async () => {
-    const response = await request(createTestApp()).delete("/api/products/HM-000001");
+    const response = await request(createTestApp()).delete(
+      "/api/products/HM-000001"
+    );
 
     expect(response.status).toBe(401);
     expect(response.body).toMatchObject({

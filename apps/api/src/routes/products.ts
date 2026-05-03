@@ -2,6 +2,7 @@ import type {
   ProductCreateData,
   ProductDeleteData,
   ProductDetailData,
+  ProductImageMutationData,
   ProductListData,
   ProductListMeta,
   ProductUpdateData,
@@ -10,9 +11,14 @@ import type {
 } from "@handmade/shared";
 import type { Router } from "express";
 import type { CreateProtectedAppContext } from "../app";
+import { createProductImage } from "../products/create-product-image";
 import { deleteProduct } from "../products/delete-product";
 import { createProduct } from "../products/create-product";
 import { getProduct } from "../products/get-product";
+import {
+  createProductImageUploadMiddleware,
+  type ProductImageUploadFile
+} from "../images/product-image-processing";
 import { updateProduct } from "../products/update-product";
 import { sendSuccess } from "../responses/api-response";
 import { listProducts } from "../products/list-products";
@@ -30,6 +36,10 @@ interface RegisterProductRoutesOptions {
     productId: string,
     input: unknown
   ) => Promise<TaskCreateData>;
+  createProductImageHandler?: (
+    productId: string,
+    file: ProductImageUploadFile | undefined
+  ) => Promise<ProductImageMutationData>;
   deleteProductHandler?: (productId: string) => Promise<ProductDeleteData>;
   getProductHandler?: (productId: string) => Promise<ProductDetailData>;
   listProductTasksHandler?: (
@@ -51,6 +61,8 @@ export function registerProductRoutes(
   const createProductHandler = options.createProductHandler ?? createProduct;
   const createProductTaskHandler =
     options.createProductTaskHandler ?? createProductTask;
+  const createProductImageHandler =
+    options.createProductImageHandler ?? createProductImage;
   const deleteProductHandler = options.deleteProductHandler ?? deleteProduct;
   const getProductHandler = options.getProductHandler ?? getProduct;
   const listProductTasksHandler =
@@ -81,10 +93,7 @@ export function registerProductRoutes(
       try {
         sendSuccess(
           response,
-          await listProductTasksHandler(
-            request.params.productId,
-            request.query
-          )
+          await listProductTasksHandler(request.params.productId, request.query)
         );
       } catch (error) {
         next(error);
@@ -121,6 +130,28 @@ export function registerProductRoutes(
         sendSuccess(
           response,
           await getProductHandler(request.params.productId)
+        );
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  router.post(
+    "/products/:productId/images",
+    context.requireAuthMiddleware,
+    createProductImageUploadMiddleware(),
+    async (request, response, next) => {
+      try {
+        sendSuccess(
+          response,
+          await createProductImageHandler(
+            request.params.productId,
+            request.file
+          ),
+          {
+            statusCode: 201
+          }
         );
       } catch (error) {
         next(error);

@@ -130,6 +130,11 @@ export interface ProductDeleteData {
   deletedAt: IsoDateTimeString;
 }
 
+export interface ProductImageMutationData {
+  imageId: string;
+  updatedAt: IsoDateTimeString;
+}
+
 export interface ProductDetail {
   productId: string;
   name: string;

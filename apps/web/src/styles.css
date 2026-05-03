@@ -714,6 +714,29 @@ input {
   background: #ffffff;
 }
 
+.task-management-page__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+
+.task-management-page__completed-toggle,
+.task-management-page__task-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1f2933;
+  font-weight: 700;
+}
+
+.task-management-page__completed-toggle input,
+.task-management-page__task-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: #0f766e;
+}
+
 .task-management-page__task-card {
   min-width: 0;
 }

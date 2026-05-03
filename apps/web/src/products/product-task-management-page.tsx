@@ -1,5 +1,7 @@
 import type {
   ProductDetailData,
+  TaskCompletionData,
+  TaskCompletionInput,
   TaskCreateData,
   TaskCreateInput,
   TaskDeleteData,
@@ -11,6 +13,7 @@ import type {
 import {
   getProductPath,
   getProductTasksPath,
+  getTaskCompletionPath,
   getTaskPath,
   taskCreateInputSchema
 } from "@handmade/shared";
@@ -37,6 +40,11 @@ import {
 interface PageNotice {
   message: string;
   type: "error" | "success";
+}
+
+interface TaskCompletionVariables {
+  isCompleted: boolean;
+  task: TaskItem;
 }
 
 type TaskFormMode = "create" | "edit" | "hidden";
@@ -99,13 +107,50 @@ function getTaskFieldErrorMessage(
   return "メモは1000文字以内で入力してください。";
 }
 
+function updateTaskWithCompletion(
+  task: TaskItem,
+  completion: TaskCompletionData
+): TaskItem {
+  return {
+    ...task,
+    completedAt: completion.completedAt,
+    isCompleted: completion.isCompleted,
+    updatedAt: completion.updatedAt
+  };
+}
+
+function updateTasksSummary(
+  data: ProductDetailData | undefined,
+  task: TaskItem,
+  completion: TaskCompletionData
+) {
+  if (!data || task.isCompleted === completion.isCompleted) {
+    return data;
+  }
+
+  const completedDelta = completion.isCompleted ? 1 : -1;
+  const openDelta = completion.isCompleted ? -1 : 1;
+
+  return {
+    ...data,
+    tasksSummary: {
+      completedCount: Math.max(data.tasksSummary.completedCount + completedDelta, 0),
+      openCount: Math.max(data.tasksSummary.openCount + openDelta, 0)
+    }
+  };
+}
+
 function TaskManagementCard({
   isBusy,
+  isCompletionPending,
   onDeleteStart,
   onEditStart,
+  onCompletionChange,
   task
 }: {
   isBusy: boolean;
+  isCompletionPending: boolean;
+  onCompletionChange: (task: TaskItem, isCompleted: boolean) => void;
   onDeleteStart: (task: TaskItem) => void;
   onEditStart: (task: TaskItem) => void;
   task: TaskItem;
@@ -119,6 +164,18 @@ function TaskManagementCard({
           </p>
           <h3 className="management-card__title">{task.name}</h3>
         </div>
+        <label className="task-management-page__task-toggle">
+          <input
+            aria-label={`${task.name}を${task.isCompleted ? "未完了に戻す" : "完了にする"}`}
+            checked={task.isCompleted}
+            disabled={isBusy || isCompletionPending}
+            type="checkbox"
+            onChange={(event) => {
+              onCompletionChange(task, event.currentTarget.checked);
+            }}
+          />
+          <span>{task.isCompleted ? "完了済み" : "未完了"}</span>
+        </label>
       </div>
       <dl className="management-card__details">
         <div>
@@ -174,6 +231,7 @@ export function ProductTaskManagementPage() {
   const [pendingDeleteTask, setPendingDeleteTask] = useState<TaskItem | null>(
     null
   );
+  const [showCompletedTasks, setShowCompletedTasks] = useState(false);
   const taskForm = useZodForm(taskCreateInputSchema, {
     defaultValues: defaultTaskFormValues,
     mode: "onChange"
@@ -200,7 +258,7 @@ export function ProductTaskManagementPage() {
     enabled: Boolean(productId && productDetailQuery.data),
     queryKey: productId
       ? queryKeys.products.tasks(productId, {
-          showCompleted: false
+          showCompleted: showCompletedTasks
         })
       : ["products", "tasks", "missing"],
     queryFn: async ({ signal }) => {
@@ -208,7 +266,7 @@ export function ProductTaskManagementPage() {
         getProductTasksPath(productId ?? ""),
         {
           query: {
-            showCompleted: false
+            showCompleted: showCompletedTasks
           },
           signal
         }
@@ -284,6 +342,61 @@ export function ProductTaskManagementPage() {
       return response.data;
     },
     onSuccess: refreshTaskData
+  });
+
+  const updateTaskCompletionMutation = useMutation({
+    mutationFn: async ({ isCompleted, task }: TaskCompletionVariables) => {
+      const response = await apiClient.patch<
+        TaskCompletionData,
+        undefined,
+        TaskCompletionInput
+      >(getTaskCompletionPath(task.taskId), {
+        body: {
+          isCompleted
+        }
+      });
+
+      return response.data;
+    },
+    onSuccess: async (data, variables) => {
+      if (!productId) {
+        return;
+      }
+
+      queryClient.setQueryData<TaskListData>(
+        queryKeys.products.tasks(productId, {
+          showCompleted: showCompletedTasks
+        }),
+        (current) => {
+          if (!current) {
+            return current;
+          }
+
+          const nextItems = current.items.map((task) =>
+            task.taskId === data.taskId ? updateTaskWithCompletion(task, data) : task
+          );
+
+          return {
+            ...current,
+            items: showCompletedTasks
+              ? nextItems
+              : nextItems.filter((task) => !task.isCompleted)
+          };
+        }
+      );
+      queryClient.setQueryData<ProductDetailData>(
+        queryKeys.products.detail(productId),
+        (current) => updateTasksSummary(current, variables.task, data)
+      );
+      setEditingTask((current) =>
+        current?.taskId === data.taskId
+          ? updateTaskWithCompletion(current, data)
+          : current
+      );
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard.root
+      });
+    }
   });
 
   const updateTaskMutation = useMutation({
@@ -479,6 +592,28 @@ export function ProductTaskManagementPage() {
     }
   };
 
+  const handleTaskCompletionChange = async (
+    task: TaskItem,
+    isCompleted: boolean
+  ) => {
+    setNotice(null);
+
+    try {
+      await updateTaskCompletionMutation.mutateAsync({
+        isCompleted,
+        task
+      });
+    } catch (error) {
+      setNotice({
+        message: getApiErrorDisplayMessage(error, {
+          codeMessages: PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES,
+          fallbackMessage: PRODUCT_ERROR_MESSAGES.taskCompletionFailed
+        }),
+        type: "error"
+      });
+    }
+  };
+
   const isInitialLoading =
     productDetailQuery.isPending ||
     (Boolean(productDetailQuery.data) && taskListQuery.isPending);
@@ -532,8 +667,15 @@ export function ProductTaskManagementPage() {
     taskListQuery.isFetching ||
     createTaskMutation.isPending ||
     updateTaskMutation.isPending ||
-    deleteTaskMutation.isPending;
+    deleteTaskMutation.isPending ||
+    updateTaskCompletionMutation.isPending;
   const formErrors = taskForm.formState.errors;
+  const pendingCompletionTaskId = updateTaskCompletionMutation.isPending
+    ? updateTaskCompletionMutation.variables?.task.taskId
+    : null;
+  const taskEmptyMessage = showCompletedTasks
+    ? "タスクはまだありません。必要な作業を追加してください。"
+    : "未完了のタスクはありません。";
 
   return (
     <section
@@ -599,6 +741,23 @@ export function ProductTaskManagementPage() {
           <span>{`未完了 ${tasksSummary.openCount}件`}</span>
           <span>{`完了 ${tasksSummary.completedCount}件`}</span>
         </div>
+        <div className="task-management-page__toolbar">
+          <label className="task-management-page__completed-toggle">
+            <input
+              checked={showCompletedTasks}
+              disabled={taskListQuery.isFetching || updateTaskCompletionMutation.isPending}
+              type="checkbox"
+              onChange={(event) => {
+                setNotice(null);
+                setShowCompletedTasks(event.currentTarget.checked);
+              }}
+            />
+            <span>完了済みも表示</span>
+          </label>
+          <p className="management-form__hint">
+            商品詳細では簡易切替、この画面では登録・編集・削除までまとめて管理します。
+          </p>
+        </div>
         {taskListQuery.isError ? (
           <ScreenErrorState
             message={getApiErrorDisplayMessage(taskListQuery.error, {
@@ -608,14 +767,16 @@ export function ProductTaskManagementPage() {
             onRetry={handleRetry}
           />
         ) : taskItems.length === 0 ? (
-          <ScreenEmptyState message="未完了のタスクはありません。" />
+          <ScreenEmptyState message={taskEmptyMessage} />
         ) : (
           <div className="management-list task-management-page__task-list" role="list">
             {taskItems.map((task) => (
               <TaskManagementCard
                 key={task.taskId}
                 isBusy={isPageBusy}
+                isCompletionPending={pendingCompletionTaskId === task.taskId}
                 task={task}
+                onCompletionChange={handleTaskCompletionChange}
                 onDeleteStart={setPendingDeleteTask}
                 onEditStart={handleEditStart}
               />

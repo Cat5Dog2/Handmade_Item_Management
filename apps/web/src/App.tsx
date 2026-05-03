@@ -10,6 +10,7 @@ import { ProductCreatePage } from "./products/product-create-page";
 import { ProductDetailPage } from "./products/product-detail-page";
 import { ProductEditPage } from "./products/product-edit-page";
 import { ProductListPage } from "./products/product-list-page";
+import { ProductTaskManagementPage } from "./products/product-task-management-page";
 import { AppProviders } from "./providers/app-providers";
 import {
   protectedRoutes,
@@ -29,6 +30,8 @@ function getProtectedRouteElement(route: ProtectedRouteDefinition) {
       return <ProductDetailPage />;
     case "/products/:productId/edit":
       return <ProductEditPage />;
+    case "/products/:productId/tasks":
+      return <ProductTaskManagementPage />;
     case "/customers":
       return <CustomerListPage />;
     case "/customers/new":

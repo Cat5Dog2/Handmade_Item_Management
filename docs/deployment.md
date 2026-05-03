@@ -332,6 +332,32 @@ docker build -f apps/api/Dockerfile -t handmade-sales-api:local .
 
 Cloud Build を使う場合も、上記と同等に「root context + `apps/api/Dockerfile`」で build する設定にすること。
 
+## 9.2.1 Cloud Build で API / Web を反映する
+
+本リポジトリでは `cloudbuild.yaml` を使い、次を1つの Cloud Build で実行する。
+
+1. API コンテナを `apps/api/Dockerfile` から build する
+2. Artifact Registry へ push する
+3. Cloud Run サービス `handmade-sales-api` へ deploy する
+4. Web を `npm run build:web` で build する
+5. Firebase Hosting へ deploy する
+
+実行例:
+
+```bash
+gcloud builds submit \
+  --config cloudbuild.yaml \
+  --substitutions=_APP_OWNER_EMAIL=your-login-email@example.com,_CORS_ORIGIN=https://your-project-id.web.app,_FIREBASE_PROJECT_ID=your-project-id,_FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app,_VITE_FIREBASE_API_KEY=your_firebase_web_api_key,_VITE_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com,_VITE_FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app,_VITE_FIREBASE_MESSAGING_SENDER_ID=1234567890,_VITE_FIREBASE_APP_ID=1:1234567890:web:abcdef1234567890
+```
+
+補足:
+
+- `cloudbuild.yaml` の `build-api-image` は、必ずリポジトリルート `.` を build context にする
+- `_CLOUD_RUN_SERVICE` を変更する場合は、`firebase.json` の Hosting rewrite の `serviceId` も同じ値へ更新する
+- `_CORS_ORIGIN` は Firebase Hosting の公開URLまたはカスタムドメインに合わせる
+- Web の API 呼び出し先は本番でも `/api` のままとし、Cloud Run の直接URLを `VITE_API_BASE_URL` にしない
+- `APP_OWNER_EMAIL` や Firebase Web SDK の値は環境ごとに substitutions で渡し、固定値を増やさない
+
 ## 9.3 Cloud Run へ初回デプロイする
 
 例:
@@ -553,6 +579,12 @@ firebase emulators:start --only auth,firestore,storage,hosting
 docker build -f apps/api/Dockerfile \
   -t asia-northeast1-docker.pkg.dev/your-project-id/handmade-sales-api/api:latest \
   .
+```
+
+### Cloud Build で API / Web 反映
+
+```bash
+gcloud builds submit --config cloudbuild.yaml --substitutions=_APP_OWNER_EMAIL=your-login-email@example.com,_CORS_ORIGIN=https://your-project-id.web.app,_FIREBASE_PROJECT_ID=your-project-id,_FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app,_VITE_FIREBASE_API_KEY=your_firebase_web_api_key,_VITE_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com,_VITE_FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app,_VITE_FIREBASE_MESSAGING_SENDER_ID=1234567890,_VITE_FIREBASE_APP_ID=1:1234567890:web:abcdef1234567890
 ```
 
 ### Cloud Run デプロイ

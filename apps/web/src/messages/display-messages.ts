@@ -39,6 +39,7 @@ export const PRODUCT_ERROR_MESSAGE_OVERRIDES = {
 
 export const PRODUCT_IMAGE_ERROR_MESSAGES = {
   addFailed: "画像を追加できませんでした。再度お試しください。",
+  deleteFailed: "画像を削除できませんでした。再度お試しください。",
   replaceFailed: "画像を差し替えできませんでした。再度お試しください。"
 } as const;
 

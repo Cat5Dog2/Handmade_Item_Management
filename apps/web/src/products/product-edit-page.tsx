@@ -53,6 +53,7 @@ type ProductUpdateFieldName =
   | "categoryId"
   | "tagIds"
   | "status"
+  | "primaryImageId"
   | "soldCustomerId";
 
 const SOLD_ROLLBACK_CONFIRM_MESSAGE =
@@ -294,6 +295,42 @@ export function ProductEditPage() {
     }
   });
 
+  const productImageDeleteMutation = useMutation({
+    mutationFn: async (imageId: string) => {
+      if (!productId) {
+        throw new Error("Product ID is missing.");
+      }
+
+      const response = await apiClient.delete<ProductImageMutationData>(
+        getProductImagePath(productId, imageId)
+      );
+
+      return response.data;
+    },
+    onSuccess: async (_, deletedImageId) => {
+      if (!productId) {
+        return;
+      }
+
+      const selectedPrimaryImageId = form.getValues("primaryImageId");
+      const remainingImages = sortImages(
+        productDetailQuery.data?.images ?? []
+      ).filter((image) => image.imageId !== deletedImageId);
+
+      if (
+        selectedPrimaryImageId &&
+        !remainingImages.some((image) => image.imageId === selectedPrimaryImageId)
+      ) {
+        form.setValue("primaryImageId", remainingImages[0]?.imageId ?? null, {
+          shouldDirty: false,
+          shouldValidate: true
+        });
+      }
+
+      await refreshProductQueries(productId);
+    }
+  });
+
   const applyFormApiErrors = useCallback(
     (error: unknown) => {
       if (!(error instanceof ApiClientError) || !error.details?.length) {
@@ -310,6 +347,7 @@ export function ProductEditPage() {
           detail.field === "categoryId" ||
           detail.field === "tagIds" ||
           detail.field === "status" ||
+          detail.field === "primaryImageId" ||
           detail.field === "soldCustomerId"
         ) {
           form.setError(detail.field as ProductUpdateFieldName, {
@@ -437,6 +475,23 @@ export function ProductEditPage() {
     }
   };
 
+  const handleDeleteImage = async (imageId: string) => {
+    setNotice(null);
+
+    try {
+      await productImageDeleteMutation.mutateAsync(imageId);
+    } catch (error) {
+      setNotice({
+        message: getApiErrorDisplayMessage(error, {
+          codeMessages: PRODUCT_IMAGE_ERROR_MESSAGE_OVERRIDES,
+          fallbackMessage: PRODUCT_IMAGE_ERROR_MESSAGES.deleteFailed,
+          fallbackMessageCodes: IMAGE_MUTATION_FALLBACK_MESSAGE_CODES
+        }),
+        type: "error"
+      });
+    }
+  };
+
   const categories = categoriesQuery.data?.items ?? [];
   const tags = tagsQuery.data?.items ?? [];
   const customers = customersQuery.data?.items ?? [];
@@ -462,7 +517,10 @@ export function ProductEditPage() {
     tagsQuery.isFetching ||
     customersQuery.isFetching;
   const isPageBusy =
-    isLookupFetching || updateProductMutation.isPending || productImageMutation.isPending;
+    isLookupFetching ||
+    updateProductMutation.isPending ||
+    productImageMutation.isPending ||
+    productImageDeleteMutation.isPending;
   const imageUploadStatus = productImageMutation.isPending
     ? productImageMutation.variables?.kind === "create"
       ? "画像を追加しています..."
@@ -802,6 +860,34 @@ export function ProductEditPage() {
             ? ` あと${PRODUCT_IMAGE_MAX_COUNT - sortedImages.length}枚追加できます。`
             : " 画像は10枚登録済みです。不要な画像を削除してから追加してください。"}
         </p>
+        {sortedImages.length > 0 ? (
+          <div className="auth-field">
+            <label className="auth-field__label" htmlFor="product-primary-image">
+              代表画像
+            </label>
+            <select
+              {...form.register("primaryImageId")}
+              id="product-primary-image"
+              className="auth-field__input"
+              aria-invalid={Boolean(formErrors.primaryImageId)}
+              disabled={isPageBusy}
+            >
+              <option value="">代表画像なし</option>
+              {sortedImages.map((image) => (
+                <option key={image.imageId} value={image.imageId}>
+                  {`画像 ${image.sortOrder}`}
+                </option>
+              ))}
+            </select>
+            {formErrors.primaryImageId ? (
+              <p className="auth-field__error" role="alert">
+                {formErrors.primaryImageId.message}
+              </p>
+            ) : (
+              <p className="management-form__hint">変更は更新ボタンで保存されます。</p>
+            )}
+          </div>
+        ) : null}
         {sortedImages.length === 0 ? (
           <div className="management-card">
             <p className="management-form__hint">
@@ -860,6 +946,17 @@ export function ProductEditPage() {
                     }}
                   >
                     差し替え
+                  </button>
+                  <button
+                    className="danger-button"
+                    disabled={isPageBusy}
+                    type="button"
+                    aria-label={`${product.name} の画像 ${image.sortOrder} (${image.imageId}) を削除する`}
+                    onClick={() => {
+                      void handleDeleteImage(image.imageId);
+                    }}
+                  >
+                    削除する
                   </button>
                 </div>
               </article>

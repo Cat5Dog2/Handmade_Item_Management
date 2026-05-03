@@ -37,6 +37,24 @@ export const PRODUCT_ERROR_MESSAGE_OVERRIDES = {
   PRODUCT_NOT_FOUND: PRODUCT_ERROR_MESSAGES.notFound
 } as const;
 
+export const PRODUCT_IMAGE_ERROR_MESSAGES = {
+  addFailed: "画像を追加できませんでした。再度お試しください。",
+  replaceFailed: "画像を差し替えできませんでした。再度お試しください。"
+} as const;
+
+export const PRODUCT_IMAGE_ERROR_MESSAGE_OVERRIDES = {
+  IMAGE_LIMIT_EXCEEDED:
+    "画像は最大10枚まで登録できます。不要な画像を削除してから追加してください。",
+  IMAGE_NOT_FOUND: "対象の画像が見つかりません。最新の情報を読み込み直してください。",
+  IMAGE_TOO_LARGE:
+    "画像サイズが大きすぎます。10MB以下の画像を選択してください。",
+  PRODUCT_DELETED: PRODUCT_ERROR_MESSAGES.deleted,
+  PRODUCT_NOT_FOUND: PRODUCT_ERROR_MESSAGES.notFound,
+  PRODUCT_RELATED_RESOURCE_UNAVAILABLE: "この商品の画像は操作できません。",
+  UNSUPPORTED_IMAGE_TYPE:
+    "JPEG、PNG、WebP 形式の画像を選択してください。"
+} as const;
+
 export const PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES = {
   PRODUCT_NOT_FOUND: PRODUCT_ERROR_MESSAGES.notFound,
   PRODUCT_RELATED_RESOURCE_UNAVAILABLE: PRODUCT_ERROR_MESSAGES.tasksUnavailable,

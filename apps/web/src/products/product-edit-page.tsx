@@ -1,21 +1,25 @@
 import type {
   CategoryListData,
   CustomerListData,
+  ApiErrorCode,
   ProductDetailData,
   ProductImageDetail,
+  ProductImageMutationData,
   ProductUpdateData,
   ProductUpdateInput,
   TagListData
 } from "@handmade/shared";
 import {
   API_PATHS,
+  getProductImagePath,
+  getProductImagesPath,
   getProductPath,
   PRODUCT_STATUS_LABELS,
   PRODUCT_STATUSES,
   productUpdateInputSchema
 } from "@handmade/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { z } from "zod";
 import { ApiClientError } from "../api/api-client";
@@ -30,7 +34,9 @@ import { useZodForm } from "../forms/use-zod-form";
 import {
   APP_NAME,
   PRODUCT_ERROR_MESSAGES,
-  PRODUCT_ERROR_MESSAGE_OVERRIDES
+  PRODUCT_ERROR_MESSAGE_OVERRIDES,
+  PRODUCT_IMAGE_ERROR_MESSAGES,
+  PRODUCT_IMAGE_ERROR_MESSAGE_OVERRIDES
 } from "../messages/display-messages";
 
 interface PageNotice {
@@ -59,6 +65,20 @@ const customerSelectQuery = {
   sortOrder: "asc"
 } as const;
 
+const PRODUCT_IMAGE_MAX_COUNT = 10;
+const IMAGE_MUTATION_FALLBACK_MESSAGE_CODES: ApiErrorCode[] = [
+  "INTERNAL_ERROR",
+  "VALIDATION_ERROR"
+];
+
+type ProductImageUploadAction =
+  | { kind: "create" }
+  | { imageId: string; kind: "replace" };
+
+type ProductImageUploadInput = ProductImageUploadAction & {
+  file: File;
+};
+
 const emptyProductUpdateFormValues: ProductUpdateFormInput = {
   categoryId: "",
   description: "",
@@ -76,6 +96,16 @@ function selectPrimaryImage(images: ProductImageDetail[]) {
     [...images].sort((left, right) => left.sortOrder - right.sortOrder)[0] ??
     null
   );
+}
+
+function sortImages(images: ProductImageDetail[]) {
+  return [...images].sort((left, right) => left.sortOrder - right.sortOrder);
+}
+
+function createProductImageFormData(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return formData;
 }
 
 function toProductUpdateFormValues(data: ProductDetailData): ProductUpdateFormInput {
@@ -105,6 +135,10 @@ export function ProductEditPage() {
   );
   const [pendingRollbackInput, setPendingRollbackInput] =
     useState<ProductUpdateInput | null>(null);
+  const productImageUploadInputRef = useRef<HTMLInputElement>(null);
+  const pendingProductImageUploadRef = useRef<ProductImageUploadAction | null>(
+    null
+  );
   const form = useZodForm(productUpdateInputSchema, {
     defaultValues: emptyProductUpdateFormValues,
     mode: "onChange"
@@ -221,6 +255,45 @@ export function ProductEditPage() {
     }
   });
 
+  const productImageMutation = useMutation({
+    mutationFn: async (input: ProductImageUploadInput) => {
+      if (!productId) {
+        throw new Error("Product ID is missing.");
+      }
+
+      const body = createProductImageFormData(input.file);
+
+      if (input.kind === "create") {
+        const response = await apiClient.post<
+          ProductImageMutationData,
+          undefined,
+          FormData
+        >(getProductImagesPath(productId), {
+          body
+        });
+
+        return response.data;
+      }
+
+      const response = await apiClient.put<
+        ProductImageMutationData,
+        undefined,
+        FormData
+      >(getProductImagePath(productId, input.imageId), {
+        body
+      });
+
+      return response.data;
+    },
+    onSuccess: async () => {
+      if (!productId) {
+        return;
+      }
+
+      await refreshProductQueries(productId);
+    }
+  });
+
   const applyFormApiErrors = useCallback(
     (error: unknown) => {
       if (!(error instanceof ApiClientError) || !error.details?.length) {
@@ -318,10 +391,61 @@ export function ProductEditPage() {
     navigate(productId ? getProductPath(productId) : "/products");
   };
 
+  const handleStartImageUpload = (
+    action: ProductImageUploadAction,
+    canAddImage = true
+  ) => {
+    if (action.kind === "create" && !canAddImage) {
+      return;
+    }
+
+    pendingProductImageUploadRef.current = action;
+    setNotice(null);
+    productImageUploadInputRef.current?.click();
+  };
+
+  const handleImageUploadChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const action = pendingProductImageUploadRef.current;
+    const file = event.currentTarget.files?.[0];
+
+    pendingProductImageUploadRef.current = null;
+    event.currentTarget.value = "";
+
+    if (!action || !file) {
+      return;
+    }
+
+    setNotice(null);
+
+    try {
+      await productImageMutation.mutateAsync({
+        ...action,
+        file
+      });
+    } catch (error) {
+      setNotice({
+        message: getApiErrorDisplayMessage(error, {
+          codeMessages: PRODUCT_IMAGE_ERROR_MESSAGE_OVERRIDES,
+          fallbackMessage:
+            action.kind === "create"
+              ? PRODUCT_IMAGE_ERROR_MESSAGES.addFailed
+              : PRODUCT_IMAGE_ERROR_MESSAGES.replaceFailed,
+          fallbackMessageCodes: IMAGE_MUTATION_FALLBACK_MESSAGE_CODES
+        }),
+        type: "error"
+      });
+    }
+  };
+
   const categories = categoriesQuery.data?.items ?? [];
   const tags = tagsQuery.data?.items ?? [];
   const customers = customersQuery.data?.items ?? [];
   const product = productDetailQuery.data?.product;
+  const sortedImages = useMemo(
+    () => sortImages(productDetailQuery.data?.images ?? []),
+    [productDetailQuery.data?.images]
+  );
+  const hasImageCapacity = sortedImages.length < PRODUCT_IMAGE_MAX_COUNT;
   const lookupError =
     productDetailQuery.error ??
     categoriesQuery.error ??
@@ -337,7 +461,13 @@ export function ProductEditPage() {
     categoriesQuery.isFetching ||
     tagsQuery.isFetching ||
     customersQuery.isFetching;
-  const isPageBusy = isLookupFetching || updateProductMutation.isPending;
+  const isPageBusy =
+    isLookupFetching || updateProductMutation.isPending || productImageMutation.isPending;
+  const imageUploadStatus = productImageMutation.isPending
+    ? productImageMutation.variables?.kind === "create"
+      ? "画像を追加しています..."
+      : "画像を差し替えています..."
+    : null;
   const formErrors = form.formState.errors;
   const shouldShowCustomerSelector = selectedStatus === "sold";
 
@@ -400,6 +530,11 @@ export function ProductEditPage() {
         {isLookupFetching ? (
           <p className="management-page__sync" role="status">
             最新の商品情報を更新中...
+          </p>
+        ) : null}
+        {imageUploadStatus ? (
+          <p className="management-page__sync" role="status">
+            {imageUploadStatus}
           </p>
         ) : null}
         {notice ? (
@@ -635,6 +770,113 @@ export function ProductEditPage() {
             </button>
           </div>
         </form>
+      </section>
+
+      <section className="management-page__section" aria-labelledby="product-edit-images-title">
+        <div className="management-page__section-header">
+          <div>
+            <h2
+              id="product-edit-images-title"
+              className="management-page__section-title"
+            >
+              画像
+            </h2>
+            <p className="management-page__section-summary">
+              商品画像の追加と差し替えを行います。最大10枚まで登録できます。
+            </p>
+          </div>
+          <button
+            className="primary-button"
+            disabled={isPageBusy || !hasImageCapacity}
+            type="button"
+            onClick={() => {
+              handleStartImageUpload({ kind: "create" }, hasImageCapacity);
+            }}
+          >
+            画像を追加
+          </button>
+        </div>
+        <p className="management-form__hint">
+          JPEG、PNG、WebP 形式の10MB以下の画像を選択してください。
+          {hasImageCapacity
+            ? ` あと${PRODUCT_IMAGE_MAX_COUNT - sortedImages.length}枚追加できます。`
+            : " 画像は10枚登録済みです。不要な画像を削除してから追加してください。"}
+        </p>
+        {sortedImages.length === 0 ? (
+          <div className="management-card">
+            <p className="management-form__hint">
+              画像はまだ登録されていません。上の追加ボタンから登録してください。
+            </p>
+          </div>
+        ) : (
+          <div className="management-list" role="list">
+            {sortedImages.map((image) => (
+              <article
+                key={image.imageId}
+                className="management-card"
+                role="listitem"
+              >
+                <div className="management-card__header">
+                  <div>
+                    <p className="management-card__subtitle">
+                      {image.isPrimary ? "代表画像" : "通常画像"}
+                    </p>
+                    <h3 className="management-card__title">{`画像 ${image.sortOrder}`}</h3>
+                  </div>
+                  <span className="management-badge is-idle">{image.imageId}</span>
+                </div>
+                <div className="product-detail-page__image">
+                  <img
+                    alt={`${product.name} の画像 ${image.sortOrder}`}
+                    className="product-detail-page__image-element"
+                    src={image.thumbnailUrl}
+                  />
+                </div>
+                <dl className="management-card__details">
+                  <div>
+                    <dt>画像ID</dt>
+                    <dd>{image.imageId}</dd>
+                  </div>
+                  <div>
+                    <dt>並び順</dt>
+                    <dd>{`${image.sortOrder}番目`}</dd>
+                  </div>
+                  <div>
+                    <dt>代表画像</dt>
+                    <dd>{image.isPrimary ? "はい" : "いいえ"}</dd>
+                  </div>
+                </dl>
+                <div className="management-card__actions">
+                  <button
+                    className="secondary-button"
+                    disabled={isPageBusy}
+                    type="button"
+                    aria-label={`${product.name} の画像 ${image.sortOrder} を差し替える`}
+                    onClick={() => {
+                      handleStartImageUpload({
+                        imageId: image.imageId,
+                        kind: "replace"
+                      });
+                    }}
+                  >
+                    差し替え
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+        <input
+          ref={productImageUploadInputRef}
+          accept="image/jpeg,image/png,image/webp"
+          aria-label="商品画像ファイルを選択"
+          data-testid="product-image-upload-input"
+          hidden
+          type="file"
+          onChange={(event) => {
+            void handleImageUploadChange(event);
+          }}
+        />
       </section>
 
       {pendingRollbackInput ? (

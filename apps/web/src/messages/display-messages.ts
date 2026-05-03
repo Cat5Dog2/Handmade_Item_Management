@@ -23,6 +23,10 @@ export const PRODUCT_ERROR_MESSAGES = {
   listFetchFailed: "商品一覧の取得に失敗しました。再度お試しください。",
   notFound: "対象の商品が見つかりません。",
   taskCompletionFailed: "タスクの完了状態を更新できませんでした。再度お試しください。",
+  taskCreateFailed: "タスクを保存できませんでした。",
+  taskDeleteFailed: "タスクを削除できませんでした。",
+  taskNotFound: "対象のタスクが見つかりません。最新の一覧を確認してください。",
+  taskUpdateFailed: "タスクを更新できませんでした。",
   tasksFetchFailed: "タスク一覧を取得できませんでした。再度お試しください。",
   tasksUnavailable: "この商品のタスクは表示できません。",
   updateFailed: "商品を更新できませんでした。"
@@ -35,7 +39,8 @@ export const PRODUCT_ERROR_MESSAGE_OVERRIDES = {
 
 export const PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES = {
   PRODUCT_NOT_FOUND: PRODUCT_ERROR_MESSAGES.notFound,
-  PRODUCT_RELATED_RESOURCE_UNAVAILABLE: PRODUCT_ERROR_MESSAGES.tasksUnavailable
+  PRODUCT_RELATED_RESOURCE_UNAVAILABLE: PRODUCT_ERROR_MESSAGES.tasksUnavailable,
+  TASK_NOT_FOUND: PRODUCT_ERROR_MESSAGES.taskNotFound
 } as const;
 
 export const CATEGORY_ERROR_MESSAGES = {

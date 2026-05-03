@@ -718,6 +718,16 @@ input {
   min-width: 0;
 }
 
+.task-management-page__content-field,
+.task-management-page__memo-field {
+  grid-column: 1 / -1;
+}
+
+.task-management-page__textarea {
+  min-height: 104px;
+  resize: vertical;
+}
+
 .task-management-page__task-content,
 .task-management-page__task-memo {
   margin: 0;

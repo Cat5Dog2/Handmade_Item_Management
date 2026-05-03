@@ -1,7 +1,23 @@
-import type { ProductDetailData, TaskItem, TaskListData } from "@handmade/shared";
-import { getProductPath, getProductTasksPath } from "@handmade/shared";
-import { useQuery } from "@tanstack/react-query";
+import type {
+  ProductDetailData,
+  TaskCreateData,
+  TaskCreateInput,
+  TaskDeleteData,
+  TaskItem,
+  TaskListData,
+  TaskUpdateData,
+  TaskUpdateInput
+} from "@handmade/shared";
+import {
+  getProductPath,
+  getProductTasksPath,
+  getTaskPath,
+  taskCreateInputSchema
+} from "@handmade/shared";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { ApiClientError } from "../api/api-client";
 import { getApiErrorDisplayMessage } from "../api/api-error-display";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
@@ -10,12 +26,28 @@ import {
   ScreenErrorState,
   ScreenLoadingState
 } from "../components/screen-states";
+import { useZodForm } from "../forms/use-zod-form";
 import {
   APP_NAME,
   PRODUCT_ERROR_MESSAGES,
   PRODUCT_ERROR_MESSAGE_OVERRIDES,
   PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES
 } from "../messages/display-messages";
+
+interface PageNotice {
+  message: string;
+  type: "error" | "success";
+}
+
+type TaskFormMode = "create" | "edit" | "hidden";
+type TaskFormFieldName = "content" | "dueDate" | "memo" | "name";
+
+const defaultTaskFormValues = {
+  content: "",
+  dueDate: "",
+  memo: "",
+  name: ""
+};
 
 const dateFormatter = new Intl.DateTimeFormat("ja-JP", {
   day: "2-digit",
@@ -46,7 +78,38 @@ function formatDateTime(value: string | null) {
   return dateTimeFormatter.format(new Date(value));
 }
 
-function TaskManagementCard({ task }: { task: TaskItem }) {
+function getTaskFieldErrorMessage(
+  fieldName: TaskFormFieldName,
+  fallbackMessage?: string
+) {
+  if (fieldName === "name") {
+    return fallbackMessage?.includes("100")
+      ? "タスク名は100文字以内で入力してください。"
+      : "タスク名を入力してください。";
+  }
+
+  if (fieldName === "content") {
+    return "タスク内容は2000文字以内で入力してください。";
+  }
+
+  if (fieldName === "dueDate") {
+    return "納期は YYYY-MM-DD 形式で入力してください。";
+  }
+
+  return "メモは1000文字以内で入力してください。";
+}
+
+function TaskManagementCard({
+  isBusy,
+  onDeleteStart,
+  onEditStart,
+  task
+}: {
+  isBusy: boolean;
+  onDeleteStart: (task: TaskItem) => void;
+  onEditStart: (task: TaskItem) => void;
+  task: TaskItem;
+}) {
   return (
     <article className="management-card task-management-page__task-card" role="listitem">
       <div className="management-card__header">
@@ -79,13 +142,42 @@ function TaskManagementCard({ task }: { task: TaskItem }) {
       {task.memo.trim().length > 0 ? (
         <p className="task-management-page__task-memo">{task.memo}</p>
       ) : null}
+      <div className="management-card__actions">
+        <button
+          className="secondary-button"
+          disabled={isBusy}
+          type="button"
+          onClick={() => onEditStart(task)}
+        >
+          編集する
+        </button>
+        <button
+          className="danger-button"
+          disabled={isBusy}
+          type="button"
+          onClick={() => onDeleteStart(task)}
+        >
+          削除する
+        </button>
+      </div>
     </article>
   );
 }
 
 export function ProductTaskManagementPage() {
   const apiClient = useApiClient();
+  const queryClient = useQueryClient();
   const { productId } = useParams();
+  const [editingTask, setEditingTask] = useState<TaskItem | null>(null);
+  const [formMode, setFormMode] = useState<TaskFormMode>("hidden");
+  const [notice, setNotice] = useState<PageNotice | null>(null);
+  const [pendingDeleteTask, setPendingDeleteTask] = useState<TaskItem | null>(
+    null
+  );
+  const taskForm = useZodForm(taskCreateInputSchema, {
+    defaultValues: defaultTaskFormValues,
+    mode: "onChange"
+  });
 
   const productDetailQuery = useQuery({
     enabled: Boolean(productId),
@@ -126,6 +218,108 @@ export function ProductTaskManagementPage() {
     }
   });
 
+  const refreshTaskData = useCallback(async () => {
+    if (!productId) {
+      return;
+    }
+
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: ["products", "tasks", productId]
+      }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.products.detail(productId)
+      }),
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.dashboard.root
+      })
+    ]);
+  }, [productId, queryClient]);
+
+  const resetTaskForm = useCallback(() => {
+    setEditingTask(null);
+    setFormMode("hidden");
+    taskForm.clearErrors();
+    taskForm.reset(defaultTaskFormValues);
+  }, [taskForm]);
+
+  const applyFormApiErrors = useCallback(
+    (error: unknown) => {
+      if (!(error instanceof ApiClientError) || !error.details?.length) {
+        return false;
+      }
+
+      let applied = false;
+
+      error.details.forEach((detail) => {
+        if (
+          detail.field === "content" ||
+          detail.field === "dueDate" ||
+          detail.field === "memo" ||
+          detail.field === "name"
+        ) {
+          taskForm.setError(detail.field, {
+            message: getTaskFieldErrorMessage(detail.field, detail.message),
+            type: "server"
+          });
+          applied = true;
+        }
+      });
+
+      return applied;
+    },
+    [taskForm]
+  );
+
+  const createTaskMutation = useMutation({
+    mutationFn: async (input: TaskCreateInput) => {
+      const response = await apiClient.post<
+        TaskCreateData,
+        undefined,
+        TaskCreateInput
+      >(getProductTasksPath(productId ?? ""), {
+        body: input
+      });
+
+      return response.data;
+    },
+    onSuccess: refreshTaskData
+  });
+
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({
+      input,
+      task
+    }: {
+      input: TaskCreateInput;
+      task: TaskItem;
+    }) => {
+      const updateInput: TaskUpdateInput = {
+        ...input,
+        isCompleted: task.isCompleted
+      };
+      const response = await apiClient.put<
+        TaskUpdateData,
+        undefined,
+        TaskUpdateInput
+      >(getTaskPath(task.taskId), {
+        body: updateInput
+      });
+
+      return response.data;
+    },
+    onSuccess: refreshTaskData
+  });
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (taskId: string) => {
+      const response = await apiClient.delete<TaskDeleteData>(getTaskPath(taskId));
+
+      return response.data;
+    },
+    onSuccess: refreshTaskData
+  });
+
   if (!productId) {
     return (
       <section
@@ -145,12 +339,144 @@ export function ProductTaskManagementPage() {
   }
 
   const handleRetry = () => {
+    setNotice(null);
+
     if (productDetailQuery.isError) {
       void productDetailQuery.refetch();
       return;
     }
 
     void taskListQuery.refetch();
+  };
+
+  const handleCreateStart = () => {
+    setNotice(null);
+    setEditingTask(null);
+    setFormMode("create");
+    taskForm.clearErrors();
+    taskForm.reset(defaultTaskFormValues);
+  };
+
+  const handleEditStart = (task: TaskItem) => {
+    setNotice(null);
+    setEditingTask(task);
+    setFormMode("edit");
+    taskForm.clearErrors();
+    taskForm.reset({
+      content: task.content,
+      dueDate: task.dueDate ?? "",
+      memo: task.memo,
+      name: task.name
+    });
+  };
+
+  const handleTaskSubmit = taskForm.handleSubmit(async (values) => {
+    setNotice(null);
+    taskForm.clearErrors();
+
+    if (formMode === "edit") {
+      if (!editingTask) {
+        setNotice({
+          message: PRODUCT_ERROR_MESSAGES.taskNotFound,
+          type: "error"
+        });
+        return;
+      }
+
+      try {
+        await updateTaskMutation.mutateAsync({
+          input: values,
+          task: editingTask
+        });
+        resetTaskForm();
+        setNotice({
+          message: "タスクを更新しました。",
+          type: "success"
+        });
+      } catch (error) {
+        const hasFieldError = applyFormApiErrors(error);
+
+        if (error instanceof ApiClientError && error.code === "TASK_NOT_FOUND") {
+          resetTaskForm();
+          await refreshTaskData();
+        }
+
+        if (!hasFieldError) {
+          setNotice({
+            message: getApiErrorDisplayMessage(error, {
+              codeMessages: PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES,
+              fallbackMessage: PRODUCT_ERROR_MESSAGES.taskUpdateFailed
+            }),
+            type: "error"
+          });
+        }
+      }
+
+      return;
+    }
+
+    try {
+      await createTaskMutation.mutateAsync(values);
+      resetTaskForm();
+      setNotice({
+        message: "タスクを追加しました。",
+        type: "success"
+      });
+    } catch (error) {
+      const hasFieldError = applyFormApiErrors(error);
+
+      if (!hasFieldError) {
+        setNotice({
+          message: getApiErrorDisplayMessage(error, {
+            codeMessages: PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES,
+            fallbackMessage: PRODUCT_ERROR_MESSAGES.taskCreateFailed
+          }),
+          type: "error"
+        });
+      }
+    }
+  });
+
+  const handleDeleteConfirm = async () => {
+    if (!pendingDeleteTask) {
+      return;
+    }
+
+    const taskToDelete = pendingDeleteTask;
+
+    setNotice(null);
+
+    try {
+      await deleteTaskMutation.mutateAsync(taskToDelete.taskId);
+      setPendingDeleteTask(null);
+
+      if (editingTask?.taskId === taskToDelete.taskId) {
+        resetTaskForm();
+      }
+
+      setNotice({
+        message: "タスクを削除しました。",
+        type: "success"
+      });
+    } catch (error) {
+      setPendingDeleteTask(null);
+
+      if (error instanceof ApiClientError && error.code === "TASK_NOT_FOUND") {
+        if (editingTask?.taskId === taskToDelete.taskId) {
+          resetTaskForm();
+        }
+
+        await refreshTaskData();
+      }
+
+      setNotice({
+        message: getApiErrorDisplayMessage(error, {
+          codeMessages: PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES,
+          fallbackMessage: PRODUCT_ERROR_MESSAGES.taskDeleteFailed
+        }),
+        type: "error"
+      });
+    }
   };
 
   const isInitialLoading =
@@ -201,6 +527,13 @@ export function ProductTaskManagementPage() {
 
   const { product, tasksSummary } = productDetailQuery.data;
   const taskItems = taskListQuery.data?.items ?? [];
+  const isPageBusy =
+    productDetailQuery.isFetching ||
+    taskListQuery.isFetching ||
+    createTaskMutation.isPending ||
+    updateTaskMutation.isPending ||
+    deleteTaskMutation.isPending;
+  const formErrors = taskForm.formState.errors;
 
   return (
     <section
@@ -229,6 +562,18 @@ export function ProductTaskManagementPage() {
             最新のタスク情報を更新中です...
           </p>
         ) : null}
+        {notice ? (
+          <div
+            className={
+              notice.type === "success"
+                ? "management-page__notice is-success"
+                : "management-page__notice is-error"
+            }
+            role={notice.type === "success" ? "status" : "alert"}
+          >
+            <p>{notice.message}</p>
+          </div>
+        ) : null}
       </div>
 
       <section className="management-page__section" aria-labelledby="task-list-title">
@@ -241,6 +586,14 @@ export function ProductTaskManagementPage() {
               未完了タスクを期限が近い順に表示します。
             </p>
           </div>
+          <button
+            className="primary-button"
+            disabled={isPageBusy}
+            type="button"
+            onClick={handleCreateStart}
+          >
+            タスクを追加
+          </button>
         </div>
         <div className="task-management-page__summary" role="status">
           <span>{`未完了 ${tasksSummary.openCount}件`}</span>
@@ -259,11 +612,172 @@ export function ProductTaskManagementPage() {
         ) : (
           <div className="management-list task-management-page__task-list" role="list">
             {taskItems.map((task) => (
-              <TaskManagementCard key={task.taskId} task={task} />
+              <TaskManagementCard
+                key={task.taskId}
+                isBusy={isPageBusy}
+                task={task}
+                onDeleteStart={setPendingDeleteTask}
+                onEditStart={handleEditStart}
+              />
             ))}
           </div>
         )}
       </section>
+
+      {formMode !== "hidden" ? (
+        <section className="management-page__section" aria-labelledby="task-form-title">
+          <div className="management-page__section-header">
+            <div>
+              <h2 id="task-form-title" className="management-page__section-title">
+                {formMode === "edit" ? "タスク編集" : "タスク追加"}
+              </h2>
+              <p className="management-page__section-summary">
+                タスク名、内容、納期、メモを保存します。
+              </p>
+            </div>
+          </div>
+          <form
+            className="management-form task-management-page__form"
+            noValidate
+            onSubmit={handleTaskSubmit}
+          >
+            <div className="management-form__grid">
+              <div className="auth-field">
+                <label className="auth-field__label" htmlFor="task-name">
+                  タスク名
+                </label>
+                <input
+                  {...taskForm.register("name")}
+                  id="task-name"
+                  aria-invalid={Boolean(formErrors.name)}
+                  className="auth-field__input"
+                  disabled={isPageBusy}
+                  type="text"
+                />
+                {formErrors.name ? (
+                  <p className="auth-field__error" role="alert">
+                    {getTaskFieldErrorMessage("name", formErrors.name.message)}
+                  </p>
+                ) : null}
+              </div>
+              <div className="auth-field">
+                <label className="auth-field__label" htmlFor="task-due-date">
+                  納期
+                </label>
+                <input
+                  {...taskForm.register("dueDate")}
+                  id="task-due-date"
+                  aria-invalid={Boolean(formErrors.dueDate)}
+                  className="auth-field__input"
+                  disabled={isPageBusy}
+                  type="date"
+                />
+                {formErrors.dueDate ? (
+                  <p className="auth-field__error" role="alert">
+                    {getTaskFieldErrorMessage(
+                      "dueDate",
+                      formErrors.dueDate.message
+                    )}
+                  </p>
+                ) : null}
+              </div>
+              <div className="auth-field task-management-page__content-field">
+                <label className="auth-field__label" htmlFor="task-content">
+                  タスク内容
+                </label>
+                <textarea
+                  {...taskForm.register("content")}
+                  id="task-content"
+                  aria-invalid={Boolean(formErrors.content)}
+                  className="auth-field__input task-management-page__textarea"
+                  disabled={isPageBusy}
+                  rows={5}
+                />
+                {formErrors.content ? (
+                  <p className="auth-field__error" role="alert">
+                    {getTaskFieldErrorMessage(
+                      "content",
+                      formErrors.content.message
+                    )}
+                  </p>
+                ) : null}
+              </div>
+              <div className="auth-field task-management-page__memo-field">
+                <label className="auth-field__label" htmlFor="task-memo">
+                  メモ
+                </label>
+                <textarea
+                  {...taskForm.register("memo")}
+                  id="task-memo"
+                  aria-invalid={Boolean(formErrors.memo)}
+                  className="auth-field__input task-management-page__textarea"
+                  disabled={isPageBusy}
+                  rows={4}
+                />
+                {formErrors.memo ? (
+                  <p className="auth-field__error" role="alert">
+                    {getTaskFieldErrorMessage("memo", formErrors.memo.message)}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+            <div className="management-form__actions">
+              <button
+                className="primary-button"
+                disabled={!taskForm.formState.isValid || isPageBusy}
+                type="submit"
+              >
+                {formMode === "edit" ? "更新する" : "追加する"}
+              </button>
+              <button
+                className="secondary-button"
+                disabled={isPageBusy}
+                type="button"
+                onClick={resetTaskForm}
+              >
+                キャンセル
+              </button>
+            </div>
+          </form>
+        </section>
+      ) : null}
+
+      {pendingDeleteTask ? (
+        <div className="app-dialog__backdrop" role="presentation">
+          <section
+            aria-labelledby="task-delete-title"
+            aria-modal="true"
+            className="app-dialog"
+            role="dialog"
+          >
+            <h2 id="task-delete-title">タスク削除確認</h2>
+            <p className="app-dialog__summary">
+              「{pendingDeleteTask.name}」を削除しますか？
+              削除したタスクは元に戻せません。
+            </p>
+            <div className="app-dialog__actions">
+              <button
+                className="secondary-button"
+                disabled={deleteTaskMutation.isPending}
+                type="button"
+                onClick={() => setPendingDeleteTask(null)}
+              >
+                キャンセル
+              </button>
+              <button
+                className="danger-button"
+                disabled={deleteTaskMutation.isPending}
+                type="button"
+                onClick={() => {
+                  void handleDeleteConfirm();
+                }}
+              >
+                削除する
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }

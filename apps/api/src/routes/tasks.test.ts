@@ -3,8 +3,13 @@ import { vi } from "vitest";
 import { createApp } from "../app";
 import { createRequireAuth } from "../middlewares/auth";
 
+const deleteTaskMock = vi.hoisted(() => vi.fn());
 const updateTaskMock = vi.hoisted(() => vi.fn());
 const updateTaskCompletionMock = vi.hoisted(() => vi.fn());
+
+vi.mock("../tasks/delete-task", () => ({
+  deleteTask: deleteTaskMock
+}));
 
 vi.mock("../tasks/update-task", () => ({
   updateTask: updateTaskMock
@@ -35,6 +40,7 @@ function createTestApp({
 
 describe("tasks routes", () => {
   beforeEach(() => {
+    deleteTaskMock.mockReset();
     updateTaskMock.mockReset();
     updateTaskCompletionMock.mockReset();
   });
@@ -134,5 +140,42 @@ describe("tasks routes", () => {
       "task_000001",
       requestBody
     );
+  });
+
+  it("returns AUTH_REQUIRED for unauthenticated task delete requests", async () => {
+    const response = await request(createTestApp()).delete(
+      "/api/tasks/task_000001"
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.body).toMatchObject({
+      code: "AUTH_REQUIRED"
+    });
+    expect(deleteTaskMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the task delete envelope for authenticated requests", async () => {
+    deleteTaskMock.mockResolvedValue({
+      taskId: "task_000001"
+    });
+
+    const response = await request(
+      createTestApp({
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .delete("/api/tasks/task_000001")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        taskId: "task_000001"
+      }
+    });
+    expect(deleteTaskMock).toHaveBeenCalledWith("task_000001");
   });
 });

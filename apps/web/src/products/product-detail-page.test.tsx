@@ -1,6 +1,10 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { getProductPath, getProductTasksPath } from "@handmade/shared";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  getProductPath,
+  getProductTasksPath,
+  getTaskCompletionPath
+} from "@handmade/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { ApiClientError } from "../api/api-client";
@@ -8,6 +12,8 @@ import { createAppQueryClient } from "../api/query-client";
 import { ProductDetailPage } from "./product-detail-page";
 
 const apiClientMock = vi.hoisted(() => ({
+  delete: vi.fn(),
+  patch: vi.fn(),
   get: vi.fn()
 }));
 
@@ -120,6 +126,24 @@ const tasksResponse = {
   }
 };
 
+const tasksWithCompletedResponse = {
+  data: {
+    items: [
+      ...tasksResponse.data.items,
+      {
+        completedAt: "2026-04-21T10:00:00Z",
+        content: "撮影用の台紙を確認する",
+        dueDate: null,
+        isCompleted: true,
+        memo: "",
+        name: "台紙チェック",
+        taskId: "task_003",
+        updatedAt: "2026-04-21T10:00:00Z"
+      }
+    ]
+  }
+};
+
 const emptyTasksResponse = {
   data: {
     items: []
@@ -144,6 +168,7 @@ function renderProductDetail(initialEntry = "/products/HM-000001") {
       >
         <Routes>
           <Route path="/products/:productId" element={<ProductDetailPage />} />
+          <Route path="/products" element={<div>商品一覧へ戻りました</div>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>
@@ -154,17 +179,37 @@ describe("ProductDetailPage", () => {
   beforeEach(() => {
     detailMode = "success";
     taskMode = "success";
+    apiClientMock.delete.mockReset();
     apiClientMock.get.mockReset();
+    apiClientMock.patch.mockReset();
     qrCodeMock.toString.mockReset();
     qrCodeMock.toString.mockResolvedValue("<svg viewBox=\"0 0 10 10\"></svg>");
+    apiClientMock.delete.mockResolvedValue({
+      data: {
+        deletedAt: "2026-04-24T10:00:00Z",
+        productId: "HM-000001"
+      }
+    });
+    apiClientMock.patch.mockResolvedValue({
+      data: {
+        completedAt: "2026-04-24T11:00:00Z",
+        isCompleted: true,
+        taskId: "task_001",
+        updatedAt: "2026-04-24T11:00:00Z"
+      }
+    });
 
-    apiClientMock.get.mockImplementation(async (path: string) => {
+    apiClientMock.get.mockImplementation(async (path: string, options?: { query?: Record<string, unknown> }) => {
       if (path === getProductTasksPath("HM-000001")) {
         if (taskMode === "error") {
           throw new Error("boom");
         }
 
-        return taskMode === "empty" ? emptyTasksResponse : tasksResponse;
+        if (taskMode === "empty") {
+          return emptyTasksResponse;
+        }
+
+        return options?.query?.showCompleted ? tasksWithCompletedResponse : tasksResponse;
       }
 
       if (path !== getProductPath("HM-000001")) {
@@ -256,6 +301,73 @@ describe("ProductDetailPage", () => {
     );
   });
 
+  it("shows completed related tasks when the completed toggle is enabled", async () => {
+    renderProductDetail();
+
+    expect(await screen.findByText("金具チェック")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("完了済みも表示"));
+
+    await waitFor(() => {
+      expect(apiClientMock.get).toHaveBeenCalledWith(
+        getProductTasksPath("HM-000001"),
+        expect.objectContaining({
+          query: {
+            showCompleted: true
+          },
+          signal: expect.any(AbortSignal)
+        })
+      );
+    });
+    expect(await screen.findByText("台紙チェック")).toBeInTheDocument();
+  });
+
+  it("updates a related task completion state from product detail", async () => {
+    renderProductDetail();
+
+    expect(await screen.findByText("金具チェック")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("金具チェックを完了にする"));
+
+    await waitFor(() => {
+      expect(apiClientMock.patch).toHaveBeenCalledWith(
+        getTaskCompletionPath("task_001"),
+        {
+          body: {
+            isCompleted: true
+          }
+        }
+      );
+    });
+    await waitFor(() => {
+      expect(screen.queryByText("金具チェック")).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("未完了 1件")).toBeInTheDocument();
+    expect(screen.getByText("完了 2件")).toBeInTheDocument();
+  });
+
+  it("deletes a product after confirmation and returns to the product list", async () => {
+    renderProductDetail();
+
+    expect(await screen.findByRole("heading", { name: "Blue Ribbon" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "削除する" })[0]);
+
+    const dialog = screen.getByRole("dialog", { name: "商品を削除しますか？" });
+    expect(
+      within(dialog).getByText("削除した商品は通常画面から参照できなくなります。")
+    ).toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole("button", { name: "削除する" }));
+
+    await waitFor(() => {
+      expect(apiClientMock.delete).toHaveBeenCalledWith(
+        getProductPath("HM-000001")
+      );
+    });
+    expect(await screen.findByText("商品一覧へ戻りました")).toBeInTheDocument();
+  });
+
   it("shows empty states for missing image, tags, description, and tasks", async () => {
     detailMode = "emptyImage";
     taskMode = "empty";
@@ -265,7 +377,7 @@ describe("ProductDetailPage", () => {
     expect(screen.getByText("タグなし")).toBeInTheDocument();
     expect(screen.getByText("説明はありません。")).toBeInTheDocument();
     expect(
-      await screen.findByText("タスクはまだありません。必要な作業を追加してください。")
+      await screen.findByText("未完了の関連タスクはありません。")
     ).toBeInTheDocument();
   });
 

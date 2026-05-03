@@ -16,7 +16,7 @@ import {
 } from "@handmade/shared";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { getApiErrorDisplayMessage } from "../api/api-error-display";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
@@ -26,6 +26,11 @@ import {
   ScreenLoadingState
 } from "../components/screen-states";
 import { APP_NAME, PRODUCT_ERROR_MESSAGES } from "../messages/display-messages";
+
+interface PageNotice {
+  message: string;
+  type: "error" | "success";
+}
 
 interface ProductListFilterState {
   categoryId: string;
@@ -211,12 +216,15 @@ function EmptyImagePlaceholder() {
 
 export function ProductListPage() {
   const apiClient = useApiClient();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchParamsString = searchParams.toString();
   const currentQuery = useMemo(
     () => parseProductListQuery(new URLSearchParams(searchParamsString)),
     [searchParamsString]
   );
+  const [notice, setNotice] = useState<PageNotice | null>(null);
   const [draftFilters, setDraftFilters] = useState<ProductListFilterState>(() =>
     toFilterState(currentQuery)
   );
@@ -229,6 +237,31 @@ export function ProductListPage() {
       previousIncludeSoldRef.current = currentQuery.includeSold ?? true;
     }
   }, [currentQuery]);
+
+  useEffect(() => {
+    const nextNotice =
+      typeof location.state === "object" &&
+      location.state !== null &&
+      "notice" in location.state
+        ? (location.state.notice as PageNotice | null | undefined)
+        : null;
+
+    if (!nextNotice) {
+      return;
+    }
+
+    setNotice(nextNotice);
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search
+      },
+      {
+        replace: true,
+        state: null
+      }
+    );
+  }, [location.pathname, location.search, location.state, navigate]);
 
   const categoriesQuery = useQuery({
     queryKey: queryKeys.categories.list,
@@ -412,6 +445,18 @@ export function ProductListPage() {
           <p className="management-page__sync" role="status">
             最新の一覧を更新中です...
           </p>
+        ) : null}
+        {notice ? (
+          <div
+            className={
+              notice.type === "success"
+                ? "management-page__notice is-success"
+                : "management-page__notice is-error"
+            }
+            role={notice.type === "success" ? "status" : "alert"}
+          >
+            <p>{notice.message}</p>
+          </div>
         ) : null}
       </div>
 

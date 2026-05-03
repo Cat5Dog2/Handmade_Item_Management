@@ -15,12 +15,14 @@ export const DASHBOARD_ERROR_MESSAGES = {
 
 export const PRODUCT_ERROR_MESSAGES = {
   createFailed: "商品を登録できませんでした。",
+  deleteFailed: "商品を削除できませんでした。",
   deleted: "対象の商品は削除済みです。",
   detailFetchFailed: "商品詳細の取得に失敗しました。再度お試しください。",
   editLookupFailed:
     "商品編集に必要な情報を取得できませんでした。再試行してください。",
   listFetchFailed: "商品一覧の取得に失敗しました。再度お試しください。",
   notFound: "対象の商品が見つかりません。",
+  taskCompletionFailed: "タスクの完了状態を更新できませんでした。再度お試しください。",
   tasksFetchFailed: "タスク一覧を取得できませんでした。再度お試しください。",
   tasksUnavailable: "この商品のタスクは表示できません。",
   updateFailed: "商品を更新できませんでした。"

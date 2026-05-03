@@ -14,6 +14,7 @@ import { ProductEditPage } from "./product-edit-page";
 
 const apiClientMock = vi.hoisted(() => ({
   get: vi.fn(),
+  delete: vi.fn(),
   post: vi.fn(),
   put: vi.fn()
 }));
@@ -96,6 +97,22 @@ const productDetailAfterImageReplaceResponse = {
           }
         : image
     )
+  }
+};
+
+const productDetailAfterImageDeleteResponse = {
+  data: {
+    ...productDetailResponse.data,
+    images: [
+      {
+        displayUrl: "https://example.com/display-1.webp",
+        imageId: "image-1",
+        isPrimary: true,
+        sortOrder: 1,
+        thumbnailUrl: "https://example.com/thumb-1.webp",
+        urlExpiresAt: "2026-04-25T12:30:00Z"
+      }
+    ]
   }
 };
 
@@ -262,6 +279,7 @@ describe("ProductEditPage", () => {
   beforeEach(() => {
     detailMode = "success";
     apiClientMock.get.mockReset();
+    apiClientMock.delete.mockReset();
     apiClientMock.post.mockReset();
     apiClientMock.put.mockReset();
 
@@ -548,6 +566,90 @@ describe("ProductEditPage", () => {
       expect(
         screen.getByRole("img", { name: "Blue Ribbon の画像 2" })
       ).toHaveAttribute("src", "https://example.com/thumb-1-updated.webp");
+    });
+  });
+
+  it("deletes a product image and keeps the representative image selection in sync", async () => {
+    mockProductEditLookups([
+      productDetailResponse,
+      productDetailAfterImageDeleteResponse
+    ]);
+    apiClientMock.delete.mockResolvedValue({
+      data: {
+        imageId: "image-2",
+        updatedAt: "2026-04-25T10:00:00Z"
+      }
+    });
+
+    renderProductEdit();
+
+    expect(await screen.findByDisplayValue("Blue Ribbon")).toBeInTheDocument();
+
+    const primaryImageSelect = await screen.findByLabelText("代表画像");
+    expect(primaryImageSelect).toHaveValue("image-2");
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Blue Ribbon の画像 1 (image-2) を削除する"
+      })
+    );
+
+    await waitFor(() => {
+      expect(apiClientMock.delete).toHaveBeenCalledWith(
+        getProductImagePath("HM-000001", "image-2")
+      );
+    });
+
+    await waitFor(() => {
+      expect(
+        apiClientMock.get.mock.calls.filter(
+          ([path]) => path === getProductPath("HM-000001")
+        )
+      ).toHaveLength(2);
+    });
+
+    expect(screen.getByLabelText("代表画像")).toHaveValue("image-1");
+    expect(
+      screen.queryByRole("button", {
+        name: "Blue Ribbon の画像 1 (image-2) を削除する"
+      })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "Blue Ribbon の画像 1" })
+    ).toHaveAttribute("src", "https://example.com/thumb-1.webp");
+  });
+
+  it("updates the representative image selection when a different image is chosen", async () => {
+    apiClientMock.put.mockResolvedValue({
+      data: {
+        productId: "HM-000001",
+        updatedAt: "2026-04-25T10:00:00Z"
+      }
+    });
+
+    renderProductEdit();
+
+    expect(await screen.findByDisplayValue("Blue Ribbon")).toBeInTheDocument();
+
+    const primaryImageSelect = await screen.findByLabelText("代表画像");
+    expect(primaryImageSelect).toHaveValue("image-2");
+
+    fireEvent.change(primaryImageSelect, {
+      target: { value: "image-1" }
+    });
+    expect(primaryImageSelect).toHaveValue("image-1");
+
+    fireEvent.click(screen.getByRole("button", { name: "更新する" }));
+
+    await waitFor(() => {
+      expect(apiClientMock.put).toHaveBeenCalledWith(
+        getProductPath("HM-000001"),
+        {
+          body: expect.objectContaining({
+            primaryImageId: "image-1"
+          })
+        }
+      );
     });
   });
 

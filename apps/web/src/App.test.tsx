@@ -70,25 +70,63 @@ const fetchMock = vi.hoisted(() =>
   vi.fn(async (input: unknown, init?: unknown) => {
     void init;
     const pathname = new URL(String(input), "http://localhost").pathname;
-    const payload =
-      pathname === "/api/dashboard"
-        ? {
-            data: {
-              dueSoonTasks: [],
-              openTaskCount: 0,
-              recentProducts: [],
-              soldCount: 0,
-              statusCounts: {
-                beforeProduction: 0,
-                completed: 0,
-                inProduction: 0,
-                inStock: 0,
-                onDisplay: 0,
-                sold: 0
-              }
-            }
+    let payload = { data: { recorded: true } } as unknown;
+
+    if (pathname === "/api/dashboard") {
+      payload = {
+        data: {
+          dueSoonTasks: [],
+          openTaskCount: 0,
+          recentProducts: [],
+          soldCount: 0,
+          statusCounts: {
+            beforeProduction: 0,
+            completed: 0,
+            inProduction: 0,
+            inStock: 0,
+            onDisplay: 0,
+            sold: 0
           }
-        : { data: { recorded: true } };
+        }
+      };
+    }
+
+    if (pathname === "/api/products/HM-000001") {
+      payload = {
+        data: {
+          images: [],
+          product: {
+            categoryId: "cat-1",
+            categoryName: "アクセサリー",
+            createdAt: "2026-04-20T08:00:00Z",
+            description: "春色のリボンです。",
+            name: "Blue Ribbon",
+            price: 2800,
+            productId: "HM-000001",
+            soldAt: null,
+            soldCustomerId: null,
+            soldCustomerNameSnapshot: null,
+            status: "onDisplay",
+            tagIds: ["tag-1"],
+            tagNames: ["春"],
+            updatedAt: "2026-04-22T10:30:00Z"
+          },
+          qrCodeValue: "HM-000001",
+          tasksSummary: {
+            completedCount: 0,
+            openCount: 0
+          }
+        }
+      };
+    }
+
+    if (pathname === "/api/products/HM-000001/tasks") {
+      payload = {
+        data: {
+          items: []
+        }
+      };
+    }
 
     return new Response(JSON.stringify(payload), {
       headers: {
@@ -164,6 +202,24 @@ describe("App routing", () => {
     renderApp("/products/HM-000001/edit");
 
     expect(screen.getByRole("heading", { name: "商品編集" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "戻る" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "商品一覧" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+  });
+
+  it("renders the task management route inside the protected workspace shell", async () => {
+    authMock.setUser({
+      email: "owner@example.com",
+      getIdToken: async () => "test-id-token",
+      uid: "owner-user"
+    });
+    renderApp("/products/HM-000001/tasks");
+
+    expect(
+      await screen.findByRole("heading", { name: "Blue Ribbonのタスク管理" })
+    ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "戻る" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "商品一覧" })).toHaveAttribute(
       "aria-current",

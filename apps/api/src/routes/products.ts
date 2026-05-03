@@ -15,6 +15,7 @@ import { createProductImage } from "../products/create-product-image";
 import { deleteProduct } from "../products/delete-product";
 import { createProduct } from "../products/create-product";
 import { getProduct } from "../products/get-product";
+import { replaceProductImage } from "../products/replace-product-image";
 import {
   createProductImageUploadMiddleware,
   type ProductImageUploadFile
@@ -40,6 +41,11 @@ interface RegisterProductRoutesOptions {
     productId: string,
     file: ProductImageUploadFile | undefined
   ) => Promise<ProductImageMutationData>;
+  replaceProductImageHandler?: (
+    productId: string,
+    imageId: string,
+    file: ProductImageUploadFile | undefined
+  ) => Promise<ProductImageMutationData>;
   deleteProductHandler?: (productId: string) => Promise<ProductDeleteData>;
   getProductHandler?: (productId: string) => Promise<ProductDetailData>;
   listProductTasksHandler?: (
@@ -63,6 +69,8 @@ export function registerProductRoutes(
     options.createProductTaskHandler ?? createProductTask;
   const createProductImageHandler =
     options.createProductImageHandler ?? createProductImage;
+  const replaceProductImageHandler =
+    options.replaceProductImageHandler ?? replaceProductImage;
   const deleteProductHandler = options.deleteProductHandler ?? deleteProduct;
   const getProductHandler = options.getProductHandler ?? getProduct;
   const listProductTasksHandler =
@@ -152,6 +160,26 @@ export function registerProductRoutes(
           {
             statusCode: 201
           }
+        );
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  router.put(
+    "/products/:productId/images/:imageId",
+    context.requireAuthMiddleware,
+    createProductImageUploadMiddleware(),
+    async (request, response, next) => {
+      try {
+        sendSuccess(
+          response,
+          await replaceProductImageHandler(
+            request.params.productId,
+            request.params.imageId,
+            request.file
+          )
         );
       } catch (error) {
         next(error);

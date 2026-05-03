@@ -1,6 +1,11 @@
 import { QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { getProductPath, getProductTasksPath, getTaskPath } from "@handmade/shared";
+import {
+  getProductPath,
+  getProductTasksPath,
+  getTaskCompletionPath,
+  getTaskPath
+} from "@handmade/shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { ApiClientError } from "../api/api-client";
@@ -10,6 +15,7 @@ import { ProductTaskManagementPage } from "./product-task-management-page";
 const apiClientMock = vi.hoisted(() => ({
   delete: vi.fn(),
   get: vi.fn(),
+  patch: vi.fn(),
   post: vi.fn(),
   put: vi.fn()
 }));
@@ -72,6 +78,24 @@ const tasksResponse = {
   }
 };
 
+const tasksWithCompletedResponse = {
+  data: {
+    items: [
+      ...tasksResponse.data.items,
+      {
+        completedAt: "2026-04-24T10:00:00Z",
+        content: "展示前に台紙を確認する",
+        dueDate: null,
+        isCompleted: true,
+        memo: "",
+        name: "台紙チェック",
+        taskId: "task_003",
+        updatedAt: "2026-04-24T10:00:00Z"
+      }
+    ]
+  }
+};
+
 const emptyTasksResponse = {
   data: {
     items: []
@@ -110,6 +134,7 @@ describe("ProductTaskManagementPage", () => {
     taskMode = "success";
     apiClientMock.delete.mockReset();
     apiClientMock.get.mockReset();
+    apiClientMock.patch.mockReset();
     apiClientMock.post.mockReset();
     apiClientMock.put.mockReset();
     apiClientMock.delete.mockResolvedValue({
@@ -129,8 +154,16 @@ describe("ProductTaskManagementPage", () => {
         taskId: "task_001"
       }
     });
+    apiClientMock.patch.mockResolvedValue({
+      data: {
+        completedAt: "2026-04-24T11:00:00Z",
+        isCompleted: true,
+        taskId: "task_001",
+        updatedAt: "2026-04-24T11:00:00Z"
+      }
+    });
 
-    apiClientMock.get.mockImplementation(async (path: string) => {
+    apiClientMock.get.mockImplementation(async (path: string, options?: { query?: Record<string, unknown> }) => {
       if (path === getProductPath("HM-000001")) {
         if (productMode === "notFound") {
           throw new ApiClientError(404, {
@@ -147,7 +180,13 @@ describe("ProductTaskManagementPage", () => {
           throw new Error("boom");
         }
 
-        return taskMode === "empty" ? emptyTasksResponse : tasksResponse;
+        if (taskMode === "empty") {
+          return emptyTasksResponse;
+        }
+
+        return options?.query?.showCompleted
+          ? tasksWithCompletedResponse
+          : tasksResponse;
       }
 
       throw new Error(`Unexpected path: ${path}`);
@@ -183,6 +222,82 @@ describe("ProductTaskManagementPage", () => {
     expect(screen.getByText("値札を付ける")).toBeInTheDocument();
     expect(screen.getByText("未完了 2件")).toBeInTheDocument();
     expect(screen.getByText("完了 1件")).toBeInTheDocument();
+  });
+
+  it("shows completed tasks when the completed toggle is enabled", async () => {
+    renderTaskManagement();
+
+    expect(await screen.findByText("金具チェック")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("完了済みも表示"));
+
+    await waitFor(() => {
+      expect(apiClientMock.get).toHaveBeenCalledWith(
+        getProductTasksPath("HM-000001"),
+        expect.objectContaining({
+          query: {
+            showCompleted: true
+          },
+          signal: expect.any(AbortSignal)
+        })
+      );
+    });
+    expect(await screen.findByText("台紙チェック")).toBeInTheDocument();
+    expect(screen.getByText("展示前に台紙を確認する")).toBeInTheDocument();
+  });
+
+  it("updates task completion and keeps the task summary in sync", async () => {
+    renderTaskManagement();
+
+    expect(await screen.findByText("金具チェック")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("金具チェックを完了にする"));
+
+    await waitFor(() => {
+      expect(apiClientMock.patch).toHaveBeenCalledWith(
+        getTaskCompletionPath("task_001"),
+        {
+          body: {
+            isCompleted: true
+          }
+        }
+      );
+    });
+    await waitFor(() => {
+      expect(screen.queryByText("金具チェック")).not.toBeInTheDocument();
+    });
+    expect(screen.getByText("未完了 1件")).toBeInTheDocument();
+    expect(screen.getByText("完了 2件")).toBeInTheDocument();
+  });
+
+  it("can return a completed task to open when completed tasks are visible", async () => {
+    apiClientMock.patch.mockResolvedValueOnce({
+      data: {
+        completedAt: null,
+        isCompleted: false,
+        taskId: "task_003",
+        updatedAt: "2026-04-24T12:00:00Z"
+      }
+    });
+    renderTaskManagement();
+
+    fireEvent.click(await screen.findByLabelText("完了済みも表示"));
+    expect(await screen.findByText("台紙チェック")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText("台紙チェックを未完了に戻す"));
+
+    await waitFor(() => {
+      expect(apiClientMock.patch).toHaveBeenCalledWith(
+        getTaskCompletionPath("task_003"),
+        {
+          body: {
+            isCompleted: false
+          }
+        }
+      );
+    });
+    expect(await screen.findByText("未完了 3件")).toBeInTheDocument();
+    expect(screen.getByText("完了 0件")).toBeInTheDocument();
   });
 
   it("creates a task from the task form", async () => {

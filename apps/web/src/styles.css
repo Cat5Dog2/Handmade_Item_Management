@@ -169,7 +169,8 @@ input {
   opacity: 0.65;
 }
 
-.auth-dialog__backdrop {
+.auth-dialog__backdrop,
+.app-dialog__backdrop {
   position: fixed;
   inset: 0;
   z-index: 40;
@@ -651,6 +652,29 @@ input {
   border: 1px solid #d5e2d8;
   border-radius: 999px;
   background: #ffffff;
+}
+
+.product-detail-page__task-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+
+.product-detail-page__completed-toggle,
+.product-detail-page__task-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #1f2933;
+  font-weight: 700;
+}
+
+.product-detail-page__completed-toggle input,
+.product-detail-page__task-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: #0f766e;
 }
 
 .product-detail-page__task-list {

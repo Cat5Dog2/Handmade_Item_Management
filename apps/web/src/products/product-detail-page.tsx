@@ -1,19 +1,23 @@
 import type {
+  ProductDeleteData,
   ProductDetailData,
   ProductImageDetail,
   ProductStatus,
+  TaskCompletionData,
+  TaskCompletionInput,
   TaskItem,
   TaskListData
 } from "@handmade/shared";
 import {
   getProductPath,
   getProductTasksPath,
+  getTaskCompletionPath,
   PRODUCT_STATUS_LABELS
 } from "@handmade/shared";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toString as generateQRCodeSvg } from "qrcode";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { getApiErrorDisplayMessage } from "../api/api-error-display";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
@@ -28,6 +32,17 @@ import {
   PRODUCT_ERROR_MESSAGE_OVERRIDES,
   PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES
 } from "../messages/display-messages";
+
+interface PageNotice {
+  message: string;
+  type: "error" | "success";
+}
+
+interface TaskCompletionVariables {
+  isCompleted: boolean;
+  showCompleted: boolean;
+  task: TaskItem;
+}
 
 const dateFormatter = new Intl.DateTimeFormat("ja-JP", {
   day: "2-digit",
@@ -92,7 +107,48 @@ function selectPrimaryImage(images: ProductImageDetail[]) {
   );
 }
 
-function ProductTaskCard({ task }: { task: TaskItem }) {
+function updateTaskWithCompletion(
+  task: TaskItem,
+  completion: TaskCompletionData
+): TaskItem {
+  return {
+    ...task,
+    completedAt: completion.completedAt,
+    isCompleted: completion.isCompleted,
+    updatedAt: completion.updatedAt
+  };
+}
+
+function updateTasksSummary(
+  data: ProductDetailData | undefined,
+  task: TaskItem,
+  completion: TaskCompletionData
+) {
+  if (!data || task.isCompleted === completion.isCompleted) {
+    return data;
+  }
+
+  const completedDelta = completion.isCompleted ? 1 : -1;
+  const openDelta = completion.isCompleted ? -1 : 1;
+
+  return {
+    ...data,
+    tasksSummary: {
+      completedCount: Math.max(data.tasksSummary.completedCount + completedDelta, 0),
+      openCount: Math.max(data.tasksSummary.openCount + openDelta, 0)
+    }
+  };
+}
+
+function ProductTaskCard({
+  isCompletionPending,
+  onCompletionChange,
+  task
+}: {
+  isCompletionPending: boolean;
+  onCompletionChange: (task: TaskItem, isCompleted: boolean) => void;
+  task: TaskItem;
+}) {
   return (
     <article className="management-card product-detail-page__task-card" role="listitem">
       <div className="management-card__header">
@@ -102,12 +158,30 @@ function ProductTaskCard({ task }: { task: TaskItem }) {
           </p>
           <h3 className="management-card__title">{task.name}</h3>
         </div>
+        <label className="product-detail-page__task-toggle">
+          <input
+            aria-label={`${task.name}を${task.isCompleted ? "未完了に戻す" : "完了にする"}`}
+            checked={task.isCompleted}
+            disabled={isCompletionPending}
+            type="checkbox"
+            onChange={(event) => {
+              onCompletionChange(task, event.currentTarget.checked);
+            }}
+          />
+          <span>{task.isCompleted ? "完了済み" : "未完了"}</span>
+        </label>
       </div>
       <dl className="management-card__details">
         <div>
           <dt>期限</dt>
           <dd>{formatDate(task.dueDate)}</dd>
         </div>
+        {task.isCompleted ? (
+          <div>
+            <dt>完了日時</dt>
+            <dd>{formatDateTime(task.completedAt)}</dd>
+          </div>
+        ) : null}
         <div>
           <dt>更新日時</dt>
           <dd>{formatDateTime(task.updatedAt)}</dd>
@@ -146,9 +220,14 @@ function ProductImagePreview({
 
 export function ProductDetailPage() {
   const apiClient = useApiClient();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { productId } = useParams();
+  const [notice, setNotice] = useState<PageNotice | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [qrSvg, setQrSvg] = useState<string | null>(null);
   const [qrError, setQrError] = useState(false);
+  const [showCompletedTasks, setShowCompletedTasks] = useState(false);
 
   const productDetailQuery = useQuery({
     enabled: Boolean(productId),
@@ -171,7 +250,7 @@ export function ProductDetailPage() {
     enabled: Boolean(productId && productDetailQuery.data),
     queryKey: productId
       ? queryKeys.products.tasks(productId, {
-          showCompleted: false
+          showCompleted: showCompletedTasks
         })
       : ["products", "tasks", "missing"],
     queryFn: async ({ signal }) => {
@@ -179,13 +258,86 @@ export function ProductDetailPage() {
         getProductTasksPath(productId ?? ""),
         {
           query: {
-            showCompleted: false
+            showCompleted: showCompletedTasks
           },
           signal
         }
       );
 
       return response.data;
+    }
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiClient.delete<ProductDeleteData>(
+        getProductPath(productId ?? "")
+      );
+
+      return response.data;
+    },
+    onSuccess: async (data) => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard.root
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["products", "list"]
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.products.detail(data.productId)
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["products", "tasks", data.productId]
+        })
+      ]);
+    }
+  });
+
+  const updateTaskCompletionMutation = useMutation({
+    mutationFn: async ({ isCompleted, task }: TaskCompletionVariables) => {
+      const response = await apiClient.patch<
+        TaskCompletionData,
+        undefined,
+        TaskCompletionInput
+      >(getTaskCompletionPath(task.taskId), {
+        body: {
+          isCompleted
+        }
+      });
+
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      if (!productId) {
+        return;
+      }
+
+      queryClient.setQueryData<TaskListData>(
+        queryKeys.products.tasks(productId, {
+          showCompleted: variables.showCompleted
+        }),
+        (current) => {
+          if (!current) {
+            return current;
+          }
+
+          const nextItems = current.items.map((task) =>
+            task.taskId === data.taskId ? updateTaskWithCompletion(task, data) : task
+          );
+
+          return {
+            ...current,
+            items: variables.showCompleted
+              ? nextItems
+              : nextItems.filter((task) => !task.isCompleted)
+          };
+        }
+      );
+      queryClient.setQueryData<ProductDetailData>(
+        queryKeys.products.detail(productId),
+        (current) => updateTasksSummary(current, variables.task, data)
+      );
     }
   });
 
@@ -248,11 +400,62 @@ export function ProductDetailPage() {
   }
 
   const handleRetry = () => {
+    setNotice(null);
     void productDetailQuery.refetch();
   };
 
   const handleTaskRetry = () => {
+    setNotice(null);
     void taskListQuery.refetch();
+  };
+
+  const handleDeleteConfirm = async () => {
+    setNotice(null);
+
+    try {
+      await deleteProductMutation.mutateAsync();
+      navigate("/products", {
+        replace: true,
+        state: {
+          notice: {
+            message: "商品を削除しました。",
+            type: "success"
+          } satisfies PageNotice
+        }
+      });
+    } catch (error) {
+      setIsDeleteDialogOpen(false);
+      setNotice({
+        message: getApiErrorDisplayMessage(error, {
+          codeMessages: PRODUCT_ERROR_MESSAGE_OVERRIDES,
+          fallbackMessage: PRODUCT_ERROR_MESSAGES.deleteFailed
+        }),
+        type: "error"
+      });
+    }
+  };
+
+  const handleTaskCompletionChange = async (
+    task: TaskItem,
+    isCompleted: boolean
+  ) => {
+    setNotice(null);
+
+    try {
+      await updateTaskCompletionMutation.mutateAsync({
+        isCompleted,
+        showCompleted: showCompletedTasks,
+        task
+      });
+    } catch (error) {
+      setNotice({
+        message: getApiErrorDisplayMessage(error, {
+          codeMessages: PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES,
+          fallbackMessage: PRODUCT_ERROR_MESSAGES.taskCompletionFailed
+        }),
+        type: "error"
+      });
+    }
   };
 
   if (productDetailQuery.isPending) {
@@ -300,8 +503,18 @@ export function ProductDetailPage() {
   const { images, product, tasksSummary } = productDetailQuery.data;
   const tagText = product.tagNames.length > 0 ? product.tagNames.join(", ") : "タグなし";
   const taskItems = taskListQuery.data?.items ?? [];
+  const pendingTaskId = updateTaskCompletionMutation.isPending
+    ? updateTaskCompletionMutation.variables?.task.taskId
+    : null;
   const shouldShowCustomerLink =
     product.status === "sold" && Boolean(product.soldCustomerId);
+  const isPageBusy =
+    productDetailQuery.isFetching ||
+    deleteProductMutation.isPending ||
+    updateTaskCompletionMutation.isPending;
+  const taskEmptyMessage = showCompletedTasks
+    ? "関連タスクはまだありません。タスク管理から追加してください。"
+    : "未完了の関連タスクはありません。";
 
   return (
     <section
@@ -331,12 +544,32 @@ export function ProductDetailPage() {
             >
               タスクを見る
             </Link>
+            <button
+              className="danger-button"
+              disabled={isPageBusy}
+              type="button"
+              onClick={() => setIsDeleteDialogOpen(true)}
+            >
+              削除する
+            </button>
           </div>
         </div>
         {productDetailQuery.isFetching ? (
           <p className="management-page__sync" role="status">
             最新の商品詳細を更新中です...
           </p>
+        ) : null}
+        {notice ? (
+          <div
+            className={
+              notice.type === "success"
+                ? "management-page__notice is-success"
+                : "management-page__notice is-error"
+            }
+            role={notice.type === "success" ? "status" : "alert"}
+          >
+            <p>{notice.message}</p>
+          </div>
         ) : null}
       </div>
 
@@ -444,6 +677,22 @@ export function ProductDetailPage() {
           <span>{`未完了 ${tasksSummary.openCount}件`}</span>
           <span>{`完了 ${tasksSummary.completedCount}件`}</span>
         </div>
+        <div className="product-detail-page__task-toolbar">
+          <label className="product-detail-page__completed-toggle">
+            <input
+              checked={showCompletedTasks}
+              disabled={taskListQuery.isFetching || updateTaskCompletionMutation.isPending}
+              type="checkbox"
+              onChange={(event) => {
+                setShowCompletedTasks(event.currentTarget.checked);
+              }}
+            />
+            <span>完了済みも表示</span>
+          </label>
+          <p className="management-form__hint">
+            タスクの追加・編集・削除はタスク管理で行います。
+          </p>
+        </div>
         {taskListQuery.isPending ? (
           <ScreenLoadingState message="関連タスクを読み込んでいます..." />
         ) : taskListQuery.isError ? (
@@ -455,11 +704,16 @@ export function ProductDetailPage() {
             onRetry={handleTaskRetry}
           />
         ) : taskItems.length === 0 ? (
-          <ScreenEmptyState message="タスクはまだありません。必要な作業を追加してください。" />
+          <ScreenEmptyState message={taskEmptyMessage} />
         ) : (
           <div className="management-list product-detail-page__task-list" role="list">
             {taskItems.map((task) => (
-              <ProductTaskCard key={task.taskId} task={task} />
+              <ProductTaskCard
+                key={task.taskId}
+                isCompletionPending={pendingTaskId === task.taskId}
+                task={task}
+                onCompletionChange={handleTaskCompletionChange}
+              />
             ))}
           </div>
         )}
@@ -503,6 +757,9 @@ export function ProductDetailPage() {
                 <dd className="product-detail-page__qr-value">{qrCodeValue}</dd>
               </div>
             </dl>
+            <p className="management-form__hint">
+              読み取り後の販売更新はQR画面で行います。
+            </p>
             <div className="management-card__actions">
               <Link
                 className="primary-button button-link"
@@ -515,6 +772,42 @@ export function ProductDetailPage() {
           </div>
         </article>
       </section>
+
+      {isDeleteDialogOpen ? (
+        <div className="app-dialog__backdrop" role="presentation">
+          <section
+            aria-labelledby="product-delete-title"
+            aria-modal="true"
+            className="app-dialog"
+            role="dialog"
+          >
+            <h2 id="product-delete-title">商品を削除しますか？</h2>
+            <p className="app-dialog__summary">
+              削除した商品は通常画面から参照できなくなります。
+            </p>
+            <div className="app-dialog__actions">
+              <button
+                className="secondary-button"
+                disabled={deleteProductMutation.isPending}
+                type="button"
+                onClick={() => setIsDeleteDialogOpen(false)}
+              >
+                キャンセル
+              </button>
+              <button
+                className="danger-button"
+                disabled={deleteProductMutation.isPending}
+                type="button"
+                onClick={() => {
+                  void handleDeleteConfirm();
+                }}
+              >
+                削除する
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }

@@ -69,7 +69,9 @@ function LocationProbe() {
   return <div data-testid="location-probe">{location.search}</div>;
 }
 
-function renderProductList(initialEntry = "/products") {
+function renderProductList(
+  initialEntry: string | { pathname: string; state: unknown } = "/products"
+) {
   const queryClient = createAppQueryClient();
 
   render(
@@ -208,6 +210,22 @@ describe("ProductListPage", () => {
         })
       })
     );
+  }, 10000);
+
+  it("shows a navigation notice from product detail", async () => {
+    renderProductList({
+      pathname: "/products",
+      state: {
+        notice: {
+          message: "商品を削除しました。",
+          type: "success"
+        }
+      }
+    });
+
+    expect(
+      await screen.findByText("商品を削除しました。", undefined, { timeout: 8000 })
+    ).toBeInTheDocument();
   }, 10000);
 
   it("applies filters through the URL and keeps sold results enabled", async () => {

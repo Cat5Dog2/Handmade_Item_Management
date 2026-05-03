@@ -15,6 +15,7 @@ import { createProductImage } from "../products/create-product-image";
 import { deleteProduct } from "../products/delete-product";
 import { createProduct } from "../products/create-product";
 import { getProduct } from "../products/get-product";
+import { deleteProductImage } from "../products/delete-product-image";
 import { replaceProductImage } from "../products/replace-product-image";
 import {
   createProductImageUploadMiddleware,
@@ -40,6 +41,10 @@ interface RegisterProductRoutesOptions {
   createProductImageHandler?: (
     productId: string,
     file: ProductImageUploadFile | undefined
+  ) => Promise<ProductImageMutationData>;
+  deleteProductImageHandler?: (
+    productId: string,
+    imageId: string
   ) => Promise<ProductImageMutationData>;
   replaceProductImageHandler?: (
     productId: string,
@@ -69,6 +74,8 @@ export function registerProductRoutes(
     options.createProductTaskHandler ?? createProductTask;
   const createProductImageHandler =
     options.createProductImageHandler ?? createProductImage;
+  const deleteProductImageHandler =
+    options.deleteProductImageHandler ?? deleteProductImage;
   const replaceProductImageHandler =
     options.replaceProductImageHandler ?? replaceProductImage;
   const deleteProductHandler = options.deleteProductHandler ?? deleteProduct;
@@ -179,6 +186,24 @@ export function registerProductRoutes(
             request.params.productId,
             request.params.imageId,
             request.file
+          )
+        );
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  router.delete(
+    "/products/:productId/images/:imageId",
+    context.requireAuthMiddleware,
+    async (request, response, next) => {
+      try {
+        sendSuccess(
+          response,
+          await deleteProductImageHandler(
+            request.params.productId,
+            request.params.imageId
           )
         );
       } catch (error) {

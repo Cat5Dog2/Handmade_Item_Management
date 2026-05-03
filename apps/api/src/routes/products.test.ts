@@ -7,6 +7,7 @@ const listProductsMock = vi.hoisted(() => vi.fn());
 const createProductMock = vi.hoisted(() => vi.fn());
 const createProductTaskMock = vi.hoisted(() => vi.fn());
 const createProductImageMock = vi.hoisted(() => vi.fn());
+const deleteProductImageMock = vi.hoisted(() => vi.fn());
 const replaceProductImageMock = vi.hoisted(() => vi.fn());
 const getProductMock = vi.hoisted(() => vi.fn());
 const listProductTasksMock = vi.hoisted(() => vi.fn());
@@ -27,6 +28,10 @@ vi.mock("../tasks/create-product-task", () => ({
 
 vi.mock("../products/create-product-image", () => ({
   createProductImage: createProductImageMock
+}));
+
+vi.mock("../products/delete-product-image", () => ({
+  deleteProductImage: deleteProductImageMock
 }));
 
 vi.mock("../products/replace-product-image", () => ({
@@ -74,6 +79,7 @@ describe("products routes", () => {
     createProductMock.mockReset();
     createProductTaskMock.mockReset();
     createProductImageMock.mockReset();
+    deleteProductImageMock.mockReset();
     replaceProductImageMock.mockReset();
     getProductMock.mockReset();
     listProductTasksMock.mockReset();
@@ -326,6 +332,48 @@ describe("products routes", () => {
         fieldname: "file",
         mimetype: "image/png"
       })
+    );
+  });
+
+  it("returns AUTH_REQUIRED for unauthenticated product image delete requests", async () => {
+    const response = await request(createTestApp()).delete(
+      "/api/products/HM-000001/images/img_abcdef123456"
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.body).toMatchObject({
+      code: "AUTH_REQUIRED"
+    });
+    expect(deleteProductImageMock).not.toHaveBeenCalled();
+  });
+
+  it("returns the product image delete envelope for authenticated requests", async () => {
+    deleteProductImageMock.mockResolvedValue({
+      imageId: "img_abcdef123456",
+      updatedAt: "2026-04-18T09:25:00.000Z"
+    });
+
+    const response = await request(
+      createTestApp({
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .delete("/api/products/HM-000001/images/img_abcdef123456")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        imageId: "img_abcdef123456",
+        updatedAt: "2026-04-18T09:25:00.000Z"
+      }
+    });
+    expect(deleteProductImageMock).toHaveBeenCalledWith(
+      "HM-000001",
+      "img_abcdef123456"
     );
   });
 

@@ -1,11 +1,17 @@
-import type { TaskCompletionData, TaskUpdateData } from "@handmade/shared";
+import type {
+  TaskCompletionData,
+  TaskDeleteData,
+  TaskUpdateData
+} from "@handmade/shared";
 import type { Router } from "express";
 import type { CreateProtectedAppContext } from "../app";
 import { sendSuccess } from "../responses/api-response";
+import { deleteTask } from "../tasks/delete-task";
 import { updateTask } from "../tasks/update-task";
 import { updateTaskCompletion } from "../tasks/update-task-completion";
 
 interface RegisterTaskRoutesOptions {
+  deleteTaskHandler?: (taskId: string) => Promise<TaskDeleteData>;
   updateTaskHandler?: (
     taskId: string,
     input: unknown
@@ -21,6 +27,7 @@ export function registerTaskRoutes(
   context: CreateProtectedAppContext,
   options: RegisterTaskRoutesOptions = {}
 ) {
+  const deleteTaskHandler = options.deleteTaskHandler ?? deleteTask;
   const updateTaskHandler = options.updateTaskHandler ?? updateTask;
   const updateTaskCompletionHandler =
     options.updateTaskCompletionHandler ?? updateTaskCompletion;
@@ -52,6 +59,18 @@ export function registerTaskRoutes(
             request.body
           )
         );
+      } catch (error) {
+        next(error);
+      }
+    }
+  );
+
+  router.delete(
+    "/tasks/:taskId",
+    context.requireAuthMiddleware,
+    async (request, response, next) => {
+      try {
+        sendSuccess(response, await deleteTaskHandler(request.params.taskId));
       } catch (error) {
         next(error);
       }

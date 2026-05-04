@@ -13,6 +13,7 @@ const updateCategoryMock = vi.hoisted(() => vi.fn());
 const updateTagMock = vi.hoisted(() => vi.fn());
 const deleteCategoryMock = vi.hoisted(() => vi.fn());
 const deleteTagMock = vi.hoisted(() => vi.fn());
+const writeOperationLogMock = vi.hoisted(() => vi.fn());
 
 vi.mock("./categories/list-categories", () => ({
   listCategories: listCategoriesMock
@@ -44,6 +45,10 @@ vi.mock("./categories/delete-category", () => ({
 
 vi.mock("./tags/delete-tag", () => ({
   deleteTag: deleteTagMock
+}));
+
+vi.mock("./operation-logs/write-operation-log", () => ({
+  writeOperationLog: writeOperationLogMock
 }));
 
 function createTestLogger(): ApiLogger {
@@ -91,6 +96,7 @@ describe("createApp", () => {
     listTagsMock.mockReset();
     updateCategoryMock.mockReset();
     updateTagMock.mockReset();
+    writeOperationLogMock.mockReset();
   });
 
   it("returns the health payload", async () => {
@@ -139,6 +145,7 @@ describe("createApp", () => {
         }
       ]
     });
+    expect(writeOperationLogMock).not.toHaveBeenCalled();
   });
 
   it("returns 404 for undefined routes", async () => {
@@ -176,6 +183,18 @@ describe("createApp", () => {
       "Unhandled API error",
       expect.any(Error)
     );
+    expect(writeOperationLogMock).toHaveBeenCalledWith({
+      eventType: "ERROR",
+      targetId: null,
+      summary: "API内部エラーが発生しました",
+      actorUid: null,
+      detail: {
+        requestPath: "/api/unexpected-error",
+        method: "GET",
+        errorCode: "INTERNAL_ERROR",
+        statusCode: 500
+      }
+    });
   });
 
   it("keeps public routes outside auth middleware", async () => {
@@ -306,8 +325,11 @@ describe("createApp", () => {
   });
 
   it("returns INTERNAL_ERROR when the owner allowlist is not configured", async () => {
+    const logger = createTestLogger();
+
     const response = await request(
       createProtectedTestApp({
+        logger,
         ownerEmail: "   ",
         verifyIdToken: async () => ({
           uid: "uid-1",
@@ -321,6 +343,22 @@ describe("createApp", () => {
     expect(response.status).toBe(500);
     expect(response.body).toMatchObject({
       code: "INTERNAL_ERROR"
+    });
+    expect(logger.error).toHaveBeenCalledWith(
+      "API major error",
+      expect.any(Error)
+    );
+    expect(writeOperationLogMock).toHaveBeenCalledWith({
+      eventType: "ERROR",
+      targetId: null,
+      summary: "API内部エラーが発生しました",
+      actorUid: null,
+      detail: {
+        requestPath: "/api/protected",
+        method: "GET",
+        errorCode: "INTERNAL_ERROR",
+        statusCode: 500
+      }
     });
   });
 

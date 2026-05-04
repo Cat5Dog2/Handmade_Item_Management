@@ -12,6 +12,7 @@ import { ProductEditPage } from "./products/product-edit-page";
 import { ProductListPage } from "./products/product-list-page";
 import { ProductTaskManagementPage } from "./products/product-task-management-page";
 import { AppProviders } from "./providers/app-providers";
+import { QrPage } from "./qr/qr-page";
 import {
   protectedRoutes,
   type ProtectedRouteDefinition
@@ -43,6 +44,8 @@ function getProtectedRouteElement(route: ProtectedRouteDefinition) {
       return <CategoryManagementPage />;
     case "/tags":
       return <TagManagementPage />;
+    case "/qr":
+      return <QrPage />;
     default:
       return <WorkspacePage summary={route.summary} title={route.title} />;
   }

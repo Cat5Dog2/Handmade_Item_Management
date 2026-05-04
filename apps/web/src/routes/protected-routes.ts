@@ -88,7 +88,8 @@ export const backEnabledPaths = new Set([
   "/products/:productId/tasks",
   "/customers/new",
   "/customers/:customerId",
-  "/customers/:customerId/edit"
+  "/customers/:customerId/edit",
+  "/qr"
 ]);
 
 export function findProtectedRoute(pathname: string) {

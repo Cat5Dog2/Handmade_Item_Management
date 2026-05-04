@@ -56,6 +56,19 @@ export const PRODUCT_IMAGE_ERROR_MESSAGE_OVERRIDES = {
     "JPEG、PNG、WebP 形式の画像を選択してください。"
 } as const;
 
+export const QR_ERROR_MESSAGES = {
+  cameraUnavailable: "カメラを利用できません。端末設定を確認してください。",
+  lookupFailed:
+    "QRコードの照合に失敗しました。通信状況を確認して再度お試しください。",
+  lookupValidationFailed: "QRコードを読み取ってください。",
+  scanFailed:
+    "QRコードを読み取れませんでした。位置や明るさを調整して再度お試しください。"
+} as const;
+
+export const QR_LOOKUP_ERROR_MESSAGE_OVERRIDES = {
+  VALIDATION_ERROR: QR_ERROR_MESSAGES.lookupValidationFailed
+} as const;
+
 export const PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES = {
   PRODUCT_NOT_FOUND: PRODUCT_ERROR_MESSAGES.notFound,
   PRODUCT_RELATED_RESOURCE_UNAVAILABLE: PRODUCT_ERROR_MESSAGES.tasksUnavailable,

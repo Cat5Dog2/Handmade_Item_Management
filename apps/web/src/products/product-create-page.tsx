@@ -14,16 +14,23 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ApiClientError } from "../api/api-client";
-import { getApiErrorDisplayMessage } from "../api/api-error-display";
+import {
+  getProductFormFieldErrorMessage,
+  type ProductFormFieldName
+} from "../api/field-error-messages";
 import { useApiClient } from "../api/api-client-context";
+import { mapApiErrorToUi, type UiApiError } from "../api/map-api-error-to-ui";
 import { queryKeys } from "../api/query-keys";
 import {
   ScreenErrorState,
   ScreenLoadingState
 } from "../components/screen-states";
 import { useZodForm } from "../forms/use-zod-form";
-import { APP_NAME, PRODUCT_ERROR_MESSAGES } from "../messages/display-messages";
+import {
+  APP_NAME,
+  PRODUCT_ERROR_MESSAGES,
+  PRODUCT_FORM_ERROR_MESSAGE_OVERRIDES
+} from "../messages/display-messages";
 
 interface PageNotice {
   message: string;
@@ -96,8 +103,8 @@ export function ProductCreatePage() {
   const tags = tagsQuery.data?.items ?? [];
 
   const applyFormApiErrors = useCallback(
-    (error: unknown) => {
-      if (!(error instanceof ApiClientError) || !error.details?.length) {
+    (error: UiApiError) => {
+      if (error.code !== "VALIDATION_ERROR") {
         return false;
       }
 
@@ -112,8 +119,10 @@ export function ProductCreatePage() {
           detail.field === "tagIds" ||
           detail.field === "status"
         ) {
+          const fieldName = detail.field as ProductFormFieldName;
+
           form.setError(detail.field as ProductCreateFieldName, {
-            message: detail.message,
+            message: getProductFormFieldErrorMessage(fieldName, detail.message),
             type: "server"
           });
           applied = true;
@@ -133,13 +142,15 @@ export function ProductCreatePage() {
       const result = await createProductMutation.mutateAsync(values);
       navigate(getProductPath(result.productId), { replace: true });
     } catch (error) {
-      const hasFieldError = applyFormApiErrors(error);
+      const uiError = mapApiErrorToUi(error, {
+        codeMessages: PRODUCT_FORM_ERROR_MESSAGE_OVERRIDES,
+        fallbackMessage: PRODUCT_ERROR_MESSAGES.createFailed
+      });
+      const hasFieldError = applyFormApiErrors(uiError);
 
       if (!hasFieldError) {
         setNotice({
-          message: getApiErrorDisplayMessage(error, {
-            fallbackMessage: PRODUCT_ERROR_MESSAGES.createFailed
-          }),
+          message: uiError.message,
           type: "error"
         });
       }

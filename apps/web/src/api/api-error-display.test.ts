@@ -11,18 +11,18 @@ describe("getApiErrorDisplayMessage", () => {
     ).toBe("一覧を取得できませんでした。");
   });
 
-  it("returns the API error message by default", () => {
+  it("uses the built-in default message for known error codes", () => {
     expect(
       getApiErrorDisplayMessage(
         new ApiClientError(400, {
-          code: "VALIDATION_ERROR",
-          message: "入力内容を確認してください。"
+          code: "CATEGORY_IN_USE",
+          message: "server-side message"
         }),
         {
           fallbackMessage: "保存できませんでした。"
         }
       )
-    ).toBe("入力内容を確認してください。");
+    ).toBe("使用中のカテゴリは削除できません。");
   });
 
   it("uses an override message for configured error codes", () => {

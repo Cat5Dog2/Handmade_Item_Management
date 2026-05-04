@@ -22,7 +22,9 @@ import { useCallback, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiClientError } from "../api/api-client";
 import { getApiErrorDisplayMessage } from "../api/api-error-display";
+import { getTaskFieldErrorMessage } from "../api/field-error-messages";
 import { useApiClient } from "../api/api-client-context";
+import { mapApiErrorToUi, type UiApiError } from "../api/map-api-error-to-ui";
 import { queryKeys } from "../api/query-keys";
 import {
   ScreenEmptyState,
@@ -48,7 +50,6 @@ interface TaskCompletionVariables {
 }
 
 type TaskFormMode = "create" | "edit" | "hidden";
-type TaskFormFieldName = "content" | "dueDate" | "memo" | "name";
 
 const defaultTaskFormValues = {
   content: "",
@@ -84,27 +85,6 @@ function formatDateTime(value: string | null) {
   }
 
   return dateTimeFormatter.format(new Date(value));
-}
-
-function getTaskFieldErrorMessage(
-  fieldName: TaskFormFieldName,
-  fallbackMessage?: string
-) {
-  if (fieldName === "name") {
-    return fallbackMessage?.includes("100")
-      ? "タスク名は100文字以内で入力してください。"
-      : "タスク名を入力してください。";
-  }
-
-  if (fieldName === "content") {
-    return "タスク内容は2000文字以内で入力してください。";
-  }
-
-  if (fieldName === "dueDate") {
-    return "納期は YYYY-MM-DD 形式で入力してください。";
-  }
-
-  return "メモは1000文字以内で入力してください。";
 }
 
 function updateTaskWithCompletion(
@@ -302,8 +282,8 @@ export function ProductTaskManagementPage() {
   }, [taskForm]);
 
   const applyFormApiErrors = useCallback(
-    (error: unknown) => {
-      if (!(error instanceof ApiClientError) || !error.details?.length) {
+    (error: UiApiError) => {
+      if (error.code !== "VALIDATION_ERROR") {
         return false;
       }
 
@@ -507,19 +487,20 @@ export function ProductTaskManagementPage() {
           type: "success"
         });
       } catch (error) {
-        const hasFieldError = applyFormApiErrors(error);
+        const uiError = mapApiErrorToUi(error, {
+          codeMessages: PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES,
+          fallbackMessage: PRODUCT_ERROR_MESSAGES.taskUpdateFailed
+        });
+        const hasFieldError = applyFormApiErrors(uiError);
 
-        if (error instanceof ApiClientError && error.code === "TASK_NOT_FOUND") {
+        if (uiError.code === "TASK_NOT_FOUND") {
           resetTaskForm();
           await refreshTaskData();
         }
 
         if (!hasFieldError) {
           setNotice({
-            message: getApiErrorDisplayMessage(error, {
-              codeMessages: PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES,
-              fallbackMessage: PRODUCT_ERROR_MESSAGES.taskUpdateFailed
-            }),
+            message: uiError.message,
             type: "error"
           });
         }
@@ -536,14 +517,15 @@ export function ProductTaskManagementPage() {
         type: "success"
       });
     } catch (error) {
-      const hasFieldError = applyFormApiErrors(error);
+      const uiError = mapApiErrorToUi(error, {
+        codeMessages: PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES,
+        fallbackMessage: PRODUCT_ERROR_MESSAGES.taskCreateFailed
+      });
+      const hasFieldError = applyFormApiErrors(uiError);
 
       if (!hasFieldError) {
         setNotice({
-          message: getApiErrorDisplayMessage(error, {
-            codeMessages: PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES,
-            fallbackMessage: PRODUCT_ERROR_MESSAGES.taskCreateFailed
-          }),
+          message: uiError.message,
           type: "error"
         });
       }
@@ -582,11 +564,13 @@ export function ProductTaskManagementPage() {
         await refreshTaskData();
       }
 
+      const uiError = mapApiErrorToUi(error, {
+        codeMessages: PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES,
+        fallbackMessage: PRODUCT_ERROR_MESSAGES.taskDeleteFailed
+      });
+
       setNotice({
-        message: getApiErrorDisplayMessage(error, {
-          codeMessages: PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES,
-          fallbackMessage: PRODUCT_ERROR_MESSAGES.taskDeleteFailed
-        }),
+        message: uiError.message,
         type: "error"
       });
     }
@@ -604,11 +588,13 @@ export function ProductTaskManagementPage() {
         task
       });
     } catch (error) {
+      const uiError = mapApiErrorToUi(error, {
+        codeMessages: PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES,
+        fallbackMessage: PRODUCT_ERROR_MESSAGES.taskCompletionFailed
+      });
+
       setNotice({
-        message: getApiErrorDisplayMessage(error, {
-          codeMessages: PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES,
-          fallbackMessage: PRODUCT_ERROR_MESSAGES.taskCompletionFailed
-        }),
+        message: uiError.message,
         type: "error"
       });
     }

@@ -260,7 +260,12 @@ describe("ProductCreatePage", () => {
       expect(apiClientMock.post).toHaveBeenCalledTimes(1);
     });
 
-    expect(screen.getByText("選択したカテゴリは利用できません。")).toBeInTheDocument();
-    expect(screen.getByLabelText("カテゴリ")).toHaveAttribute("aria-invalid", "true");
+    expect(
+      screen.getByText("指定したカテゴリが見つかりません。カテゴリを選び直してください。")
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("カテゴリ")).not.toHaveAttribute(
+      "aria-invalid",
+      "true"
+    );
   });
 });

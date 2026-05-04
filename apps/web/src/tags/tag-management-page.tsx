@@ -7,9 +7,12 @@ import type {
 import { API_PATHS, getTagPath, tagInputSchema } from "@handmade/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
-import { ApiClientError } from "../api/api-client";
-import { getApiErrorDisplayMessage } from "../api/api-error-display";
+import {
+  getTagFormFieldErrorMessage,
+  type TagFormFieldName
+} from "../api/field-error-messages";
 import { useApiClient } from "../api/api-client-context";
+import { mapApiErrorToUi, type UiApiError } from "../api/map-api-error-to-ui";
 import { queryKeys } from "../api/query-keys";
 import {
   ScreenEmptyState,
@@ -17,7 +20,11 @@ import {
   ScreenLoadingState
 } from "../components/screen-states";
 import { useZodForm } from "../forms/use-zod-form";
-import { APP_NAME, TAG_ERROR_MESSAGES } from "../messages/display-messages";
+import {
+  APP_NAME,
+  TAG_ERROR_MESSAGE_OVERRIDES,
+  TAG_ERROR_MESSAGES
+} from "../messages/display-messages";
 
 interface PageNotice {
   message: string;
@@ -77,8 +84,8 @@ export function TagManagementPage() {
   }, [tagForm]);
 
   const applyFormApiErrors = useCallback(
-    (error: unknown) => {
-      if (!(error instanceof ApiClientError) || !error.details?.length) {
+    (error: UiApiError) => {
+      if (error.code !== "VALIDATION_ERROR" && error.code !== "DUPLICATE_NAME") {
         return false;
       }
 
@@ -87,7 +94,10 @@ export function TagManagementPage() {
       error.details.forEach((detail) => {
         if (detail.field === "name") {
           tagForm.setError("name", {
-            message: detail.message,
+            message:
+              error.code === "DUPLICATE_NAME"
+                ? error.message
+                : getTagFormFieldErrorMessage(detail.field as TagFormFieldName, detail.message),
             type: "server"
           });
           applied = true;
@@ -172,13 +182,15 @@ export function TagManagementPage() {
           type: "success"
         });
       } catch (error) {
-        const hasFieldError = applyFormApiErrors(error);
+        const uiError = mapApiErrorToUi(error, {
+          codeMessages: TAG_ERROR_MESSAGE_OVERRIDES,
+          fallbackMessage: TAG_ERROR_MESSAGES.createFailed
+        });
+        const hasFieldError = applyFormApiErrors(uiError);
 
         if (!hasFieldError) {
           setNotice({
-            message: getApiErrorDisplayMessage(error, {
-              fallbackMessage: TAG_ERROR_MESSAGES.createFailed
-            }),
+            message: uiError.message,
             type: "error"
           });
         }
@@ -198,18 +210,20 @@ export function TagManagementPage() {
         type: "success"
       });
     } catch (error) {
-      const hasFieldError = applyFormApiErrors(error);
+      const uiError = mapApiErrorToUi(error, {
+        codeMessages: TAG_ERROR_MESSAGE_OVERRIDES,
+        fallbackMessage: TAG_ERROR_MESSAGES.updateFailed
+      });
+      const hasFieldError = applyFormApiErrors(uiError);
 
-      if (error instanceof ApiClientError && error.code === "TAG_NOT_FOUND") {
+      if (uiError.code === "TAG_NOT_FOUND") {
         resetTagForm();
         await refreshTags();
       }
 
       if (!hasFieldError) {
         setNotice({
-          message: getApiErrorDisplayMessage(error, {
-            fallbackMessage: TAG_ERROR_MESSAGES.updateFailed
-          }),
+          message: uiError.message,
           type: "error"
         });
       }
@@ -240,7 +254,12 @@ export function TagManagementPage() {
     } catch (error) {
       setPendingDeleteTag(null);
 
-      if (error instanceof ApiClientError && error.code === "TAG_NOT_FOUND") {
+      const uiError = mapApiErrorToUi(error, {
+        codeMessages: TAG_ERROR_MESSAGE_OVERRIDES,
+        fallbackMessage: TAG_ERROR_MESSAGES.deleteFailed
+      });
+
+      if (uiError.code === "TAG_NOT_FOUND") {
         if (editingTag?.tagId === tagToDelete.tagId) {
           resetTagForm();
         }
@@ -249,9 +268,7 @@ export function TagManagementPage() {
       }
 
       setNotice({
-        message: getApiErrorDisplayMessage(error, {
-          fallbackMessage: TAG_ERROR_MESSAGES.deleteFailed
-        }),
+        message: uiError.message,
         type: "error"
       });
     }

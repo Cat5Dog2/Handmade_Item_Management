@@ -22,9 +22,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { z } from "zod";
-import { ApiClientError } from "../api/api-client";
 import { getApiErrorDisplayMessage } from "../api/api-error-display";
+import {
+  getProductFormFieldErrorMessage,
+  type ProductFormFieldName
+} from "../api/field-error-messages";
 import { useApiClient } from "../api/api-client-context";
+import { mapApiErrorToUi, type UiApiError } from "../api/map-api-error-to-ui";
 import { queryKeys } from "../api/query-keys";
 import {
   ScreenErrorState,
@@ -34,7 +38,7 @@ import { useZodForm } from "../forms/use-zod-form";
 import {
   APP_NAME,
   PRODUCT_ERROR_MESSAGES,
-  PRODUCT_ERROR_MESSAGE_OVERRIDES,
+  PRODUCT_FORM_ERROR_MESSAGE_OVERRIDES,
   PRODUCT_IMAGE_ERROR_MESSAGES,
   PRODUCT_IMAGE_ERROR_MESSAGE_OVERRIDES
 } from "../messages/display-messages";
@@ -332,8 +336,8 @@ export function ProductEditPage() {
   });
 
   const applyFormApiErrors = useCallback(
-    (error: unknown) => {
-      if (!(error instanceof ApiClientError) || !error.details?.length) {
+    (error: UiApiError) => {
+      if (error.code !== "VALIDATION_ERROR") {
         return false;
       }
 
@@ -350,8 +354,10 @@ export function ProductEditPage() {
           detail.field === "primaryImageId" ||
           detail.field === "soldCustomerId"
         ) {
+          const fieldName = detail.field as ProductFormFieldName;
+
           form.setError(detail.field as ProductUpdateFieldName, {
-            message: detail.message,
+            message: getProductFormFieldErrorMessage(fieldName, detail.message),
             type: "server"
           });
           applied = true;
@@ -380,14 +386,15 @@ export function ProductEditPage() {
         const result = await updateProductMutation.mutateAsync(input);
         navigate(getProductPath(result.productId), { replace: true });
       } catch (error) {
-        const hasFieldError = applyFormApiErrors(error);
+        const uiError = mapApiErrorToUi(error, {
+          codeMessages: PRODUCT_FORM_ERROR_MESSAGE_OVERRIDES,
+          fallbackMessage: PRODUCT_ERROR_MESSAGES.updateFailed
+        });
+        const hasFieldError = applyFormApiErrors(uiError);
 
         if (!hasFieldError) {
           setNotice({
-            message: getApiErrorDisplayMessage(error, {
-              codeMessages: PRODUCT_ERROR_MESSAGE_OVERRIDES,
-              fallbackMessage: PRODUCT_ERROR_MESSAGES.updateFailed
-            }),
+            message: uiError.message,
             type: "error"
           });
         }
@@ -568,7 +575,7 @@ export function ProductEditPage() {
         </div>
         <ScreenErrorState
           message={getApiErrorDisplayMessage(lookupError, {
-            codeMessages: PRODUCT_ERROR_MESSAGE_OVERRIDES,
+            codeMessages: PRODUCT_FORM_ERROR_MESSAGE_OVERRIDES,
             fallbackMessage: PRODUCT_ERROR_MESSAGES.editLookupFailed
           })}
           onRetry={retryLookups}

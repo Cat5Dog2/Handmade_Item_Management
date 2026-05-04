@@ -61,9 +61,9 @@ function createUploadFile(buffer: Buffer) {
   };
 }
 
-function createBucketFileMock() {
+function createBucketFileMock(save = vi.fn().mockResolvedValue(undefined)) {
   return {
-    save: vi.fn().mockResolvedValue(undefined)
+    save
   };
 }
 
@@ -275,6 +275,85 @@ describe("replaceProductImage", () => {
     expect(transaction.set).not.toHaveBeenCalled();
     expect(displayFile.save).not.toHaveBeenCalled();
     expect(thumbnailFile.save).not.toHaveBeenCalled();
+  });
+
+  it("does not update product metadata when storage replacement fails", async () => {
+    const productId = "HM-000001";
+    const imageId = "img_existing_2";
+    const product = createProductDocument();
+    const productRef = {
+      get: vi.fn().mockResolvedValue(createDocumentSnapshot(product)),
+      path: `products/${productId}`
+    };
+    const storageError = new Error("Storage save failed");
+    const displayFile = createBucketFileMock(
+      vi.fn().mockRejectedValue(storageError)
+    );
+    const thumbnailFile = createBucketFileMock();
+    const fileMock = vi.fn((path: string) => {
+      const paths = getProductImageStoragePaths(productId, imageId);
+
+      if (path === paths.displayPath) {
+        return displayFile;
+      }
+
+      if (path === paths.thumbnailPath) {
+        return thumbnailFile;
+      }
+
+      throw new Error(`Unexpected path ${path}`);
+    });
+    const transaction = {
+      get: vi.fn(async (reference: unknown) => {
+        if (reference === productRef) {
+          return createDocumentSnapshot(product);
+        }
+
+        throw new Error("Unexpected transaction reference");
+      }),
+      set: vi.fn()
+    };
+    const db = {
+      collection: vi.fn((collectionName: string) => {
+        if (collectionName === "products") {
+          return {
+            doc: vi.fn(() => productRef)
+          };
+        }
+
+        throw new Error(`Unexpected collection ${collectionName}`);
+      }),
+      runTransaction: vi.fn(async (callback) => callback(transaction as never))
+    };
+    const sourceBuffer = await sharp({
+      create: {
+        width: 320,
+        height: 320,
+        channels: 3,
+        background: "#f4b5ca"
+      }
+    })
+      .png()
+      .toBuffer();
+
+    await expect(
+      replaceProductImage(
+        productId,
+        imageId,
+        createUploadFile(sourceBuffer),
+        {
+          bucket: {
+            file: fileMock
+          } as never,
+          db: db as never
+        }
+      )
+    ).rejects.toBe(storageError);
+
+    expect(db.runTransaction).toHaveBeenCalledTimes(1);
+    expect(displayFile.save).toHaveBeenCalledTimes(1);
+    expect(thumbnailFile.save).toHaveBeenCalledTimes(1);
+    expect(transaction.set).not.toHaveBeenCalled();
   });
 
   it("returns PRODUCT_NOT_FOUND when the product does not exist", async () => {

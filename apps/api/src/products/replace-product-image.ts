@@ -127,6 +127,7 @@ export async function replaceProductImage(
 
   const processedImage = await processProductImageBuffer(file.buffer);
   const storagePaths = getProductImageStoragePaths(productId, imageId);
+  const bucket = options.bucket ?? getStorageBucket();
 
   const result = await db.runTransaction(async (transaction) => {
     const typedTransaction = transaction as unknown as FirestoreTransactionLike;
@@ -142,6 +143,13 @@ export async function replaceProductImage(
 
     const updatedAt = now();
 
+    await saveProcessedImage(
+      bucket,
+      storagePaths,
+      processedImage.display.buffer,
+      processedImage.thumbnail.buffer
+    );
+
     typedTransaction.set(productReference, {
       ...latestProduct,
       updatedAt
@@ -151,14 +159,6 @@ export async function replaceProductImage(
       updatedAt
     };
   });
-
-  const bucket = options.bucket ?? getStorageBucket();
-  await saveProcessedImage(
-    bucket,
-    storagePaths,
-    processedImage.display.buffer,
-    processedImage.thumbnail.buffer
-  );
 
   return {
     imageId,

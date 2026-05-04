@@ -647,14 +647,16 @@ MVPでは **operationLogs の自動削除は実装しない**。
 - Docker / ローカル起動を含め、開発用途のサーバーは localhost または閉域ネットワーク内に限定する
 - `npm audit fix --force` による一括更新は、`vite@8` や `vitest@4` へのメジャー更新を伴うため、別タスクで検証してから実施する
 
-### 15.3 prod-low 許容判断
+### 15.3 prod 監査結果の再評価
 
-- prod 側に残る low は `firebase-admin@13.8.0` 配下の推移依存（`@google-cloud/firestore`, `@google-cloud/storage`, `teeny-request`, `retry-request`, `http-proxy-agent`, `@tootallnate/once` など）に由来する
-- 2026年4月11日時点では、`npm audit` が提示する自動修正案は **`firebase-admin@10.3.0` へのダウングレード** であり、これは破壊的変更かつ最新版より後退するため採用しない
-- 現時点では **high / critical が無いこと、prod 側は low のみであること、非破壊な自動修正手段が無いこと** を根拠に、MVP 開発中は許容とする
+- 2026年5月4日時点の `npm audit --omit=dev --audit-level=moderate` では、prod 側に 10 件（low 2 件 / moderate 8 件）が残る
+- 対象は `firebase-admin@13.8.0` 配下の推移依存（`@google-cloud/firestore`, `@google-cloud/storage`, `google-gax`, `gaxios`, `teeny-request`, `retry-request`, `http-proxy-agent`, `@tootallnate/once`, `uuid` など）に由来する
+- `npm view firebase-admin version` では `13.8.0` が最新版であり、`npm audit fix --omit=dev` でも非破壊な修正は適用されなかった
+- `npm audit` が提示する自動修正案は **`npm audit fix --force` による `firebase-admin@10.1.0` へのダウングレード** であり、破壊的変更かつ最新版より後退するため採用しない
+- 現時点では **high / critical が無いこと、非破壊な自動修正手段が無いこと、最新版 `firebase-admin` を利用していること** を根拠に、MVP 開発中は残存リスクとして管理する
 - ただし、許容は恒久対応ではなく、次の条件で再評価する
   - `firebase-admin` または配下依存に非破壊更新が出たとき
-  - severity が moderate 以上へ上がったとき
+  - severity が high / critical へ上がったとき
   - リリース前確認で `npm audit` の結果が変化したとき
 
 ### 15.4 運用ルール

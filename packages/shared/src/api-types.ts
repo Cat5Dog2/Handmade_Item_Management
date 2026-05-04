@@ -132,6 +132,7 @@ export interface ProductDeleteData {
 
 export interface ProductImageMutationData {
   imageId: string;
+  isPrimary?: boolean;
   updatedAt: IsoDateTimeString;
 }
 

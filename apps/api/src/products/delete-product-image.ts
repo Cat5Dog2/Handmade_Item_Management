@@ -81,7 +81,9 @@ function normalizeImagesAfterDelete(
   deletedImageId: string
 ) {
   const sortedImages = sortImages(images);
-  const deletedImage = sortedImages.find((image) => image.imageId === deletedImageId);
+  const deletedImage = sortedImages.find(
+    (image) => image.imageId === deletedImageId
+  );
 
   if (!deletedImage) {
     throw createImageNotFoundError();
@@ -94,11 +96,41 @@ function normalizeImagesAfterDelete(
     ? remainingImages[0]?.imageId ?? null
     : remainingImages.find((image) => image.isPrimary)?.imageId ?? null;
 
-  return remainingImages.map((image, index) => ({
-    ...image,
-    isPrimary: image.imageId === primaryImageId,
-    sortOrder: index + 1
-  }));
+  return {
+    deletedImage,
+    images: remainingImages.map((image, index) => ({
+      ...image,
+      isPrimary: image.imageId === primaryImageId,
+      sortOrder: index + 1
+    }))
+  };
+}
+
+function isStorageNotFoundError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const storageError = error as {
+    code?: number | string;
+    statusCode?: number;
+  };
+
+  return (
+    storageError.code === 404 ||
+    storageError.code === "404" ||
+    storageError.statusCode === 404
+  );
+}
+
+async function deleteStorageFile(file: ProductImageBucketFile) {
+  try {
+    await file.delete();
+  } catch (error) {
+    if (!isStorageNotFoundError(error)) {
+      throw error;
+    }
+  }
 }
 
 async function deleteStorageFiles(
@@ -106,8 +138,8 @@ async function deleteStorageFiles(
   paths: Pick<ProductImageDocument, "displayPath" | "thumbnailPath">
 ) {
   await Promise.all([
-    bucket.file(paths.displayPath).delete(),
-    bucket.file(paths.thumbnailPath).delete()
+    deleteStorageFile(bucket.file(paths.displayPath)),
+    deleteStorageFile(bucket.file(paths.thumbnailPath))
   ]);
 }
 
@@ -134,6 +166,8 @@ export async function deleteProductImage(
     throw createImageNotFoundError();
   }
 
+  const bucket = options.bucket ?? getStorageBucket();
+
   const result = await db.runTransaction(async (transaction) => {
     const typedTransaction = transaction as unknown as FirestoreTransactionLike;
     const latestSnapshot = await typedTransaction.get(productReference);
@@ -142,8 +176,13 @@ export async function deleteProductImage(
 
     const latestProduct = latestSnapshot.data() as ProductDocument;
     const latestImages = latestProduct.images ?? [];
-    const updatedImages = normalizeImagesAfterDelete(latestImages, imageId);
+    const { deletedImage, images: updatedImages } = normalizeImagesAfterDelete(
+      latestImages,
+      imageId
+    );
     const updatedAt = now();
+
+    await deleteStorageFiles(bucket, deletedImage);
 
     typedTransaction.set(productReference, {
       ...latestProduct,
@@ -155,9 +194,6 @@ export async function deleteProductImage(
       updatedAt
     };
   });
-
-  const bucket = options.bucket ?? getStorageBucket();
-  await deleteStorageFiles(bucket, targetImage);
 
   return {
     imageId,

@@ -110,6 +110,7 @@ describe("deleteProduct", () => {
       })
     ).rejects.toMatchObject({
       code: "PRODUCT_NOT_FOUND",
+      message: "対象の商品が見つかりません。",
       statusCode: 404
     });
   });
@@ -162,6 +163,7 @@ describe("deleteProduct", () => {
       })
     ).rejects.toMatchObject({
       code: "PRODUCT_DELETED",
+      message: "対象の商品はすでに利用できません。",
       statusCode: 404
     });
   });

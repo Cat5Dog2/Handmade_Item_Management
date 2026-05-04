@@ -130,9 +130,14 @@ export interface ProductDeleteData {
   deletedAt: IsoDateTimeString;
 }
 
+export interface ProductImageCreateData {
+  imageId: string;
+  isPrimary: boolean;
+  updatedAt: IsoDateTimeString;
+}
+
 export interface ProductImageMutationData {
   imageId: string;
-  isPrimary?: boolean;
   updatedAt: IsoDateTimeString;
 }
 

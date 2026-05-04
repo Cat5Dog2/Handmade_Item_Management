@@ -1,52 +1,23 @@
 import type { ProductImageMutationData } from "@handmade/shared";
 import type { Firestore, Timestamp } from "firebase-admin/firestore";
 import { Timestamp as FirestoreTimestamp } from "firebase-admin/firestore";
-import { createApiError } from "../errors/api-errors";
 import { getFirestoreDb, getStorageBucket } from "../firebase/firebase-admin";
 import {
   assertRelatedProductAvailable,
   type SnapshotLike
 } from "../guards/firestore-business-guards";
-
-interface ProductImageDocument {
-  displayPath: string;
-  imageId: string;
-  isPrimary: boolean;
-  sortOrder: number;
-  thumbnailPath: string;
-}
-
-interface ProductDocument {
-  categoryId: string;
-  createdAt: Timestamp;
-  deletedAt: Timestamp | null;
-  description: string;
-  images?: ProductImageDocument[] | null;
-  isDeleted: boolean;
-  name: string;
-  price: number;
-  productId: string;
-  qrCodeValue: string;
-  soldAt: Timestamp | null;
-  soldCustomerId?: string | null;
-  soldCustomerNameSnapshot?: string | null;
-  status: string;
-  tagIds: string[];
-  updatedAt: Timestamp;
-}
-
-interface ProductImageBucketFile {
-  delete(): Promise<unknown>;
-}
-
-interface ProductImageBucket {
-  file(path: string): ProductImageBucketFile;
-}
-
-interface FirestoreTransactionLike {
-  get(reference: unknown): Promise<SnapshotLike<unknown>>;
-  set(reference: unknown, data: unknown): void;
-}
+import {
+  findProductImageOrThrow,
+  sortProductImages
+} from "./product-image-documents";
+import { createImageNotFoundError } from "./product-image-errors";
+import type {
+  FirestoreTransactionLike,
+  ProductDocument,
+  ProductImageBucket,
+  ProductImageDocument
+} from "./product-image-service-types";
+import { deleteProductImageStorageFiles } from "./product-image-storage";
 
 interface DeleteProductImageOptions {
   bucket?: ProductImageBucket;
@@ -58,29 +29,11 @@ function toIsoString(value: Timestamp) {
   return value.toDate().toISOString();
 }
 
-function createImageNotFoundError() {
-  return createApiError({
-    statusCode: 404,
-    code: "IMAGE_NOT_FOUND",
-    message: "対象の画像が見つかりません。最新の情報を読み込み直してください。"
-  });
-}
-
-function sortImages(images: ProductImageDocument[]) {
-  return [...images].sort((left, right) => {
-    if (left.sortOrder !== right.sortOrder) {
-      return left.sortOrder - right.sortOrder;
-    }
-
-    return left.imageId.localeCompare(right.imageId);
-  });
-}
-
 function normalizeImagesAfterDelete(
   images: ProductImageDocument[],
   deletedImageId: string
 ) {
-  const sortedImages = sortImages(images);
+  const sortedImages = sortProductImages(images);
   const deletedImage = sortedImages.find(
     (image) => image.imageId === deletedImageId
   );
@@ -106,43 +59,6 @@ function normalizeImagesAfterDelete(
   };
 }
 
-function isStorageNotFoundError(error: unknown) {
-  if (!error || typeof error !== "object") {
-    return false;
-  }
-
-  const storageError = error as {
-    code?: number | string;
-    statusCode?: number;
-  };
-
-  return (
-    storageError.code === 404 ||
-    storageError.code === "404" ||
-    storageError.statusCode === 404
-  );
-}
-
-async function deleteStorageFile(file: ProductImageBucketFile) {
-  try {
-    await file.delete();
-  } catch (error) {
-    if (!isStorageNotFoundError(error)) {
-      throw error;
-    }
-  }
-}
-
-async function deleteStorageFiles(
-  bucket: ProductImageBucket,
-  paths: Pick<ProductImageDocument, "displayPath" | "thumbnailPath">
-) {
-  await Promise.all([
-    deleteStorageFile(bucket.file(paths.displayPath)),
-    deleteStorageFile(bucket.file(paths.thumbnailPath))
-  ]);
-}
-
 export async function deleteProductImage(
   productId: string,
   imageId: string,
@@ -158,15 +74,21 @@ export async function deleteProductImage(
 
   const product = productSnapshot.data();
   const currentImages = product.images ?? [];
-  const targetImage = sortImages(currentImages).find(
-    (image) => image.imageId === imageId
-  );
-
-  if (!targetImage) {
-    throw createImageNotFoundError();
-  }
+  findProductImageOrThrow(currentImages, imageId);
 
   const bucket = options.bucket ?? getStorageBucket();
+  const latestSnapshotBeforeStorage =
+    (await productReference.get()) as unknown as SnapshotLike<ProductDocument>;
+
+  assertRelatedProductAvailable(latestSnapshotBeforeStorage);
+
+  const latestProductBeforeStorage = latestSnapshotBeforeStorage.data();
+  const { deletedImage } = normalizeImagesAfterDelete(
+    latestProductBeforeStorage.images ?? [],
+    imageId
+  );
+
+  await deleteProductImageStorageFiles(bucket, deletedImage);
 
   const result = await db.runTransaction(async (transaction) => {
     const typedTransaction = transaction as unknown as FirestoreTransactionLike;
@@ -176,13 +98,11 @@ export async function deleteProductImage(
 
     const latestProduct = latestSnapshot.data() as ProductDocument;
     const latestImages = latestProduct.images ?? [];
-    const { deletedImage, images: updatedImages } = normalizeImagesAfterDelete(
+    const { images: updatedImages } = normalizeImagesAfterDelete(
       latestImages,
       imageId
     );
     const updatedAt = now();
-
-    await deleteStorageFiles(bucket, deletedImage);
 
     typedTransaction.set(productReference, {
       ...latestProduct,

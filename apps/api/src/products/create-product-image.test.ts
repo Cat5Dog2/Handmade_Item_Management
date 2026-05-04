@@ -5,74 +5,25 @@ import {
   createTimestamp,
   expectTimestampLike
 } from "../test/firestore-test-helpers";
+import {
+  createProductDocument,
+  createProductImageBucketFileMock,
+  createProductImageBucketPathMock,
+  createProductImageDocument,
+  createProductImageUploadFile
+} from "../test/product-image-test-helpers";
 import { createProductImage } from "./create-product-image";
-import { getProductImageStoragePaths } from "../images/product-image-processing";
 
-function createProductImageDocument(
-  overrides: Partial<Record<string, unknown>> = {}
-) {
-  return {
-    displayPath: "products/HM-000001/display/img_existing_1.webp",
-    imageId: "img_existing_1",
-    isPrimary: false,
-    sortOrder: 1,
-    thumbnailPath: "products/HM-000001/thumb/img_existing_1.webp",
-    ...overrides
-  };
-}
-
-function createProductDocument(
-  imageCount: number,
-  overrides: Partial<Record<string, unknown>> = {}
-) {
-  const images = Array.from({ length: imageCount }, (_, index) =>
-    createProductImageDocument({
-      displayPath: `products/HM-000001/display/img_existing_${index + 1}.webp`,
-      imageId: `img_existing_${index + 1}`,
-      isPrimary: index === 0,
-      sortOrder: index + 1,
-      thumbnailPath: `products/HM-000001/thumb/img_existing_${index + 1}.webp`
-    })
-  );
-
-  return {
-    categoryId: "cat-a",
-    createdAt: createTimestamp("2026-04-18T08:00:00.000Z"),
-    deletedAt: null,
-    description: "Handmade pin",
-    images,
-    isDeleted: false,
-    name: "Fancy Pin",
-    price: 2800,
-    productId: "HM-000001",
-    qrCodeValue: "HM-000001",
-    soldAt: null,
-    soldCustomerId: null,
-    soldCustomerNameSnapshot: null,
-    status: "onDisplay",
-    tagIds: [],
-    updatedAt: createTimestamp("2026-04-18T09:00:00.000Z"),
-    ...overrides
-  };
-}
-
-function createUploadFile(buffer: Buffer) {
-  return {
-    buffer,
-    fieldname: "file",
-    mimetype: "image/png",
-    size: buffer.length
-  };
-}
-
-function createBucketFileMock() {
-  const save = vi.fn().mockResolvedValue(undefined);
-  const deleteMock = vi.fn().mockResolvedValue(undefined);
-
-  return {
-    delete: deleteMock,
-    save
-  };
+function createProductDocumentWithImageCount(imageCount: number) {
+  return createProductDocument({
+    images: Array.from({ length: imageCount }, (_, index) =>
+      createProductImageDocument({
+        imageId: `img_existing_${index + 1}`,
+        isPrimary: index === 0,
+        sortOrder: index + 1
+      })
+    )
+  });
 }
 
 describe("createProductImage", () => {
@@ -80,7 +31,7 @@ describe("createProductImage", () => {
     const now = createTimestamp("2026-04-18T10:00:00.000Z");
     const productId = "HM-000001";
     const imageId = "img_abcdef123456";
-    const existingProduct = createProductDocument(2);
+    const existingProduct = createProductDocumentWithImageCount(2);
     const productRef = {
       get: vi.fn().mockResolvedValue(createDocumentSnapshot(existingProduct))
     };
@@ -97,20 +48,13 @@ describe("createProductImage", () => {
     const runTransaction = vi.fn(async (callback) =>
       callback(transaction as never)
     );
-    const displayFile = createBucketFileMock();
-    const thumbnailFile = createBucketFileMock();
-    const fileMock = vi.fn((path: string) => {
-      const paths = getProductImageStoragePaths(productId, imageId);
-
-      if (path === paths.displayPath) {
-        return displayFile;
-      }
-
-      if (path === paths.thumbnailPath) {
-        return thumbnailFile;
-      }
-
-      throw new Error(`Unexpected path ${path}`);
+    const displayFile = createProductImageBucketFileMock();
+    const thumbnailFile = createProductImageBucketFileMock();
+    const fileMock = createProductImageBucketPathMock({
+      displayFile,
+      imageId,
+      productId,
+      thumbnailFile
     });
     const db = {
       collection: vi.fn((collectionName: string) => {
@@ -137,7 +81,7 @@ describe("createProductImage", () => {
 
     const result = await createProductImage(
       productId,
-      createUploadFile(sourceBuffer),
+      createProductImageUploadFile(sourceBuffer),
       {
         bucket: {
           file: fileMock
@@ -222,7 +166,9 @@ describe("createProductImage", () => {
     const productRef = {
       get: vi
         .fn()
-        .mockResolvedValue(createDocumentSnapshot(createProductDocument(10)))
+        .mockResolvedValue(
+          createDocumentSnapshot(createProductDocumentWithImageCount(10))
+        )
     };
     const db = {
       collection: vi.fn((collectionName: string) => {
@@ -249,7 +195,7 @@ describe("createProductImage", () => {
       .toBuffer();
 
     await expect(
-      createProductImage(productId, createUploadFile(sourceBuffer), {
+      createProductImage(productId, createProductImageUploadFile(sourceBuffer), {
         bucket: {
           file: fileMock
         } as never,
@@ -269,8 +215,8 @@ describe("createProductImage", () => {
     const now = createTimestamp("2026-04-18T10:00:00.000Z");
     const productId = "HM-000001";
     const imageId = "img_abcdef123456";
-    const preflightProduct = createProductDocument(9);
-    const transactionProduct = createProductDocument(10);
+    const preflightProduct = createProductDocumentWithImageCount(9);
+    const transactionProduct = createProductDocumentWithImageCount(10);
     const productRef = {
       get: vi.fn().mockResolvedValue(createDocumentSnapshot(preflightProduct))
     };
@@ -287,20 +233,13 @@ describe("createProductImage", () => {
     const runTransaction = vi.fn(async (callback) =>
       callback(transaction as never)
     );
-    const displayFile = createBucketFileMock();
-    const thumbnailFile = createBucketFileMock();
-    const fileMock = vi.fn((path: string) => {
-      const paths = getProductImageStoragePaths(productId, imageId);
-
-      if (path === paths.displayPath) {
-        return displayFile;
-      }
-
-      if (path === paths.thumbnailPath) {
-        return thumbnailFile;
-      }
-
-      throw new Error(`Unexpected path ${path}`);
+    const displayFile = createProductImageBucketFileMock();
+    const thumbnailFile = createProductImageBucketFileMock();
+    const fileMock = createProductImageBucketPathMock({
+      displayFile,
+      imageId,
+      productId,
+      thumbnailFile
     });
     const db = {
       collection: vi.fn((collectionName: string) => {
@@ -326,7 +265,7 @@ describe("createProductImage", () => {
       .toBuffer();
 
     await expect(
-      createProductImage(productId, createUploadFile(sourceBuffer), {
+      createProductImage(productId, createProductImageUploadFile(sourceBuffer), {
         bucket: {
           file: fileMock
         } as never,

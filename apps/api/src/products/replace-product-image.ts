@@ -1,7 +1,6 @@
 import type { ProductImageMutationData } from "@handmade/shared";
 import type { Firestore, Timestamp } from "firebase-admin/firestore";
 import { Timestamp as FirestoreTimestamp } from "firebase-admin/firestore";
-import { createApiError } from "../errors/api-errors";
 import { getFirestoreDb, getStorageBucket } from "../firebase/firebase-admin";
 import {
   assertRelatedProductAvailable,
@@ -13,52 +12,13 @@ import {
   processProductImageBuffer,
   type ProductImageUploadFile
 } from "../images/product-image-processing";
-
-interface ProductImageDocument {
-  displayPath: string;
-  imageId: string;
-  isPrimary: boolean;
-  sortOrder: number;
-  thumbnailPath: string;
-}
-
-interface ProductDocument {
-  categoryId: string;
-  createdAt: Timestamp;
-  deletedAt: Timestamp | null;
-  description: string;
-  images?: ProductImageDocument[] | null;
-  isDeleted: boolean;
-  name: string;
-  price: number;
-  productId: string;
-  qrCodeValue: string;
-  soldAt: Timestamp | null;
-  soldCustomerId?: string | null;
-  soldCustomerNameSnapshot?: string | null;
-  status: string;
-  tagIds: string[];
-  updatedAt: Timestamp;
-}
-
-interface ProductImageBucketFile {
-  save(
-    data: Buffer,
-    options: {
-      contentType: string;
-      resumable: boolean;
-    }
-  ): Promise<unknown>;
-}
-
-interface ProductImageBucket {
-  file(path: string): ProductImageBucketFile;
-}
-
-interface FirestoreTransactionLike {
-  get(reference: unknown): Promise<SnapshotLike<unknown>>;
-  set(reference: unknown, data: unknown): void;
-}
+import { findProductImageOrThrow } from "./product-image-documents";
+import type {
+  FirestoreTransactionLike,
+  ProductDocument,
+  ProductImageBucket
+} from "./product-image-service-types";
+import { saveProductImageStorageFiles } from "./product-image-storage";
 
 interface ReplaceProductImageOptions {
   bucket?: ProductImageBucket;
@@ -68,39 +28,6 @@ interface ReplaceProductImageOptions {
 
 function toIsoString(value: Timestamp) {
   return value.toDate().toISOString();
-}
-
-function createImageNotFoundError() {
-  return createApiError({
-    statusCode: 404,
-    code: "IMAGE_NOT_FOUND",
-    message: "対象の画像が見つかりません。最新の情報を読み込み直してください。"
-  });
-}
-
-function hasProductImage(
-  images: ProductImageDocument[] | null | undefined,
-  imageId: string
-) {
-  return (images ?? []).some((image) => image.imageId === imageId);
-}
-
-async function saveProcessedImage(
-  bucket: ProductImageBucket,
-  paths: ReturnType<typeof getProductImageStoragePaths>,
-  displayBuffer: Buffer,
-  thumbnailBuffer: Buffer
-) {
-  await Promise.all([
-    bucket.file(paths.displayPath).save(displayBuffer, {
-      contentType: "image/webp",
-      resumable: false
-    }),
-    bucket.file(paths.thumbnailPath).save(thumbnailBuffer, {
-      contentType: "image/webp",
-      resumable: false
-    })
-  ]);
 }
 
 export async function replaceProductImage(
@@ -121,13 +48,23 @@ export async function replaceProductImage(
 
   const product = productSnapshot.data();
 
-  if (!hasProductImage(product.images, imageId)) {
-    throw createImageNotFoundError();
-  }
+  findProductImageOrThrow(product.images, imageId);
 
   const processedImage = await processProductImageBuffer(file.buffer);
   const storagePaths = getProductImageStoragePaths(productId, imageId);
   const bucket = options.bucket ?? getStorageBucket();
+  const latestSnapshotBeforeStorage =
+    (await productReference.get()) as unknown as SnapshotLike<ProductDocument>;
+
+  assertRelatedProductAvailable(latestSnapshotBeforeStorage);
+  findProductImageOrThrow(latestSnapshotBeforeStorage.data().images, imageId);
+
+  await saveProductImageStorageFiles(
+    bucket,
+    storagePaths,
+    processedImage.display.buffer,
+    processedImage.thumbnail.buffer
+  );
 
   const result = await db.runTransaction(async (transaction) => {
     const typedTransaction = transaction as unknown as FirestoreTransactionLike;
@@ -137,18 +74,9 @@ export async function replaceProductImage(
 
     const latestProduct = latestSnapshot.data() as ProductDocument;
 
-    if (!hasProductImage(latestProduct.images, imageId)) {
-      throw createImageNotFoundError();
-    }
+    findProductImageOrThrow(latestProduct.images, imageId);
 
     const updatedAt = now();
-
-    await saveProcessedImage(
-      bucket,
-      storagePaths,
-      processedImage.display.buffer,
-      processedImage.thumbnail.buffer
-    );
 
     typedTransaction.set(productReference, {
       ...latestProduct,

@@ -5,66 +5,29 @@ import {
   createTimestamp,
   expectTimestampLike
 } from "../test/firestore-test-helpers";
-import { getProductImageStoragePaths } from "../images/product-image-processing";
+import {
+  createProductDocument,
+  createProductImageBucketFileMock,
+  createProductImageBucketPathMock,
+  createProductImageDocument,
+  createProductImageUploadFile
+} from "../test/product-image-test-helpers";
 import { replaceProductImage } from "./replace-product-image";
 
-function createProductImageDocument(
-  imageId: string,
-  sortOrder: number,
+function createReplaceProductDocument(
   overrides: Partial<Record<string, unknown>> = {}
 ) {
-  return {
-    displayPath: `products/HM-000001/display/${imageId}.webp`,
-    imageId,
-    isPrimary: sortOrder === 1,
-    sortOrder,
-    thumbnailPath: `products/HM-000001/thumb/${imageId}.webp`,
-    ...overrides
-  };
-}
-
-function createProductDocument(
-  overrides: Partial<Record<string, unknown>> = {}
-) {
-  return {
-    categoryId: "cat-a",
-    createdAt: createTimestamp("2026-04-18T08:00:00.000Z"),
-    deletedAt: null,
-    description: "Handmade pin",
+  return createProductDocument({
     images: [
-      createProductImageDocument("img_existing_1", 1),
-      createProductImageDocument("img_existing_2", 2, {
-        isPrimary: true
+      createProductImageDocument({ imageId: "img_existing_1", sortOrder: 1 }),
+      createProductImageDocument({
+        imageId: "img_existing_2",
+        isPrimary: true,
+        sortOrder: 2
       })
     ],
-    isDeleted: false,
-    name: "Fancy Pin",
-    price: 2800,
-    productId: "HM-000001",
-    qrCodeValue: "HM-000001",
-    soldAt: null,
-    soldCustomerId: null,
-    soldCustomerNameSnapshot: null,
-    status: "onDisplay",
-    tagIds: [],
-    updatedAt: createTimestamp("2026-04-18T09:00:00.000Z"),
-    ...overrides
-  };
-}
-
-function createUploadFile(buffer: Buffer) {
-  return {
-    buffer,
-    fieldname: "file",
-    mimetype: "image/png",
-    size: buffer.length
-  };
-}
-
-function createBucketFileMock(save = vi.fn().mockResolvedValue(undefined)) {
-  return {
-    save
-  };
+    overrides
+  });
 }
 
 describe("replaceProductImage", () => {
@@ -72,32 +35,28 @@ describe("replaceProductImage", () => {
     const now = createTimestamp("2026-04-18T10:00:00.000Z");
     const productId = "HM-000001";
     const imageId = "img_existing_2";
-    const preflightProduct = createProductDocument({
+    const preflightProduct = createReplaceProductDocument({
       description: "Preflight description",
       updatedAt: createTimestamp("2026-04-18T08:30:00.000Z")
     });
-    const latestProduct = createProductDocument({
+    const latestProduct = createReplaceProductDocument({
       description: "Latest description",
       updatedAt: createTimestamp("2026-04-18T09:30:00.000Z")
     });
     const productRef = {
-      get: vi.fn().mockResolvedValue(createDocumentSnapshot(preflightProduct)),
+      get: vi
+        .fn()
+        .mockResolvedValueOnce(createDocumentSnapshot(preflightProduct))
+        .mockResolvedValue(createDocumentSnapshot(latestProduct)),
       path: `products/${productId}`
     };
-    const displayFile = createBucketFileMock();
-    const thumbnailFile = createBucketFileMock();
-    const fileMock = vi.fn((path: string) => {
-      const paths = getProductImageStoragePaths(productId, imageId);
-
-      if (path === paths.displayPath) {
-        return displayFile;
-      }
-
-      if (path === paths.thumbnailPath) {
-        return thumbnailFile;
-      }
-
-      throw new Error(`Unexpected path ${path}`);
+    const displayFile = createProductImageBucketFileMock();
+    const thumbnailFile = createProductImageBucketFileMock();
+    const fileMock = createProductImageBucketPathMock({
+      displayFile,
+      imageId,
+      productId,
+      thumbnailFile
     });
     const transaction = {
       get: vi.fn(async (reference: unknown) => {
@@ -137,7 +96,7 @@ describe("replaceProductImage", () => {
     const result = await replaceProductImage(
       productId,
       imageId,
-      createUploadFile(sourceBuffer),
+      createProductImageUploadFile(sourceBuffer),
       {
         bucket: {
           file: fileMock
@@ -198,39 +157,25 @@ describe("replaceProductImage", () => {
   it("returns IMAGE_NOT_FOUND when the latest product snapshot no longer has the target image", async () => {
     const productId = "HM-000001";
     const imageId = "img_existing_2";
-    const preflightProduct = createProductDocument();
-    const latestProduct = createProductDocument({
-      images: [createProductImageDocument("img_existing_1", 1)]
+    const preflightProduct = createReplaceProductDocument();
+    const latestProduct = createReplaceProductDocument({
+      images: [createProductImageDocument({ imageId: "img_existing_1" })]
     });
     const productRef = {
-      get: vi.fn().mockResolvedValue(createDocumentSnapshot(preflightProduct)),
+      get: vi
+        .fn()
+        .mockResolvedValueOnce(createDocumentSnapshot(preflightProduct))
+        .mockResolvedValue(createDocumentSnapshot(latestProduct)),
       path: `products/${productId}`
     };
-    const displayFile = createBucketFileMock();
-    const thumbnailFile = createBucketFileMock();
-    const fileMock = vi.fn((path: string) => {
-      const paths = getProductImageStoragePaths(productId, imageId);
-
-      if (path === paths.displayPath) {
-        return displayFile;
-      }
-
-      if (path === paths.thumbnailPath) {
-        return thumbnailFile;
-      }
-
-      throw new Error(`Unexpected path ${path}`);
+    const displayFile = createProductImageBucketFileMock();
+    const thumbnailFile = createProductImageBucketFileMock();
+    const fileMock = createProductImageBucketPathMock({
+      displayFile,
+      imageId,
+      productId,
+      thumbnailFile
     });
-    const transaction = {
-      get: vi.fn(async (reference: unknown) => {
-        if (reference === productRef) {
-          return createDocumentSnapshot(latestProduct);
-        }
-
-        throw new Error("Unexpected transaction reference");
-      }),
-      set: vi.fn()
-    };
     const db = {
       collection: vi.fn((collectionName: string) => {
         if (collectionName === "products") {
@@ -241,7 +186,7 @@ describe("replaceProductImage", () => {
 
         throw new Error(`Unexpected collection ${collectionName}`);
       }),
-      runTransaction: vi.fn(async (callback) => callback(transaction as never))
+      runTransaction: vi.fn()
     };
     const sourceBuffer = await sharp({
       create: {
@@ -258,7 +203,7 @@ describe("replaceProductImage", () => {
       replaceProductImage(
         productId,
         imageId,
-        createUploadFile(sourceBuffer),
+        createProductImageUploadFile(sourceBuffer),
         {
           bucket: {
             file: fileMock
@@ -271,8 +216,7 @@ describe("replaceProductImage", () => {
       statusCode: 404
     });
 
-    expect(db.runTransaction).toHaveBeenCalledTimes(1);
-    expect(transaction.set).not.toHaveBeenCalled();
+    expect(db.runTransaction).not.toHaveBeenCalled();
     expect(displayFile.save).not.toHaveBeenCalled();
     expect(thumbnailFile.save).not.toHaveBeenCalled();
   });
@@ -280,39 +224,22 @@ describe("replaceProductImage", () => {
   it("does not update product metadata when storage replacement fails", async () => {
     const productId = "HM-000001";
     const imageId = "img_existing_2";
-    const product = createProductDocument();
+    const product = createReplaceProductDocument();
     const productRef = {
       get: vi.fn().mockResolvedValue(createDocumentSnapshot(product)),
       path: `products/${productId}`
     };
     const storageError = new Error("Storage save failed");
-    const displayFile = createBucketFileMock(
-      vi.fn().mockRejectedValue(storageError)
-    );
-    const thumbnailFile = createBucketFileMock();
-    const fileMock = vi.fn((path: string) => {
-      const paths = getProductImageStoragePaths(productId, imageId);
-
-      if (path === paths.displayPath) {
-        return displayFile;
-      }
-
-      if (path === paths.thumbnailPath) {
-        return thumbnailFile;
-      }
-
-      throw new Error(`Unexpected path ${path}`);
+    const displayFile = createProductImageBucketFileMock({
+      saveMock: vi.fn().mockRejectedValue(storageError)
     });
-    const transaction = {
-      get: vi.fn(async (reference: unknown) => {
-        if (reference === productRef) {
-          return createDocumentSnapshot(product);
-        }
-
-        throw new Error("Unexpected transaction reference");
-      }),
-      set: vi.fn()
-    };
+    const thumbnailFile = createProductImageBucketFileMock();
+    const fileMock = createProductImageBucketPathMock({
+      displayFile,
+      imageId,
+      productId,
+      thumbnailFile
+    });
     const db = {
       collection: vi.fn((collectionName: string) => {
         if (collectionName === "products") {
@@ -323,7 +250,7 @@ describe("replaceProductImage", () => {
 
         throw new Error(`Unexpected collection ${collectionName}`);
       }),
-      runTransaction: vi.fn(async (callback) => callback(transaction as never))
+      runTransaction: vi.fn()
     };
     const sourceBuffer = await sharp({
       create: {
@@ -340,7 +267,7 @@ describe("replaceProductImage", () => {
       replaceProductImage(
         productId,
         imageId,
-        createUploadFile(sourceBuffer),
+        createProductImageUploadFile(sourceBuffer),
         {
           bucket: {
             file: fileMock
@@ -350,10 +277,9 @@ describe("replaceProductImage", () => {
       )
     ).rejects.toBe(storageError);
 
-    expect(db.runTransaction).toHaveBeenCalledTimes(1);
+    expect(db.runTransaction).not.toHaveBeenCalled();
     expect(displayFile.save).toHaveBeenCalledTimes(1);
     expect(thumbnailFile.save).toHaveBeenCalledTimes(1);
-    expect(transaction.set).not.toHaveBeenCalled();
   });
 
   it("returns PRODUCT_NOT_FOUND when the product does not exist", async () => {
@@ -397,7 +323,7 @@ describe("replaceProductImage", () => {
       replaceProductImage(
         productId,
         imageId,
-        createUploadFile(sourceBuffer),
+        createProductImageUploadFile(sourceBuffer),
         {
           db: db as never
         }
@@ -416,7 +342,7 @@ describe("replaceProductImage", () => {
     const productRef = {
       get: vi.fn().mockResolvedValue(
         createDocumentSnapshot({
-          ...createProductDocument(),
+          ...createReplaceProductDocument(),
           isDeleted: true
         })
       ),
@@ -449,7 +375,7 @@ describe("replaceProductImage", () => {
       replaceProductImage(
         productId,
         imageId,
-        createUploadFile(sourceBuffer),
+        createProductImageUploadFile(sourceBuffer),
         {
           db: db as never
         }

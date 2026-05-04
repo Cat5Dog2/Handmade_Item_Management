@@ -34,6 +34,10 @@ interface SellQrCodeOptions {
   now?: () => Timestamp;
 }
 
+export interface QrSellResult extends QrSellData {
+  previousStatus: ProductStatus;
+}
+
 function toValidationErrorDetails(error: ZodError<QrSellInput>) {
   return error.issues.map((issue) => ({
     field: typeof issue.path[0] === "string" ? issue.path[0] : "requestBody",
@@ -74,7 +78,7 @@ function assertSellableProduct(product: ProductDocument) {
 export async function sellQrCode(
   input: unknown,
   options: SellQrCodeOptions = {}
-): Promise<QrSellData> {
+): Promise<QrSellResult> {
   const parsedInput = qrSellInputSchema.safeParse(input);
 
   if (!parsedInput.success) {
@@ -109,6 +113,7 @@ export async function sellQrCode(
     }
 
     const product = productSnapshot.data() as ProductDocument;
+    const previousStatus = product.status;
 
     assertSellableProduct(product);
 
@@ -143,6 +148,7 @@ export async function sellQrCode(
     });
 
     return {
+      previousStatus,
       productId: product.productId,
       status: "sold",
       soldAt: soldAt.toDate().toISOString(),

@@ -13,6 +13,7 @@ const getProductMock = vi.hoisted(() => vi.fn());
 const listProductTasksMock = vi.hoisted(() => vi.fn());
 const updateProductMock = vi.hoisted(() => vi.fn());
 const deleteProductMock = vi.hoisted(() => vi.fn());
+const writeOperationLogMock = vi.hoisted(() => vi.fn());
 
 vi.mock("../products/list-products", () => ({
   listProducts: listProductsMock
@@ -54,6 +55,10 @@ vi.mock("../products/delete-product", () => ({
   deleteProduct: deleteProductMock
 }));
 
+vi.mock("../operation-logs/write-operation-log", () => ({
+  writeOperationLog: writeOperationLogMock
+}));
+
 function createTestApp({
   ownerEmail = "owner@example.com",
   verifyIdToken
@@ -85,6 +90,7 @@ describe("products routes", () => {
     listProductTasksMock.mockReset();
     updateProductMock.mockReset();
     deleteProductMock.mockReset();
+    writeOperationLogMock.mockReset();
   });
 
   it("returns AUTH_REQUIRED for unauthenticated product list requests", async () => {
@@ -501,8 +507,12 @@ describe("products routes", () => {
 
   it("returns the product update envelope for authenticated requests", async () => {
     updateProductMock.mockResolvedValue({
+      changedFields: ["name", "price", "categoryId", "status", "description", "tagIds"],
       productId: "HM-000001",
       updatedAt: "2026-04-18T10:00:00.000Z"
+    });
+    writeOperationLogMock.mockResolvedValue({
+      logId: "log-update-001"
     });
 
     const response = await request(
@@ -543,6 +553,22 @@ describe("products routes", () => {
       status: "onDisplay",
       tagIds: ["tag-a"]
     });
+    expect(writeOperationLogMock).toHaveBeenCalledWith({
+      eventType: "PRODUCT_UPDATED",
+      targetId: "HM-000001",
+      summary: "商品を更新しました",
+      actorUid: "uid-1",
+      detail: {
+        changedFields: [
+          "name",
+          "price",
+          "categoryId",
+          "status",
+          "description",
+          "tagIds"
+        ]
+      }
+    });
   });
 
   it("returns AUTH_REQUIRED for unauthenticated product delete requests", async () => {
@@ -561,6 +587,9 @@ describe("products routes", () => {
     deleteProductMock.mockResolvedValue({
       deletedAt: "2026-04-18T11:00:00.000Z",
       productId: "HM-000001"
+    });
+    writeOperationLogMock.mockResolvedValue({
+      logId: "log-delete-001"
     });
 
     const response = await request(
@@ -582,6 +611,12 @@ describe("products routes", () => {
       }
     });
     expect(deleteProductMock).toHaveBeenCalledWith("HM-000001");
+    expect(writeOperationLogMock).toHaveBeenCalledWith({
+      eventType: "PRODUCT_DELETED",
+      targetId: "HM-000001",
+      summary: "商品を論理削除しました",
+      actorUid: "uid-1"
+    });
   });
 
   it("returns AUTH_REQUIRED for unauthenticated product create requests", async () => {

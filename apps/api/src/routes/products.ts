@@ -2,6 +2,7 @@ import type {
   ProductCreateData,
   ProductDeleteData,
   ProductDetailData,
+  ProductImageCreateData,
   ProductImageMutationData,
   ProductListData,
   ProductListMeta,
@@ -44,7 +45,7 @@ interface RegisterProductRoutesOptions {
   createProductImageHandler?: (
     productId: string,
     file: ProductImageUploadFile | undefined
-  ) => Promise<ProductImageMutationData>;
+  ) => Promise<ProductImageCreateData>;
   deleteProductImageHandler?: (
     productId: string,
     imageId: string

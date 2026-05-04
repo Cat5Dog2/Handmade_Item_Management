@@ -3,6 +3,7 @@ import type {
   CustomerListData,
   ApiErrorCode,
   ProductDetailData,
+  ProductImageCreateData,
   ProductImageDetail,
   ProductImageMutationData,
   ProductUpdateData,
@@ -270,7 +271,7 @@ export function ProductEditPage() {
 
       if (input.kind === "create") {
         const response = await apiClient.post<
-          ProductImageMutationData,
+          ProductImageCreateData,
           undefined,
           FormData
         >(getProductImagesPath(productId), {

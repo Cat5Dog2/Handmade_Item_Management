@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { ProductImageMutationData } from "@handmade/shared";
+import type { ProductImageCreateData } from "@handmade/shared";
 import type { Firestore, Timestamp } from "firebase-admin/firestore";
 import { Timestamp as FirestoreTimestamp } from "firebase-admin/firestore";
 import { getFirestoreDb, getStorageBucket } from "../firebase/firebase-admin";
@@ -14,53 +14,16 @@ import {
   processProductImageBuffer,
   type ProductImageUploadFile
 } from "../images/product-image-processing";
-
-interface ProductImageDocument {
-  displayPath: string;
-  imageId: string;
-  isPrimary: boolean;
-  sortOrder: number;
-  thumbnailPath: string;
-}
-
-interface ProductDocument {
-  categoryId: string;
-  createdAt: Timestamp;
-  deletedAt: Timestamp | null;
-  description: string;
-  images?: ProductImageDocument[] | null;
-  isDeleted: boolean;
-  name: string;
-  price: number;
-  productId: string;
-  qrCodeValue: string;
-  soldAt: Timestamp | null;
-  soldCustomerId?: string | null;
-  soldCustomerNameSnapshot?: string | null;
-  status: string;
-  tagIds: string[];
-  updatedAt: Timestamp;
-}
-
-interface ProductImageBucketFile {
-  delete(): Promise<unknown>;
-  save(
-    data: Buffer,
-    options: {
-      contentType: string;
-      resumable: boolean;
-    }
-  ): Promise<unknown>;
-}
-
-interface ProductImageBucket {
-  file(path: string): ProductImageBucketFile;
-}
-
-interface FirestoreTransactionLike {
-  get(reference: unknown): Promise<SnapshotLike<unknown>>;
-  set(reference: unknown, data: unknown): void;
-}
+import {
+  cleanupProductImageStorageFiles,
+  saveProductImageStorageFiles
+} from "./product-image-storage";
+import type {
+  FirestoreTransactionLike,
+  ProductDocument,
+  ProductImageBucket,
+  ProductImageDocument
+} from "./product-image-service-types";
 
 interface CreateProductImageOptions {
   bucket?: ProductImageBucket;
@@ -91,39 +54,11 @@ function toIsoString(value: Timestamp) {
   return value.toDate().toISOString();
 }
 
-async function cleanupUploadedFiles(
-  bucket: ProductImageBucket,
-  paths: ReturnType<typeof getProductImageStoragePaths>
-) {
-  await Promise.allSettled([
-    bucket.file(paths.displayPath).delete(),
-    bucket.file(paths.thumbnailPath).delete()
-  ]);
-}
-
-async function saveProcessedImage(
-  bucket: ProductImageBucket,
-  paths: ReturnType<typeof getProductImageStoragePaths>,
-  displayBuffer: Buffer,
-  thumbnailBuffer: Buffer
-) {
-  await Promise.all([
-    bucket.file(paths.displayPath).save(displayBuffer, {
-      contentType: "image/webp",
-      resumable: false
-    }),
-    bucket.file(paths.thumbnailPath).save(thumbnailBuffer, {
-      contentType: "image/webp",
-      resumable: false
-    })
-  ]);
-}
-
 export async function createProductImage(
   productId: string,
   file: ProductImageUploadFile | undefined,
   options: CreateProductImageOptions = {}
-): Promise<ProductImageMutationData> {
+): Promise<ProductImageCreateData> {
   assertProductImageUploadFile(file);
 
   const db = options.db ?? getFirestoreDb();
@@ -147,7 +82,7 @@ export async function createProductImage(
 
   try {
     shouldCleanup = true;
-    await saveProcessedImage(
+    await saveProductImageStorageFiles(
       bucket,
       storagePaths,
       processedImage.display.buffer,
@@ -195,7 +130,7 @@ export async function createProductImage(
     };
   } catch (error) {
     if (shouldCleanup) {
-      await cleanupUploadedFiles(bucket, storagePaths);
+      await cleanupProductImageStorageFiles(bucket, storagePaths);
     }
 
     throw error;

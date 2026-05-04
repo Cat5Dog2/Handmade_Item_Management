@@ -4,55 +4,24 @@ import {
   createTimestamp,
   expectTimestampLike
 } from "../test/firestore-test-helpers";
-import { getProductImageStoragePaths } from "../images/product-image-processing";
+import {
+  createProductDocument,
+  createProductImageBucketFileMock,
+  createProductImageBucketPathMock,
+  createProductImageDocument
+} from "../test/product-image-test-helpers";
 import { deleteProductImage } from "./delete-product-image";
 
-function createProductImageDocument(
-  productId: string,
-  imageId: string,
-  sortOrder: number,
-  overrides: Partial<Record<string, unknown>> = {}
-) {
-  return {
-    displayPath: `products/${productId}/display/${imageId}.webp`,
-    imageId,
-    isPrimary: sortOrder === 2,
-    sortOrder,
-    thumbnailPath: `products/${productId}/thumb/${imageId}.webp`,
-    ...overrides
-  };
-}
-
-function createProductDocument(
+function createDeleteProductDocument(
   productId: string,
   images: Array<ReturnType<typeof createProductImageDocument>>,
   overrides: Partial<Record<string, unknown>> = {}
 ) {
-  return {
-    categoryId: "cat-a",
-    createdAt: createTimestamp("2026-04-18T08:00:00.000Z"),
-    deletedAt: null,
-    description: "Handmade pin",
+  return createProductDocument({
     images,
-    isDeleted: false,
-    name: "Fancy Pin",
-    price: 2800,
-    productId,
-    qrCodeValue: productId,
-    soldAt: null,
-    soldCustomerId: null,
-    soldCustomerNameSnapshot: null,
-    status: "onDisplay",
-    tagIds: [],
-    updatedAt: createTimestamp("2026-04-18T09:00:00.000Z"),
-    ...overrides
-  };
-}
-
-function createBucketFileMock(deleteMock = vi.fn().mockResolvedValue(undefined)) {
-  return {
-    delete: deleteMock
-  };
+    overrides,
+    productId
+  });
 }
 
 describe("deleteProductImage", () => {
@@ -63,49 +32,60 @@ describe("deleteProductImage", () => {
     const productRef = {
       get: vi.fn().mockResolvedValue(
         createDocumentSnapshot(
-          createProductDocument(productId, [
-            createProductImageDocument(productId, "img_existing_1", 1, {
-              isPrimary: true
+          createDeleteProductDocument(productId, [
+            createProductImageDocument({
+              imageId: "img_existing_1",
+              isPrimary: true,
+              productId,
+              sortOrder: 1
             }),
-            createProductImageDocument(productId, "img_existing_2", 2, {
-              isPrimary: false
+            createProductImageDocument({
+              imageId: "img_existing_2",
+              isPrimary: false,
+              productId,
+              sortOrder: 2
             }),
-            createProductImageDocument(productId, "img_existing_3", 3, {
-              isPrimary: false
+            createProductImageDocument({
+              imageId: "img_existing_3",
+              isPrimary: false,
+              productId,
+              sortOrder: 3
             })
           ])
         )
       ),
       path: `products/${productId}`
     };
-    const displayFile = createBucketFileMock();
-    const thumbnailFile = createBucketFileMock();
-    const fileMock = vi.fn((path: string) => {
-      const paths = getProductImageStoragePaths(productId, imageId);
-
-      if (path === paths.displayPath) {
-        return displayFile;
-      }
-
-      if (path === paths.thumbnailPath) {
-        return thumbnailFile;
-      }
-
-      throw new Error(`Unexpected path ${path}`);
+    const displayFile = createProductImageBucketFileMock();
+    const thumbnailFile = createProductImageBucketFileMock();
+    const fileMock = createProductImageBucketPathMock({
+      displayFile,
+      imageId,
+      productId,
+      thumbnailFile
     });
     const transaction = {
       get: vi.fn(async (reference: unknown) => {
         if (reference === productRef) {
           return createDocumentSnapshot(
-            createProductDocument(productId, [
-              createProductImageDocument(productId, "img_existing_1", 1, {
-                isPrimary: true
+            createDeleteProductDocument(productId, [
+              createProductImageDocument({
+                imageId: "img_existing_1",
+                isPrimary: true,
+                productId,
+                sortOrder: 1
               }),
-              createProductImageDocument(productId, "img_existing_2", 2, {
-                isPrimary: false
+              createProductImageDocument({
+                imageId: "img_existing_2",
+                isPrimary: false,
+                productId,
+                sortOrder: 2
               }),
-              createProductImageDocument(productId, "img_existing_3", 3, {
-                isPrimary: false
+              createProductImageDocument({
+                imageId: "img_existing_3",
+                isPrimary: false,
+                productId,
+                sortOrder: 3
               })
             ])
           );
@@ -175,49 +155,60 @@ describe("deleteProductImage", () => {
     const productRef = {
       get: vi.fn().mockResolvedValue(
         createDocumentSnapshot(
-          createProductDocument(productId, [
-            createProductImageDocument(productId, "img_existing_1", 1, {
-              isPrimary: false
+          createDeleteProductDocument(productId, [
+            createProductImageDocument({
+              imageId: "img_existing_1",
+              isPrimary: false,
+              productId,
+              sortOrder: 1
             }),
-            createProductImageDocument(productId, "img_existing_2", 2, {
-              isPrimary: true
+            createProductImageDocument({
+              imageId: "img_existing_2",
+              isPrimary: true,
+              productId,
+              sortOrder: 2
             }),
-            createProductImageDocument(productId, "img_existing_3", 3, {
-              isPrimary: false
+            createProductImageDocument({
+              imageId: "img_existing_3",
+              isPrimary: false,
+              productId,
+              sortOrder: 3
             })
           ])
         )
       ),
       path: `products/${productId}`
     };
-    const displayFile = createBucketFileMock();
-    const thumbnailFile = createBucketFileMock();
-    const fileMock = vi.fn((path: string) => {
-      const paths = getProductImageStoragePaths(productId, imageId);
-
-      if (path === paths.displayPath) {
-        return displayFile;
-      }
-
-      if (path === paths.thumbnailPath) {
-        return thumbnailFile;
-      }
-
-      throw new Error(`Unexpected path ${path}`);
+    const displayFile = createProductImageBucketFileMock();
+    const thumbnailFile = createProductImageBucketFileMock();
+    const fileMock = createProductImageBucketPathMock({
+      displayFile,
+      imageId,
+      productId,
+      thumbnailFile
     });
     const transaction = {
       get: vi.fn(async (reference: unknown) => {
         if (reference === productRef) {
           return createDocumentSnapshot(
-            createProductDocument(productId, [
-              createProductImageDocument(productId, "img_existing_1", 1, {
-                isPrimary: false
+            createDeleteProductDocument(productId, [
+              createProductImageDocument({
+                imageId: "img_existing_1",
+                isPrimary: false,
+                productId,
+                sortOrder: 1
               }),
-              createProductImageDocument(productId, "img_existing_2", 2, {
-                isPrimary: true
+              createProductImageDocument({
+                imageId: "img_existing_2",
+                isPrimary: true,
+                productId,
+                sortOrder: 2
               }),
-              createProductImageDocument(productId, "img_existing_3", 3, {
-                isPrimary: false
+              createProductImageDocument({
+                imageId: "img_existing_3",
+                isPrimary: false,
+                productId,
+                sortOrder: 3
               })
             ])
           );
@@ -278,12 +269,18 @@ describe("deleteProductImage", () => {
   it("does not update product metadata when storage deletion fails", async () => {
     const productId = "HM-000003";
     const imageId = "img_existing_1";
-    const product = createProductDocument(productId, [
-      createProductImageDocument(productId, "img_existing_1", 1, {
-        isPrimary: true
+    const product = createDeleteProductDocument(productId, [
+      createProductImageDocument({
+        imageId: "img_existing_1",
+        isPrimary: true,
+        productId,
+        sortOrder: 1
       }),
-      createProductImageDocument(productId, "img_existing_2", 2, {
-        isPrimary: false
+      createProductImageDocument({
+        imageId: "img_existing_2",
+        isPrimary: false,
+        productId,
+        sortOrder: 2
       })
     ]);
     const productRef = {
@@ -291,33 +288,16 @@ describe("deleteProductImage", () => {
       path: `products/${productId}`
     };
     const storageError = new Error("Storage delete failed");
-    const displayFile = createBucketFileMock(
-      vi.fn().mockRejectedValue(storageError)
-    );
-    const thumbnailFile = createBucketFileMock();
-    const fileMock = vi.fn((path: string) => {
-      const paths = getProductImageStoragePaths(productId, imageId);
-
-      if (path === paths.displayPath) {
-        return displayFile;
-      }
-
-      if (path === paths.thumbnailPath) {
-        return thumbnailFile;
-      }
-
-      throw new Error(`Unexpected path ${path}`);
+    const displayFile = createProductImageBucketFileMock({
+      deleteMock: vi.fn().mockRejectedValue(storageError)
     });
-    const transaction = {
-      get: vi.fn(async (reference: unknown) => {
-        if (reference === productRef) {
-          return createDocumentSnapshot(product);
-        }
-
-        throw new Error("Unexpected transaction reference");
-      }),
-      set: vi.fn()
-    };
+    const thumbnailFile = createProductImageBucketFileMock();
+    const fileMock = createProductImageBucketPathMock({
+      displayFile,
+      imageId,
+      productId,
+      thumbnailFile
+    });
     const db = {
       collection: vi.fn((collectionName: string) => {
         if (collectionName === "products") {
@@ -328,7 +308,7 @@ describe("deleteProductImage", () => {
 
         throw new Error(`Unexpected collection ${collectionName}`);
       }),
-      runTransaction: vi.fn(async (callback) => callback(transaction as never))
+      runTransaction: vi.fn()
     };
 
     await expect(
@@ -340,10 +320,9 @@ describe("deleteProductImage", () => {
       })
     ).rejects.toBe(storageError);
 
-    expect(db.runTransaction).toHaveBeenCalledTimes(1);
+    expect(db.runTransaction).not.toHaveBeenCalled();
     expect(displayFile.delete).toHaveBeenCalledTimes(1);
     expect(thumbnailFile.delete).toHaveBeenCalledTimes(1);
-    expect(transaction.set).not.toHaveBeenCalled();
   });
 
   it("returns IMAGE_NOT_FOUND when the target image does not exist", async () => {
@@ -352,9 +331,12 @@ describe("deleteProductImage", () => {
     const productRef = {
       get: vi.fn().mockResolvedValue(
         createDocumentSnapshot(
-          createProductDocument(productId, [
-            createProductImageDocument(productId, "img_existing_1", 1, {
-              isPrimary: true
+          createDeleteProductDocument(productId, [
+            createProductImageDocument({
+              imageId: "img_existing_1",
+              isPrimary: true,
+              productId,
+              sortOrder: 1
             })
           ])
         )
@@ -431,11 +413,14 @@ describe("deleteProductImage", () => {
     const productRef = {
       get: vi.fn().mockResolvedValue(
         createDocumentSnapshot(
-          createProductDocument(
+          createDeleteProductDocument(
             productId,
             [
-              createProductImageDocument(productId, "img_existing_1", 1, {
-                isPrimary: true
+              createProductImageDocument({
+                imageId: "img_existing_1",
+                isPrimary: true,
+                productId,
+                sortOrder: 1
               })
             ],
             {

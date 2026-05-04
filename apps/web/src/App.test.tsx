@@ -137,11 +137,23 @@ const fetchMock = vi.hoisted(() =>
   })
 );
 
+const qrScannerMock = vi.hoisted(() => ({
+  clear: vi.fn(),
+  pause: vi.fn(),
+  resume: vi.fn(),
+  start: vi.fn(async () => null),
+  stop: vi.fn(async () => undefined)
+}));
+
 vi.mock("./auth/firebase-auth-client", () => ({
   sendPasswordReset: authMock.sendPasswordReset,
   signInWithEmail: authMock.signInWithEmail,
   signOutUser: authMock.signOutUser,
   subscribeToAuthChanges: authMock.subscribeToAuthChanges
+}));
+
+vi.mock("./qr/qr-scanner-adapter", () => ({
+  createQrScannerController: () => qrScannerMock
 }));
 
 function renderApp(initialEntry: string) {
@@ -161,6 +173,11 @@ function renderApp(initialEntry: string) {
 describe("App routing", () => {
   beforeEach(() => {
     authMock.reset();
+    qrScannerMock.clear.mockClear();
+    qrScannerMock.pause.mockClear();
+    qrScannerMock.resume.mockClear();
+    qrScannerMock.start.mockClear();
+    qrScannerMock.stop.mockClear();
     fetchMock.mockClear();
     vi.stubGlobal("fetch", fetchMock);
   });
@@ -237,6 +254,26 @@ describe("App routing", () => {
 
     expect(await screen.findByLabelText("商品名")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "登録する" })).toBeInTheDocument();
+  });
+
+  it("renders the QR route inside the protected workspace shell for authenticated users", async () => {
+    authMock.setUser({
+      email: "owner@example.com",
+      getIdToken: async () => "test-id-token",
+      uid: "owner-user"
+    });
+    renderApp("/qr");
+
+    await waitFor(() => {
+      expect(qrScannerMock.start).toHaveBeenCalledTimes(1);
+    });
+
+    expect(screen.getByRole("heading", { name: "QR読み取り" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "戻る" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "QR読み取り" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
   });
 
   it("logs in and navigates to the dashboard", async () => {

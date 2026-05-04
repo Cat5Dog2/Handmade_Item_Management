@@ -1135,6 +1135,67 @@ input {
   gap: 12px;
 }
 
+.qr-page__scanner-card {
+  gap: 12px;
+}
+
+.qr-page__scanner-frame {
+  position: relative;
+  min-height: 280px;
+  overflow: hidden;
+  border: 1px solid #b9e3d8;
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(237, 249, 243, 0.9), rgba(247, 251, 248, 0.98));
+}
+
+.qr-page__scanner-target {
+  min-height: 280px;
+}
+
+.qr-page__scanner-target > div,
+.qr-page__scanner-target video,
+.qr-page__scanner-target canvas,
+.qr-page__scanner-target img {
+  width: 100% !important;
+  height: auto !important;
+}
+
+.qr-page__scanner-target video,
+.qr-page__scanner-target canvas,
+.qr-page__scanner-target img {
+  display: block;
+  border-radius: 12px;
+}
+
+.qr-page__scanner-status {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  left: 16px;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.92);
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.qr-page__result-card {
+  gap: 12px;
+}
+
+.qr-page__result-card.is-success {
+  border-color: #b9e3d8;
+  background: #f7fbf8;
+}
+
+.qr-page__result-card.is-error {
+  border-color: #f3c7c7;
+  background: #fffafa;
+}
+
 .management-badge {
   display: inline-flex;
   align-items: center;

@@ -134,6 +134,14 @@ describe("updateProduct", () => {
         }
       )
     ).resolves.toEqual({
+      changedFields: [
+        "name",
+        "price",
+        "categoryId",
+        "status",
+        "description",
+        "tagIds"
+      ],
       productId,
       updatedAt: "2026-04-18T10:00:00.000Z"
     });
@@ -279,6 +287,7 @@ describe("updateProduct", () => {
         }
       )
     ).resolves.toEqual({
+      changedFields: ["status", "description", "soldCustomerId"],
       productId,
       updatedAt: "2026-04-18T10:30:00.000Z"
     });

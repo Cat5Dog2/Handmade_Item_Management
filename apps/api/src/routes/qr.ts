@@ -1,13 +1,14 @@
-import type { QrLookupData, QrSellData } from "@handmade/shared";
+import type { QrLookupData } from "@handmade/shared";
 import type { Router } from "express";
 import type { CreateProtectedAppContext } from "../app";
 import { lookupQrCode } from "../qr/lookup-qr-code";
-import { sellQrCode } from "../qr/sell-qr-code";
+import { sellQrCode, type QrSellResult } from "../qr/sell-qr-code";
+import { writeOperationLog } from "../operation-logs/write-operation-log";
 import { sendSuccess } from "../responses/api-response";
 
 interface RegisterQrRoutesOptions {
   lookupQrCodeHandler?: (input: unknown) => Promise<QrLookupData>;
-  sellQrCodeHandler?: (input: unknown) => Promise<QrSellData>;
+  sellQrCodeHandler?: (input: unknown) => Promise<QrSellResult>;
 }
 
 export function registerQrRoutes(
@@ -35,7 +36,26 @@ export function registerQrRoutes(
     context.requireAuthMiddleware,
     async (request, response, next) => {
       try {
-        sendSuccess(response, await sellQrCodeHandler(request.body));
+        const result = await sellQrCodeHandler(request.body);
+
+        await writeOperationLog({
+          eventType: "QR_SOLD",
+          targetId: result.productId,
+          summary: "商品を販売済に更新しました",
+          actorUid: request.authContext?.actorUid ?? null,
+          detail: {
+            previousStatus: result.previousStatus
+          }
+        });
+
+        sendSuccess(response, {
+          productId: result.productId,
+          status: result.status,
+          soldAt: result.soldAt,
+          soldCustomerId: result.soldCustomerId,
+          soldCustomerNameSnapshot: result.soldCustomerNameSnapshot,
+          updatedAt: result.updatedAt
+        });
       } catch (error) {
         next(error);
       }

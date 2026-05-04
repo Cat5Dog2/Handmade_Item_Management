@@ -5,7 +5,6 @@ import type {
   ProductImageMutationData,
   ProductListData,
   ProductListMeta,
-  ProductUpdateData,
   TaskCreateData,
   TaskListData
 } from "@handmade/shared";
@@ -21,7 +20,11 @@ import {
   createProductImageUploadMiddleware,
   type ProductImageUploadFile
 } from "../images/product-image-processing";
-import { updateProduct } from "../products/update-product";
+import {
+  updateProduct,
+  type ProductUpdateResult
+} from "../products/update-product";
+import { writeOperationLog } from "../operation-logs/write-operation-log";
 import { sendSuccess } from "../responses/api-response";
 import { listProducts } from "../products/list-products";
 import { createProductTask } from "../tasks/create-product-task";
@@ -60,7 +63,7 @@ interface RegisterProductRoutesOptions {
   updateProductHandler?: (
     productId: string,
     input: unknown
-  ) => Promise<ProductUpdateData>;
+  ) => Promise<ProductUpdateResult>;
   listProductsHandler?: (input: unknown) => Promise<ProductListResult>;
 }
 
@@ -231,10 +234,25 @@ export function registerProductRoutes(
     context.requireAuthMiddleware,
     async (request, response, next) => {
       try {
-        sendSuccess(
-          response,
-          await updateProductHandler(request.params.productId, request.body)
+        const result = await updateProductHandler(
+          request.params.productId,
+          request.body
         );
+
+        await writeOperationLog({
+          eventType: "PRODUCT_UPDATED",
+          targetId: result.productId,
+          summary: "商品を更新しました",
+          actorUid: request.authContext?.actorUid ?? null,
+          detail: {
+            changedFields: result.changedFields
+          }
+        });
+
+        sendSuccess(response, {
+          productId: result.productId,
+          updatedAt: result.updatedAt
+        });
       } catch (error) {
         next(error);
       }
@@ -246,10 +264,16 @@ export function registerProductRoutes(
     context.requireAuthMiddleware,
     async (request, response, next) => {
       try {
-        sendSuccess(
-          response,
-          await deleteProductHandler(request.params.productId)
-        );
+        const result = await deleteProductHandler(request.params.productId);
+
+        await writeOperationLog({
+          eventType: "PRODUCT_DELETED",
+          targetId: result.productId,
+          summary: "商品を論理削除しました",
+          actorUid: request.authContext?.actorUid ?? null
+        });
+
+        sendSuccess(response, result);
       } catch (error) {
         next(error);
       }

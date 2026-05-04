@@ -1,6 +1,5 @@
 import type {
   ProductStatus,
-  ProductUpdateData,
   ProductUpdateInput
 } from "@handmade/shared";
 import { productUpdateInputSchema } from "@handmade/shared";
@@ -52,6 +51,12 @@ interface UpdateProductOptions {
   now?: () => Timestamp;
 }
 
+export interface ProductUpdateResult {
+  changedFields: string[];
+  productId: string;
+  updatedAt: string;
+}
+
 function toValidationErrorDetails(error: ZodError<ProductUpdateInput>) {
   return error.issues.map((issue) => ({
     field: typeof issue.path[0] === "string" ? issue.path[0] : "requestBody",
@@ -93,11 +98,65 @@ function normalizeImages(
   }));
 }
 
+function getCurrentPrimaryImageId(images?: ProductImageDocument[] | null) {
+  return images?.find((image) => image.isPrimary)?.imageId ?? null;
+}
+
+function areStringArraysEqual(left: string[], right: string[]) {
+  if (left.length !== right.length) {
+    return false;
+  }
+
+  return left.every((value, index) => value === right[index]);
+}
+
+function getChangedFields(
+  product: ProductDocument,
+  input: ProductUpdateInput
+): string[] {
+  const changedFields: string[] = [];
+  const currentPrimaryImageId = getCurrentPrimaryImageId(product.images ?? []);
+
+  if (product.name !== input.name) {
+    changedFields.push("name");
+  }
+
+  if (product.price !== input.price) {
+    changedFields.push("price");
+  }
+
+  if (product.categoryId !== input.categoryId) {
+    changedFields.push("categoryId");
+  }
+
+  if (product.status !== input.status) {
+    changedFields.push("status");
+  }
+
+  if (product.description !== input.description) {
+    changedFields.push("description");
+  }
+
+  if ((product.soldCustomerId ?? null) !== input.soldCustomerId) {
+    changedFields.push("soldCustomerId");
+  }
+
+  if (!areStringArraysEqual(product.tagIds, input.tagIds)) {
+    changedFields.push("tagIds");
+  }
+
+  if (currentPrimaryImageId !== input.primaryImageId) {
+    changedFields.push("primaryImageId");
+  }
+
+  return changedFields;
+}
+
 export async function updateProduct(
   productId: string,
   input: unknown,
   options: UpdateProductOptions = {}
-): Promise<ProductUpdateData> {
+): Promise<ProductUpdateResult> {
   const parsedInput = productUpdateInputSchema.safeParse(input);
 
   if (!parsedInput.success) {
@@ -165,6 +224,7 @@ export async function updateProduct(
       currentImages,
       parsedInput.data.primaryImageId
     );
+    const changedFields = getChangedFields(product, parsedInput.data);
     const updatedAt = now();
     const soldAt =
       parsedInput.data.status === "sold" ? product.soldAt ?? updatedAt : null;
@@ -205,6 +265,7 @@ export async function updateProduct(
     });
 
     return {
+      changedFields,
       productId: product.productId,
       updatedAt: updatedAt.toDate().toISOString()
     };

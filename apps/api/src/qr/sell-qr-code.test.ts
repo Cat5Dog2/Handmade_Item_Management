@@ -122,6 +122,7 @@ describe("sellQrCode", () => {
         }
       )
     ).resolves.toEqual({
+      previousStatus: "onDisplay",
       productId: "HM-000001",
       status: "sold",
       soldAt: "2026-04-18T10:00:00.000Z",
@@ -164,6 +165,7 @@ describe("sellQrCode", () => {
         }
       )
     ).resolves.toMatchObject({
+      previousStatus: "inStock",
       productId: "HM-000002",
       status: "sold"
     });
@@ -199,6 +201,7 @@ describe("sellQrCode", () => {
         }
       )
     ).resolves.toEqual({
+      previousStatus: "inStock",
       productId: "HM-000001",
       status: "sold",
       soldAt: "2026-04-18T10:10:00.000Z",

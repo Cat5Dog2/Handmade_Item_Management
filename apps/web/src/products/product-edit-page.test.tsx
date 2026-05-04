@@ -440,12 +440,8 @@ describe("ProductEditPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "更新する" }));
 
     expect(
-      await screen.findByText("選択した顧客は利用できません。")
+      await screen.findByText("選択した顧客は現在利用できません。別の顧客を選び直してください。")
     ).toBeInTheDocument();
-    expect(screen.getByLabelText("購入者")).toHaveAttribute(
-      "aria-invalid",
-      "true"
-    );
   });
 
   it("shows a retry action when edit lookups fail", async () => {

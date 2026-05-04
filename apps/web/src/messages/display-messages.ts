@@ -37,6 +37,24 @@ export const PRODUCT_ERROR_MESSAGE_OVERRIDES = {
   PRODUCT_NOT_FOUND: PRODUCT_ERROR_MESSAGES.notFound
 } as const;
 
+export const PRODUCT_FORM_ERROR_MESSAGES = {
+  categoryNotFound: "指定したカテゴリが見つかりません。カテゴリを選び直してください。",
+  customerArchived: "選択した顧客は現在利用できません。別の顧客を選び直してください。",
+  customerNotFound: "選択した顧客が見つかりません。顧客を選び直してください。",
+  deleted: "この商品は削除済みのため更新できません。",
+  notFound: "更新対象の商品が見つかりません。最新の一覧を確認してください。",
+  tagNotFound: "指定したタグが見つかりません。タグを選び直してください。"
+} as const;
+
+export const PRODUCT_FORM_ERROR_MESSAGE_OVERRIDES = {
+  CATEGORY_NOT_FOUND: PRODUCT_FORM_ERROR_MESSAGES.categoryNotFound,
+  CUSTOMER_ARCHIVED: PRODUCT_FORM_ERROR_MESSAGES.customerArchived,
+  CUSTOMER_NOT_FOUND: PRODUCT_FORM_ERROR_MESSAGES.customerNotFound,
+  PRODUCT_DELETED: PRODUCT_FORM_ERROR_MESSAGES.deleted,
+  PRODUCT_NOT_FOUND: PRODUCT_FORM_ERROR_MESSAGES.notFound,
+  TAG_NOT_FOUND: PRODUCT_FORM_ERROR_MESSAGES.tagNotFound
+} as const;
+
 export const PRODUCT_IMAGE_ERROR_MESSAGES = {
   addFailed: "画像を追加できませんでした。再度お試しください。",
   deleteFailed: "画像を削除できませんでした。再度お試しください。",
@@ -106,6 +124,18 @@ export const TAG_ERROR_MESSAGES = {
   deleteFailed: "タグを削除できませんでした。",
   listFetchFailed: "タグ一覧を取得できませんでした。",
   updateFailed: "タグを更新できませんでした。"
+} as const;
+
+export const CATEGORY_ERROR_MESSAGE_OVERRIDES = {
+  CATEGORY_IN_USE: "使用中のカテゴリは削除できません。参照中の商品を確認してください。",
+  CATEGORY_NOT_FOUND: "対象のカテゴリが見つかりません。最新の一覧を確認してください。",
+  DUPLICATE_NAME: "同じ名前のカテゴリは登録できません。"
+} as const;
+
+export const TAG_ERROR_MESSAGE_OVERRIDES = {
+  DUPLICATE_NAME: "同じ名前のタグは登録できません。",
+  TAG_IN_USE: "使用中のタグは削除できません。参照中の商品を確認してください。",
+  TAG_NOT_FOUND: "対象のタグが見つかりません。最新の一覧を確認してください。"
 } as const;
 
 export const CUSTOMER_ERROR_MESSAGES = {

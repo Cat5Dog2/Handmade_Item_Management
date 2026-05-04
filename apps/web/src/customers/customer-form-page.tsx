@@ -17,9 +17,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray } from "react-hook-form";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import type { z } from "zod";
-import { ApiClientError } from "../api/api-client";
 import { getApiErrorDisplayMessage } from "../api/api-error-display";
+import { getCustomerFormFieldErrorMessage } from "../api/field-error-messages";
 import { useApiClient } from "../api/api-client-context";
+import { mapApiErrorToUi, type UiApiError } from "../api/map-api-error-to-ui";
 import { queryKeys } from "../api/query-keys";
 import {
   ScreenErrorState,
@@ -86,31 +87,6 @@ function toCustomerFormValues(data: CustomerDetailData): CustomerFormInput {
       url: toFormText(account.url)
     }))
   };
-}
-
-function getFieldErrorMessage(
-  fieldName: CustomerFormFieldName,
-  fallbackMessage?: string
-) {
-  if (fieldName === "name") {
-    return fallbackMessage?.includes("100")
-      ? "顧客名は100文字以内で入力してください。"
-      : "顧客名を入力してください。";
-  }
-
-  if (fieldName === "customerStyle") {
-    return "系統メモは100文字以内で入力してください。";
-  }
-
-  if (fieldName === "memo") {
-    return "顧客メモは1000文字以内で入力してください。";
-  }
-
-  if (fieldName === "snsAccounts") {
-    return "SNSアカウントの入力内容を確認してください。";
-  }
-
-  return fallbackMessage ?? "入力内容を確認してください。";
 }
 
 function buildNotice(message: string): PageNotice {
@@ -218,8 +194,8 @@ export function CustomerFormPage() {
   });
 
   const applyFormApiErrors = useCallback(
-    (error: unknown) => {
-      if (!(error instanceof ApiClientError) || !error.details?.length) {
+    (error: UiApiError) => {
+      if (error.code !== "VALIDATION_ERROR") {
         return false;
       }
 
@@ -235,7 +211,7 @@ export function CustomerFormPage() {
           detail.field === "memo"
         ) {
           customerForm.setError(detail.field as CustomerFormFieldName, {
-            message: getFieldErrorMessage(
+            message: getCustomerFormFieldErrorMessage(
               detail.field as CustomerFormFieldName,
               detail.message
             ),
@@ -268,14 +244,15 @@ export function CustomerFormPage() {
           }
         });
       } catch (error) {
-        const hasFieldError = applyFormApiErrors(error);
+        const uiError = mapApiErrorToUi(error, {
+          codeMessages: CUSTOMER_FORM_ERROR_MESSAGE_OVERRIDES,
+          fallbackMessage: CUSTOMER_ERROR_MESSAGES.createFailed
+        });
+        const hasFieldError = applyFormApiErrors(uiError);
 
         if (!hasFieldError) {
           setNotice({
-            message: getApiErrorDisplayMessage(error, {
-              codeMessages: CUSTOMER_FORM_ERROR_MESSAGE_OVERRIDES,
-              fallbackMessage: CUSTOMER_ERROR_MESSAGES.createFailed
-            }),
+            message: uiError.message,
             type: "error"
           });
         }
@@ -301,18 +278,19 @@ export function CustomerFormPage() {
         }
       });
     } catch (error) {
-      const hasFieldError = applyFormApiErrors(error);
+      const uiError = mapApiErrorToUi(error, {
+        codeMessages: CUSTOMER_FORM_ERROR_MESSAGE_OVERRIDES,
+        fallbackMessage: CUSTOMER_ERROR_MESSAGES.updateFailed
+      });
+      const hasFieldError = applyFormApiErrors(uiError);
 
-      if (error instanceof ApiClientError && error.code === "CUSTOMER_ARCHIVED") {
+      if (uiError.code === "CUSTOMER_ARCHIVED") {
         await refreshCustomerQueries(customerId);
       }
 
       if (!hasFieldError) {
         setNotice({
-          message: getApiErrorDisplayMessage(error, {
-            codeMessages: CUSTOMER_FORM_ERROR_MESSAGE_OVERRIDES,
-            fallbackMessage: CUSTOMER_ERROR_MESSAGES.updateFailed
-          }),
+          message: uiError.message,
           type: "error"
         });
       }
@@ -332,7 +310,10 @@ export function CustomerFormPage() {
   const formErrors = customerForm.formState.errors;
   const snsAccountsErrorMessage =
     formErrors.snsAccounts && !Array.isArray(formErrors.snsAccounts)
-      ? getFieldErrorMessage("snsAccounts", formErrors.snsAccounts.message)
+      ? getCustomerFormFieldErrorMessage(
+          "snsAccounts",
+          formErrors.snsAccounts.message
+        )
       : null;
 
   if (isInitialLoading) {
@@ -439,7 +420,10 @@ export function CustomerFormPage() {
               />
               {formErrors.name ? (
                 <p className="auth-field__error" role="alert">
-                  {getFieldErrorMessage("name", formErrors.name.message)}
+                  {getCustomerFormFieldErrorMessage(
+                    "name",
+                    formErrors.name.message
+                  )}
                 </p>
               ) : null}
             </div>
@@ -496,7 +480,7 @@ export function CustomerFormPage() {
               />
               {formErrors.customerStyle ? (
                 <p className="auth-field__error" role="alert">
-                  {getFieldErrorMessage(
+                  {getCustomerFormFieldErrorMessage(
                     "customerStyle",
                     formErrors.customerStyle.message
                   )}
@@ -518,7 +502,10 @@ export function CustomerFormPage() {
               />
               {formErrors.memo ? (
                 <p className="auth-field__error" role="alert">
-                  {getFieldErrorMessage("memo", formErrors.memo.message)}
+                  {getCustomerFormFieldErrorMessage(
+                    "memo",
+                    formErrors.memo.message
+                  )}
                 </p>
               ) : null}
             </div>

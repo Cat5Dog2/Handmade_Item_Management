@@ -69,6 +69,25 @@ export const QR_LOOKUP_ERROR_MESSAGE_OVERRIDES = {
   VALIDATION_ERROR: QR_ERROR_MESSAGES.lookupValidationFailed
 } as const;
 
+export const QR_SELL_ERROR_MESSAGES = {
+  sellFailed: "QR販売済更新に失敗しました。状態を確認してもう一度お試しください。",
+  alreadySold: "この商品はすでに販売済みです。",
+  customerArchived: "選択した顧客は現在利用できません。別の顧客を選択してください。",
+  customerNotFound: "選択した顧客が見つかりません。顧客一覧を確認してください。",
+  invalidStatus: "このステータスの商品はQRで販売済に更新できません。"
+} as const;
+
+export const QR_SELL_ERROR_MESSAGE_OVERRIDES = {
+  ALREADY_SOLD: QR_SELL_ERROR_MESSAGES.alreadySold,
+  CUSTOMER_ARCHIVED: QR_SELL_ERROR_MESSAGES.customerArchived,
+  CUSTOMER_NOT_FOUND: QR_SELL_ERROR_MESSAGES.customerNotFound,
+  INVALID_STATUS_FOR_QR_SELL: QR_SELL_ERROR_MESSAGES.invalidStatus
+} as const;
+
+export const QR_SELL_SUCCESS_MESSAGES = {
+  sellSucceeded: "販売済更新が完了しました。"
+} as const;
+
 export const PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES = {
   PRODUCT_NOT_FOUND: PRODUCT_ERROR_MESSAGES.notFound,
   PRODUCT_RELATED_RESOURCE_UNAVAILABLE: PRODUCT_ERROR_MESSAGES.tasksUnavailable,

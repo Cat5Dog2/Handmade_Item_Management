@@ -1,9 +1,27 @@
-import type { QrLookupData } from "@handmade/shared";
-import { API_PATHS, PRODUCT_STATUS_LABELS } from "@handmade/shared";
-import { useEffect, useId, useRef, useState } from "react";
+import type {
+  CustomerListData,
+  CustomerListItem,
+  QrLookupData,
+  QrSellData,
+  QrSellInput
+} from "@handmade/shared";
+import {
+  API_PATHS,
+  PRODUCT_STATUS_LABELS
+} from "@handmade/shared";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ChangeEvent
+} from "react";
 import { useLocation } from "react-router-dom";
 import { getApiErrorDisplayMessage } from "../api/api-error-display";
 import { useApiClient } from "../api/api-client-context";
+import { queryKeys } from "../api/query-keys";
 import {
   ScreenEmptyState,
   ScreenErrorState,
@@ -12,7 +30,10 @@ import {
 import {
   APP_NAME,
   QR_ERROR_MESSAGES,
-  QR_LOOKUP_ERROR_MESSAGE_OVERRIDES
+  QR_LOOKUP_ERROR_MESSAGE_OVERRIDES,
+  QR_SELL_ERROR_MESSAGES,
+  QR_SELL_ERROR_MESSAGE_OVERRIDES,
+  QR_SELL_SUCCESS_MESSAGES
 } from "../messages/display-messages";
 import { createQrScannerController } from "./qr-scanner-adapter";
 
@@ -23,6 +44,13 @@ interface QrLaunchContext {
 
 type CameraState = "starting" | "ready" | "paused" | "error";
 type LookupState = "idle" | "pending" | "success" | "error";
+
+const customerSelectQuery = {
+  page: 1,
+  pageSize: 100,
+  sortBy: "name",
+  sortOrder: "asc"
+} as const;
 
 function isQrLaunchContext(value: unknown): value is QrLaunchContext {
   if (typeof value !== "object" || value === null) {
@@ -43,36 +71,105 @@ function getScannerStatusMessage(cameraState: CameraState, lookupState: LookupSt
   }
 
   if (cameraState === "ready") {
-    return "QRコードを枠内に合わせてください。";
+    return "QRコードを画面にかざしてください。";
   }
 
   if (cameraState === "paused" && lookupState === "pending") {
     return "読み取り結果を確認しています...";
   }
 
-  return "再試行で新しいQR読み取りを開始できます。";
+  return "新しいQR読み取りを開始できます。";
 }
 
 function formatLookupDetail(value: string | null) {
-  return value ?? "未取得";
+  return value ?? "未設定";
+}
+
+function formatDateTime(value: string) {
+  return new Date(value).toLocaleString("ja-JP");
+}
+
+function getSelectedCustomerLabel(
+  customers: CustomerListItem[],
+  selectedCustomerId: string
+) {
+  if (!selectedCustomerId) {
+    return "未選択";
+  }
+
+  return customers.find((customer) => customer.customerId === selectedCustomerId)?.name ?? "未選択";
+}
+
+function buildQrSellInput(
+  productId: string,
+  selectedCustomerId: string
+): QrSellInput {
+  const body: QrSellInput = {
+    productId
+  };
+
+  if (selectedCustomerId) {
+    body.customerId = selectedCustomerId;
+  }
+
+  return body;
 }
 
 export function QrPage() {
   const apiClient = useApiClient();
+  const queryClient = useQueryClient();
   const location = useLocation();
   const scannerContainerId = useId().replace(/:/g, "-");
+  const customerSelectId = useId().replace(/:/g, "-");
+  const sellDialogTitleId = useId().replace(/:/g, "-");
   const lookupLockRef = useRef(false);
   const launchContext = isQrLaunchContext(location.state) ? location.state : null;
 
   const [cameraState, setCameraState] = useState<CameraState>("starting");
   const [lookupState, setLookupState] = useState<LookupState>("idle");
   const [lookupResult, setLookupResult] = useState<QrLookupData | null>(null);
+  const [sellResult, setSellResult] = useState<QrSellData | null>(null);
   const [lookupErrorMessage, setLookupErrorMessage] = useState<string | null>(null);
-  const [scannerErrorMessage, setScannerErrorMessage] = useState<string | null>(null);
+  const [sellErrorMessage, setSellErrorMessage] = useState<string | null>(null);
+  const [scannerErrorMessage, setScannerErrorMessage] = useState<string | null>(
+    null
+  );
   const [lastScannedValue, setLastScannedValue] = useState<string | null>(null);
   const [scanSessionId, setScanSessionId] = useState(0);
+  const [selectedCustomerId, setSelectedCustomerId] = useState("");
+  const [isSellDialogOpen, setIsSellDialogOpen] = useState(false);
 
-  const handleRetry = () => {
+  const isLookupResultVisible = lookupState === "success" && lookupResult !== null;
+  const isSellActionAvailable =
+    isLookupResultVisible && lookupResult.canSell && sellResult === null;
+
+  const customersQuery = useQuery({
+    enabled: isSellActionAvailable,
+    queryKey: queryKeys.customers.list(customerSelectQuery),
+    queryFn: async ({ signal }) => {
+      const response = await apiClient.get<CustomerListData>(API_PATHS.customers, {
+        query: customerSelectQuery,
+        signal
+      });
+
+      return response.data;
+    }
+  });
+
+  const availableCustomers = customersQuery.data?.items ?? [];
+  const selectedCustomerLabel = getSelectedCustomerLabel(
+    availableCustomers,
+    selectedCustomerId
+  );
+
+  const resetSellFlow = useCallback(() => {
+    setSellResult(null);
+    setSellErrorMessage(null);
+    setSelectedCustomerId("");
+    setIsSellDialogOpen(false);
+  }, []);
+
+  const handleRetry = useCallback(() => {
     lookupLockRef.current = false;
     setCameraState("starting");
     setLookupState("idle");
@@ -80,8 +177,75 @@ export function QrPage() {
     setLookupErrorMessage(null);
     setLastScannedValue(null);
     setScannerErrorMessage(null);
+    resetSellFlow();
     setScanSessionId((current) => current + 1);
-  };
+  }, [resetSellFlow]);
+
+  const refreshQrRelatedQueries = useCallback(
+    async (productId: string, customerId: string | null) => {
+      const invalidations = [
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.dashboard.root
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["products", "list"]
+        }),
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.products.detail(productId)
+        })
+      ];
+
+      if (customerId) {
+        invalidations.push(
+          queryClient.invalidateQueries({
+            queryKey: ["customers", "list"]
+          }),
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.customers.detail(customerId)
+          }),
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.customers.purchases(customerId)
+          })
+        );
+      }
+
+      await Promise.all(invalidations);
+    },
+    [queryClient]
+  );
+
+  const sellProductMutation = useMutation({
+    mutationFn: async () => {
+      if (!lookupResult?.productId) {
+        throw new Error("Product ID is missing.");
+      }
+
+      const response = await apiClient.post<
+        QrSellData,
+        undefined,
+        QrSellInput
+      >(API_PATHS.qrSell, {
+        body: buildQrSellInput(lookupResult.productId, selectedCustomerId)
+      });
+
+      return response.data;
+    },
+    onError: (error) => {
+      setSellErrorMessage(
+        getApiErrorDisplayMessage(error, {
+          codeMessages: QR_SELL_ERROR_MESSAGE_OVERRIDES,
+          fallbackMessage: QR_SELL_ERROR_MESSAGES.sellFailed
+        })
+      );
+    },
+    onSuccess: async (data) => {
+      setSellErrorMessage(null);
+      setIsSellDialogOpen(false);
+      setSellResult(data);
+      setSelectedCustomerId("");
+      await refreshQrRelatedQueries(data.productId, data.soldCustomerId);
+    }
+  });
 
   useEffect(() => {
     let isCancelled = false;
@@ -105,6 +269,7 @@ export function QrPage() {
           setLookupErrorMessage(QR_ERROR_MESSAGES.lookupValidationFailed);
           setLookupResult(null);
           setLastScannedValue(null);
+          resetSellFlow();
           return;
         }
 
@@ -113,6 +278,7 @@ export function QrPage() {
         setLookupState("pending");
         setLookupErrorMessage(null);
         setLookupResult(null);
+        resetSellFlow();
         setCameraState("paused");
 
         try {
@@ -180,10 +346,52 @@ export function QrPage() {
           }
         });
     };
-  }, [apiClient, scanSessionId, scannerContainerId]);
+  }, [apiClient, resetSellFlow, scanSessionId, scannerContainerId]);
 
   const scannerStatusMessage = getScannerStatusMessage(cameraState, lookupState);
-  const isLookupResultVisible = lookupState === "success" && lookupResult !== null;
+  const resultStatus = sellResult ? sellResult.status : lookupResult?.status ?? null;
+  const resultCanSell = Boolean(!sellResult && lookupResult?.canSell);
+  const resultMessage = sellResult
+    ? QR_SELL_SUCCESS_MESSAGES.sellSucceeded
+    : lookupResult?.message ?? null;
+  const resultSubtitle = sellResult
+    ? "販売済更新完了"
+    : lookupResult?.canSell
+      ? "販売済更新可能"
+      : "販売済更新不可";
+  const resultToneClass = resultCanSell || Boolean(sellResult) ? "is-success" : "is-error";
+  const resultRole = resultCanSell || Boolean(sellResult) ? "status" : "alert";
+
+  const handleOpenSellDialog = () => {
+    setSellErrorMessage(null);
+    setIsSellDialogOpen(true);
+  };
+
+  const handleCloseSellDialog = () => {
+    if (sellProductMutation.isPending) {
+      return;
+    }
+
+    setIsSellDialogOpen(false);
+    setSellErrorMessage(null);
+  };
+
+  const handleCustomerChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCustomerId(event.target.value);
+    setSellErrorMessage(null);
+  };
+
+  const handleSellConfirm = async () => {
+    if (!isSellActionAvailable) {
+      return;
+    }
+
+    try {
+      await sellProductMutation.mutateAsync();
+    } catch {
+      // The mutation error is surfaced through sellErrorMessage.
+    }
+  };
 
   return (
     <section className="management-page qr-page" aria-labelledby="qr-page-title">
@@ -192,12 +400,12 @@ export function QrPage() {
         <div>
           <h1 id="qr-page-title">QR読み取り</h1>
           <p className="management-page__lead">
-            端末カメラで QR を読み取り、商品確認の結果を表示します。
+            カメラで QR を読み取り、商品の確認と販売済更新を行います。
           </p>
         </div>
         {launchContext ? (
           <p className="management-page__sync" role="status">
-            {`商品詳細から開いた商品: ${launchContext.productId}`}
+            商品詳細から開きました: {launchContext.productId}
           </p>
         ) : null}
       </div>
@@ -209,7 +417,7 @@ export function QrPage() {
               カメラ読み取り
             </h2>
             <p className="management-page__section-summary">
-              QRコードを枠内に合わせると自動で照合します。
+              QRコードを画面にかざすと自動で読み取ります。
             </p>
           </div>
         </div>
@@ -227,7 +435,7 @@ export function QrPage() {
               </p>
             </div>
             <p className="management-form__hint">
-              読み取り後は結果が下に表示されます。再試行でスキャンをやり直せます。
+              読み取り後は結果を表示します。再試行でスキャンをやり直せます。
             </p>
           </article>
         )}
@@ -240,7 +448,7 @@ export function QrPage() {
               読み取り結果
             </h2>
             <p className="management-page__section-summary">
-              照合した商品情報と販売済更新可否を表示します。
+              読み取った商品情報と販売済更新の操作を表示します。
             </p>
           </div>
         </div>
@@ -257,16 +465,10 @@ export function QrPage() {
           />
         ) : null}
         {isLookupResultVisible ? (
-          <article
-            className={`management-card qr-page__result-card ${
-              lookupResult.canSell ? "is-success" : "is-error"
-            }`}
-          >
+          <article className={`management-card qr-page__result-card ${resultToneClass}`}>
             <div className="management-card__header">
               <div>
-                <p className="management-card__subtitle">
-                  {lookupResult.canSell ? "更新可能" : "更新不可"}
-                </p>
+                <p className="management-card__subtitle">{resultSubtitle}</p>
                 <h3 className="management-card__title">
                   {lookupResult.productId ? lookupResult.name : "該当する商品が見つかりません"}
                 </h3>
@@ -274,12 +476,14 @@ export function QrPage() {
             </div>
             <dl className="management-card__details">
               <div>
-                <dt>読み取ったQR値</dt>
+                <dt>読み取り値</dt>
                 <dd>{formatLookupDetail(lastScannedValue)}</dd>
               </div>
               <div>
-                <dt>判定</dt>
-                <dd>{lookupResult.canSell ? "販売済更新可能" : "販売済更新不可"}</dd>
+                <dt>現在ステータス</dt>
+                <dd>
+                  {resultStatus ? PRODUCT_STATUS_LABELS[resultStatus] : "未取得"}
+                </dd>
               </div>
               <div>
                 <dt>商品ID</dt>
@@ -289,37 +493,133 @@ export function QrPage() {
                 <dt>商品名</dt>
                 <dd>{formatLookupDetail(lookupResult.name)}</dd>
               </div>
+              {sellResult ? (
+                <div>
+                  <dt>販売済更新日時</dt>
+                  <dd>{formatDateTime(sellResult.soldAt)}</dd>
+                </div>
+              ) : null}
+            </dl>
+            <div
+              className={
+                resultCanSell || Boolean(sellResult)
+                  ? "management-page__notice is-success"
+                  : "management-page__notice is-error"
+              }
+              role={resultRole}
+            >
+              <p>{resultMessage}</p>
+            </div>
+            {isSellActionAvailable ? (
+              <div className="management-page__field-group">
+                <label className="management-form__label" htmlFor={customerSelectId}>
+                  購入者
+                </label>
+                <select
+                  id={customerSelectId}
+                  className="management-form__select"
+                  value={selectedCustomerId}
+                  onChange={handleCustomerChange}
+                  disabled={customersQuery.isPending || sellProductMutation.isPending}
+                >
+                  <option value="">未選択</option>
+                  {availableCustomers.map((customer) => (
+                    <option key={customer.customerId} value={customer.customerId}>
+                      {customer.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="management-form__hint">
+                  {customersQuery.isError
+                    ? "購入者一覧を取得できませんでした。未選択のまま更新できます。"
+                    : "未選択でも更新できます。"}
+                </p>
+                <div className="management-card__actions">
+                  <button
+                    className="primary-button"
+                    type="button"
+                    onClick={handleOpenSellDialog}
+                  >
+                    販売済更新
+                  </button>
+                  <button className="secondary-button" type="button" onClick={handleRetry}>
+                    再読み取り
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="management-card__actions">
+                <button className="secondary-button" type="button" onClick={handleRetry}>
+                  再読み取り
+                </button>
+              </div>
+            )}
+          </article>
+        ) : null}
+      </section>
+
+      {isSellDialogOpen ? (
+        <div className="app-dialog__backdrop" role="presentation">
+          <section
+            aria-labelledby={sellDialogTitleId}
+            aria-modal="true"
+            className="app-dialog"
+            role="dialog"
+          >
+            <h2 id={sellDialogTitleId}>販売済更新確認</h2>
+            <p className="app-dialog__summary">
+              この商品を販売済みに更新します。内容を確認して確定してください。
+            </p>
+            <dl className="management-card__details">
+              <div>
+                <dt>商品名</dt>
+                <dd>{formatLookupDetail(lookupResult?.name ?? null)}</dd>
+              </div>
+              <div>
+                <dt>商品ID</dt>
+                <dd>{formatLookupDetail(lookupResult?.productId ?? null)}</dd>
+              </div>
               <div>
                 <dt>現在ステータス</dt>
                 <dd>
-                  {lookupResult.status
+                  {lookupResult?.status
                     ? PRODUCT_STATUS_LABELS[lookupResult.status]
                     : "未取得"}
                 </dd>
               </div>
+              <div>
+                <dt>購入者</dt>
+                <dd>{selectedCustomerLabel}</dd>
+              </div>
             </dl>
-            <div
-              className={
-                lookupResult.canSell
-                  ? "management-page__notice is-success"
-                  : "management-page__notice is-error"
-              }
-              role={lookupResult.canSell ? "status" : "alert"}
-            >
-              <p>{lookupResult.message}</p>
-            </div>
-            <div className="management-card__actions">
+            {sellErrorMessage ? (
+              <div className="management-page__notice is-error" role="alert">
+                <p>{sellErrorMessage}</p>
+              </div>
+            ) : null}
+            <div className="app-dialog__actions">
               <button
                 className="secondary-button"
+                disabled={sellProductMutation.isPending}
                 type="button"
-                onClick={handleRetry}
+                onClick={handleCloseSellDialog}
               >
-                再試行
+                キャンセル
+              </button>
+              <button
+                className="primary-button"
+                disabled={sellProductMutation.isPending}
+                type="button"
+                onClick={() => {
+                  void handleSellConfirm();
+                }}
+              >
+                販売済に更新
               </button>
             </div>
-          </article>
-        ) : null}
-      </section>
+          </section>
+        </div>
+      ) : null}
     </section>
   );
 }

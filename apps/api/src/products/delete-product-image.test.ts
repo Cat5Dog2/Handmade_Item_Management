@@ -49,9 +49,9 @@ function createProductDocument(
   };
 }
 
-function createBucketFileMock() {
+function createBucketFileMock(deleteMock = vi.fn().mockResolvedValue(undefined)) {
   return {
-    delete: vi.fn().mockResolvedValue(undefined)
+    delete: deleteMock
   };
 }
 
@@ -275,8 +275,79 @@ describe("deleteProductImage", () => {
     expect(thumbnailFile.delete).toHaveBeenCalledTimes(1);
   });
 
-  it("returns IMAGE_NOT_FOUND when the target image does not exist", async () => {
+  it("does not update product metadata when storage deletion fails", async () => {
     const productId = "HM-000003";
+    const imageId = "img_existing_1";
+    const product = createProductDocument(productId, [
+      createProductImageDocument(productId, "img_existing_1", 1, {
+        isPrimary: true
+      }),
+      createProductImageDocument(productId, "img_existing_2", 2, {
+        isPrimary: false
+      })
+    ]);
+    const productRef = {
+      get: vi.fn().mockResolvedValue(createDocumentSnapshot(product)),
+      path: `products/${productId}`
+    };
+    const storageError = new Error("Storage delete failed");
+    const displayFile = createBucketFileMock(
+      vi.fn().mockRejectedValue(storageError)
+    );
+    const thumbnailFile = createBucketFileMock();
+    const fileMock = vi.fn((path: string) => {
+      const paths = getProductImageStoragePaths(productId, imageId);
+
+      if (path === paths.displayPath) {
+        return displayFile;
+      }
+
+      if (path === paths.thumbnailPath) {
+        return thumbnailFile;
+      }
+
+      throw new Error(`Unexpected path ${path}`);
+    });
+    const transaction = {
+      get: vi.fn(async (reference: unknown) => {
+        if (reference === productRef) {
+          return createDocumentSnapshot(product);
+        }
+
+        throw new Error("Unexpected transaction reference");
+      }),
+      set: vi.fn()
+    };
+    const db = {
+      collection: vi.fn((collectionName: string) => {
+        if (collectionName === "products") {
+          return {
+            doc: vi.fn(() => productRef)
+          };
+        }
+
+        throw new Error(`Unexpected collection ${collectionName}`);
+      }),
+      runTransaction: vi.fn(async (callback) => callback(transaction as never))
+    };
+
+    await expect(
+      deleteProductImage(productId, imageId, {
+        bucket: {
+          file: fileMock
+        } as never,
+        db: db as never
+      })
+    ).rejects.toBe(storageError);
+
+    expect(db.runTransaction).toHaveBeenCalledTimes(1);
+    expect(displayFile.delete).toHaveBeenCalledTimes(1);
+    expect(thumbnailFile.delete).toHaveBeenCalledTimes(1);
+    expect(transaction.set).not.toHaveBeenCalled();
+  });
+
+  it("returns IMAGE_NOT_FOUND when the target image does not exist", async () => {
+    const productId = "HM-000004";
     const imageId = "img_missing";
     const productRef = {
       get: vi.fn().mockResolvedValue(
@@ -316,7 +387,7 @@ describe("deleteProductImage", () => {
   });
 
   it("returns PRODUCT_NOT_FOUND when the product does not exist", async () => {
-    const productId = "HM-000004";
+    const productId = "HM-000005";
     const imageId = "img_existing_1";
     const productRef = {
       get: vi.fn().mockResolvedValue(
@@ -355,7 +426,7 @@ describe("deleteProductImage", () => {
   });
 
   it("returns PRODUCT_RELATED_RESOURCE_UNAVAILABLE when the product is logically deleted", async () => {
-    const productId = "HM-000005";
+    const productId = "HM-000006";
     const imageId = "img_existing_1";
     const productRef = {
       get: vi.fn().mockResolvedValue(

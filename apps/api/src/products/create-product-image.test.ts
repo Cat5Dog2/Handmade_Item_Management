@@ -150,6 +150,7 @@ describe("createProductImage", () => {
 
     expect(result).toEqual({
       imageId,
+      isPrimary: false,
       updatedAt: "2026-04-18T10:00:00.000Z"
     });
     expect(fileMock).toHaveBeenCalledTimes(2);

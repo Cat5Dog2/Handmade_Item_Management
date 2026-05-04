@@ -52,7 +52,7 @@ export async function deleteProduct(
       throw createApiError({
         statusCode: 404,
         code: "PRODUCT_NOT_FOUND",
-        message: "蟇ｾ雎｡縺ｮ蝠・刀縺瑚ｦ九▽縺九ｊ縺ｾ縺帙ｓ縲・"
+        message: "対象の商品が見つかりません。"
       });
     }
 
@@ -62,7 +62,7 @@ export async function deleteProduct(
       throw createApiError({
         statusCode: 404,
         code: "PRODUCT_DELETED",
-        message: "蟇ｾ雎｡縺ｮ蝠・刀縺ｯ縺吶〒縺ｫ蜑企勁縺ｵ縺｣縺ｦ縺ｾ縺帙ｓ縲・"
+        message: "対象の商品はすでに利用できません。"
       });
     }
 

@@ -183,12 +183,14 @@ export async function createProductImage(
 
       return {
         imageId,
+        isPrimary: newImage.isPrimary,
         updatedAt
       };
     });
 
     return {
       imageId: result.imageId,
+      isPrimary: result.isPrimary,
       updatedAt: toIsoString(result.updatedAt)
     };
   } catch (error) {

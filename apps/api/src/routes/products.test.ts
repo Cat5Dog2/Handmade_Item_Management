@@ -257,6 +257,7 @@ describe("products routes", () => {
   it("returns the product image create envelope for authenticated requests", async () => {
     createProductImageMock.mockResolvedValue({
       imageId: "img_abcdef123456",
+      isPrimary: false,
       updatedAt: "2026-04-18T09:15:00.000Z"
     });
 
@@ -279,6 +280,7 @@ describe("products routes", () => {
     expect(response.body).toEqual({
       data: {
         imageId: "img_abcdef123456",
+        isPrimary: false,
         updatedAt: "2026-04-18T09:15:00.000Z"
       }
     });

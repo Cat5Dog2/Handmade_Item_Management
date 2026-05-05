@@ -31,6 +31,9 @@ docker compose --env-file .env.docker up --build
 ```
 
 Docker 用の Emulator 設定は `firebase.docker.json` を使い、通常のローカル開発向け `firebase.json` とは分けてあります。
+Docker 版では Auth / Firestore / Storage Emulator を `0.0.0.0` で待ち受けるため、ブラウザ側の Emulator UI からも保存・参照できます。
+API 側の Storage 参照には `.env.docker` の `FIREBASE_STORAGE_BUCKET` と、署名用のダミー service account `/workspace/firebase/service-account.docker.json` が必要です。
+`GOOGLE_APPLICATION_CREDENTIALS` はこのファイルを指すようにしてください。
 
 ## 公開ポート
 

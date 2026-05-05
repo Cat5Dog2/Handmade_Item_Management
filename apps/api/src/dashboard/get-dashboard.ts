@@ -12,6 +12,7 @@ import type {
   Timestamp
 } from "firebase-admin/firestore";
 import { getFirestoreDb, getStorageBucket } from "../firebase/firebase-admin";
+import { getStorageReadUrl } from "../firebase/storage-read-url";
 
 interface ProductImageDocument {
   displayPath: string;
@@ -199,10 +200,7 @@ async function getThumbnailUrl(
     return null;
   }
 
-  const [thumbnailUrl] = await bucket.file(thumbnailPath).getSignedUrl({
-    action: "read",
-    expires: expiresAt
-  });
+  const thumbnailUrl = await getStorageReadUrl(bucket, thumbnailPath, expiresAt);
 
   return thumbnailUrl;
 }

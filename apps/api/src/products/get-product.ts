@@ -6,6 +6,7 @@ import type {
 import type { Firestore, Timestamp } from "firebase-admin/firestore";
 import { createApiError } from "../errors/api-errors";
 import { getFirestoreDb, getStorageBucket } from "../firebase/firebase-admin";
+import { getStorageReadUrl } from "../firebase/storage-read-url";
 
 interface ProductImageDocument {
   displayPath: string;
@@ -104,14 +105,16 @@ async function createImageDetail(
   image: ProductImageDocument,
   expiresAt: Date
 ): Promise<ProductImageDetail> {
-  const [displayUrl] = await bucket.file(image.displayPath).getSignedUrl({
-    action: "read",
-    expires: expiresAt
-  });
-  const [thumbnailUrl] = await bucket.file(image.thumbnailPath).getSignedUrl({
-    action: "read",
-    expires: expiresAt
-  });
+  const displayUrl = await getStorageReadUrl(
+    bucket,
+    image.displayPath,
+    expiresAt
+  );
+  const thumbnailUrl = await getStorageReadUrl(
+    bucket,
+    image.thumbnailPath,
+    expiresAt
+  );
 
   return {
     imageId: image.imageId,

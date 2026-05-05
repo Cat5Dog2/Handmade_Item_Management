@@ -21,7 +21,7 @@ import {
   updateCustomer,
   type CustomerUpdateResult
 } from "../customers/update-customer";
-import { writeOperationLog } from "../operation-logs/write-operation-log";
+import { writeOperationLogSafely } from "../operation-logs/write-operation-log-safely";
 import { sendSuccess } from "../responses/api-response";
 
 interface CustomerListResult {
@@ -132,7 +132,7 @@ export function registerCustomerRoutes(
           updatedAt: result.updatedAt
         };
 
-        await writeOperationLog({
+        await writeOperationLogSafely({
           eventType: "CUSTOMER_UPDATED",
           targetId: result.customerId,
           summary: "顧客情報を更新しました",
@@ -141,7 +141,7 @@ export function registerCustomerRoutes(
             result: "success",
             changedFields: result.changedFields
           }
-        });
+        }, context.logger);
 
         sendSuccess(response, responseData);
       } catch (error) {
@@ -163,7 +163,7 @@ export function registerCustomerRoutes(
         };
 
         if (result.didArchive) {
-          await writeOperationLog({
+          await writeOperationLogSafely({
             eventType: "CUSTOMER_ARCHIVED",
             targetId: result.customerId,
             summary:
@@ -172,7 +172,7 @@ export function registerCustomerRoutes(
             detail: {
               result: "success"
             }
-          });
+          }, context.logger);
         }
 
         sendSuccess(response, responseData);

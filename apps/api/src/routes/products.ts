@@ -25,7 +25,7 @@ import {
   updateProduct,
   type ProductUpdateResult
 } from "../products/update-product";
-import { writeOperationLog } from "../operation-logs/write-operation-log";
+import { writeOperationLogSafely } from "../operation-logs/write-operation-log-safely";
 import { sendSuccess } from "../responses/api-response";
 import { listProducts } from "../products/list-products";
 import { createProductTask } from "../tasks/create-product-task";
@@ -240,7 +240,7 @@ export function registerProductRoutes(
           request.body
         );
 
-        await writeOperationLog({
+        await writeOperationLogSafely({
           eventType: "PRODUCT_UPDATED",
           targetId: result.productId,
           summary: "商品を更新しました",
@@ -248,7 +248,7 @@ export function registerProductRoutes(
           detail: {
             changedFields: result.changedFields
           }
-        });
+        }, context.logger);
 
         sendSuccess(response, {
           productId: result.productId,
@@ -267,12 +267,12 @@ export function registerProductRoutes(
       try {
         const result = await deleteProductHandler(request.params.productId);
 
-        await writeOperationLog({
+        await writeOperationLogSafely({
           eventType: "PRODUCT_DELETED",
           targetId: result.productId,
           summary: "商品を論理削除しました",
           actorUid: request.authContext?.actorUid ?? null
-        });
+        }, context.logger);
 
         sendSuccess(response, result);
       } catch (error) {

@@ -76,20 +76,6 @@ export async function deleteProductImage(
   const currentImages = product.images ?? [];
   findProductImageOrThrow(currentImages, imageId);
 
-  const bucket = options.bucket ?? getStorageBucket();
-  const latestSnapshotBeforeStorage =
-    (await productReference.get()) as unknown as SnapshotLike<ProductDocument>;
-
-  assertRelatedProductAvailable(latestSnapshotBeforeStorage);
-
-  const latestProductBeforeStorage = latestSnapshotBeforeStorage.data();
-  const { deletedImage } = normalizeImagesAfterDelete(
-    latestProductBeforeStorage.images ?? [],
-    imageId
-  );
-
-  await deleteProductImageStorageFiles(bucket, deletedImage);
-
   const result = await db.runTransaction(async (transaction) => {
     const typedTransaction = transaction as unknown as FirestoreTransactionLike;
     const latestSnapshot = await typedTransaction.get(productReference);
@@ -98,7 +84,7 @@ export async function deleteProductImage(
 
     const latestProduct = latestSnapshot.data() as ProductDocument;
     const latestImages = latestProduct.images ?? [];
-    const { images: updatedImages } = normalizeImagesAfterDelete(
+    const { deletedImage, images: updatedImages } = normalizeImagesAfterDelete(
       latestImages,
       imageId
     );
@@ -111,9 +97,13 @@ export async function deleteProductImage(
     });
 
     return {
+      deletedImage,
       updatedAt
     };
   });
+  const bucket = options.bucket ?? getStorageBucket();
+
+  await deleteProductImageStorageFiles(bucket, result.deletedImage);
 
   return {
     imageId,

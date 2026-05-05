@@ -162,4 +162,43 @@ describe("qr routes", () => {
       }
     });
   });
+
+  it("keeps QR sell responses successful when operation log writing fails", async () => {
+    sellQrCodeMock.mockResolvedValue({
+      previousStatus: "inStock",
+      productId: "HM-000001",
+      status: "sold",
+      soldAt: "2026-04-18T10:00:00.000Z",
+      soldCustomerId: null,
+      soldCustomerNameSnapshot: null,
+      updatedAt: "2026-04-18T10:00:00.000Z"
+    });
+    writeOperationLogMock.mockRejectedValue(new Error("log write failed"));
+
+    const response = await request(
+      createTestApp({
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .post("/api/qr/sell")
+      .set("Authorization", "Bearer valid-token")
+      .send({
+        productId: "HM-000001"
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        productId: "HM-000001",
+        status: "sold",
+        soldAt: "2026-04-18T10:00:00.000Z",
+        soldCustomerId: null,
+        soldCustomerNameSnapshot: null,
+        updatedAt: "2026-04-18T10:00:00.000Z"
+      }
+    });
+  });
 });

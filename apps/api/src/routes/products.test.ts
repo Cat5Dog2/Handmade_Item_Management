@@ -573,6 +573,44 @@ describe("products routes", () => {
     });
   });
 
+  it("keeps product update responses successful when operation log writing fails", async () => {
+    updateProductMock.mockResolvedValue({
+      changedFields: ["name"],
+      productId: "HM-000001",
+      updatedAt: "2026-04-18T10:00:00.000Z"
+    });
+    writeOperationLogMock.mockRejectedValue(new Error("log write failed"));
+
+    const response = await request(
+      createTestApp({
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .put("/api/products/HM-000001")
+      .set("Authorization", "Bearer valid-token")
+      .send({
+        categoryId: "cat-a",
+        description: "Updated pin",
+        name: "Fancy Pin",
+        price: 3000,
+        primaryImageId: null,
+        soldCustomerId: null,
+        status: "onDisplay",
+        tagIds: ["tag-a"]
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        productId: "HM-000001",
+        updatedAt: "2026-04-18T10:00:00.000Z"
+      }
+    });
+  });
+
   it("returns AUTH_REQUIRED for unauthenticated product delete requests", async () => {
     const response = await request(createTestApp()).delete(
       "/api/products/HM-000001"

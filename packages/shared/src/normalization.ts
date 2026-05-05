@@ -9,6 +9,7 @@ const CONTROL_CHARACTER_RANGES = [
 const CONTROL_CHARACTERS = new RegExp(`[${CONTROL_CHARACTER_RANGES}]`, "g");
 const LINE_ENDINGS = /\r\n?/g;
 const MULTIPLE_SPACES = /\s+/g;
+const SINGLE_LINE_FORBIDDEN_CHARACTERS = /[\n\t]/;
 
 function toSafeText(value: string) {
   return value.replace(CONTROL_CHARACTERS, "");
@@ -19,10 +20,11 @@ export function normalizeLineEndings(value: string) {
 }
 
 export function normalizeSingleLineText(value: string) {
-  return toSafeText(normalizeLineEndings(value))
-    .replace(/\n/g, " ")
-    .replace(/\t/g, " ")
-    .trim();
+  return toSafeText(normalizeLineEndings(value)).trim();
+}
+
+export function hasSingleLineForbiddenCharacters(value: string) {
+  return SINGLE_LINE_FORBIDDEN_CHARACTERS.test(normalizeLineEndings(value));
 }
 
 export const normalizeName = normalizeSingleLineText;

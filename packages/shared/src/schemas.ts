@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { API_ERROR_CODES } from "./error-codes";
 import {
+  hasSingleLineForbiddenCharacters,
   normalizeMultilineText,
-  normalizeOptionalSearchKeyword,
   normalizeSearchKeyword,
   normalizeSingleLineText
 } from "./normalization";
@@ -57,7 +57,7 @@ function emptyStringToUndefined(value: unknown) {
   return value;
 }
 
-function normalizeOptionalIdentifier(value: unknown) {
+function emptyBlankSingleLineStringToUndefined(value: unknown) {
   if (value === undefined || value === null || value === "") {
     return undefined;
   }
@@ -66,10 +66,68 @@ function normalizeOptionalIdentifier(value: unknown) {
     return value;
   }
 
-  const normalized = normalizeSingleLineText(value);
+  if (value.trim() === "" && !hasSingleLineForbiddenCharacters(value)) {
+    return undefined;
+  }
 
-  return normalized === "" ? undefined : normalized;
+  return value;
 }
+
+function emptyBlankSingleLineStringToNull(value: unknown) {
+  if (value === null || value === "") {
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  if (value.trim() === "" && !hasSingleLineForbiddenCharacters(value)) {
+    return null;
+  }
+
+  return value;
+}
+
+function emptyBlankSearchKeywordToUndefined(value: unknown) {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  if (normalizeSearchKeyword(value) === "" && !hasSingleLineForbiddenCharacters(value)) {
+    return undefined;
+  }
+
+  return value;
+}
+
+const normalizedSingleLineStringSchema = z
+  .string()
+  .superRefine((value, ctx) => {
+    if (hasSingleLineForbiddenCharacters(value)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Line breaks and tabs are not allowed."
+      });
+    }
+  })
+  .transform(normalizeSingleLineText);
+
+const normalizedSearchKeywordSchema = z
+  .string()
+  .superRefine((value, ctx) => {
+    if (hasSingleLineForbiddenCharacters(value)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Search keyword must not include line breaks or tabs."
+      });
+    }
+  })
+  .transform(normalizeSearchKeyword);
 
 function isIsoDateString(value: string) {
   if (!ISO_DATE_PATTERN.test(value)) {
@@ -89,49 +147,33 @@ function isIsoDateString(value: string) {
   );
 }
 
-const identifierSchema = z.preprocess(
-  (value) => normalizeStringInput(value, normalizeSingleLineText),
-  z.string().min(1)
-);
+const identifierSchema = normalizedSingleLineStringSchema.pipe(z.string().min(1));
 
 const optionalIdentifierSchema = z.preprocess(
-  normalizeOptionalIdentifier,
-  z.string().min(1).optional()
+  emptyBlankSingleLineStringToUndefined,
+  identifierSchema.optional()
 );
 
-const nullableIdentifierSchema = z.preprocess((value) => {
-  if (value === "") {
-    return null;
-  }
-
-  return normalizeStringInput(value, normalizeSingleLineText);
-}, z.string().min(1).nullable());
+const nullableIdentifierSchema = z.preprocess(
+  emptyBlankSingleLineStringToNull,
+  identifierSchema.nullable()
+);
 
 const requiredSingleLineTextSchema = (maxLength: number) =>
-  z.preprocess(
-    (value) => normalizeStringInput(value, normalizeSingleLineText),
-    z.string().min(1).max(maxLength)
-  );
+  normalizedSingleLineStringSchema.pipe(z.string().min(1).max(maxLength));
 
 const optionalNullableSingleLineTextSchema = (maxLength?: number) =>
   z.preprocess(
-    (value) => {
-      if (value === undefined) {
-        return undefined;
-      }
-
-      if (value === null || value === "") {
-        return null;
-      }
-
-      const normalized = normalizeStringInput(value, normalizeSingleLineText);
-
-      return normalized === "" ? null : normalized;
-    },
-    (maxLength === undefined
-      ? z.union([z.string(), z.null()])
-      : z.union([z.string().max(maxLength), z.null()])
-    ).optional()
+    (value) => (value === undefined ? undefined : emptyBlankSingleLineStringToNull(value)),
+    z
+      .union([
+        (maxLength === undefined
+          ? normalizedSingleLineStringSchema.pipe(z.string())
+          : normalizedSingleLineStringSchema.pipe(z.string().max(maxLength))
+        ).transform((value) => (value === "" ? null : value)),
+        z.null()
+      ])
+      .optional()
   );
 
 const optionalMultilineTextSchema = (maxLength: number) =>
@@ -218,8 +260,7 @@ const optionalBooleanSchema = z.preprocess((value) => {
   return value;
 }, z.boolean().optional());
 
-export const isoDateSchema = z.preprocess(
-  (value) => normalizeStringInput(value, normalizeSingleLineText),
+export const isoDateSchema = normalizedSingleLineStringSchema.pipe(
   z.string().regex(ISO_DATE_PATTERN).refine(isIsoDateString)
 );
 
@@ -231,20 +272,13 @@ const optionalNullableIsoDateSchema = z.preprocess((value) => {
   return normalizeStringInput(value, normalizeSingleLineText);
 }, z.union([isoDateSchema, z.null()]).optional());
 
-export const searchKeywordSchema = z.preprocess(
-  (value) => normalizeStringInput(value, normalizeSearchKeyword),
+export const searchKeywordSchema = normalizedSearchKeywordSchema.pipe(
   z.string().min(1).max(100)
 );
 
 const optionalSearchKeywordSchema = z.preprocess(
-  (value) => {
-    if (typeof value !== "string" && value != null) {
-      return value;
-    }
-
-    return normalizeOptionalSearchKeyword(value);
-  },
-  z.string().max(100).optional()
+  emptyBlankSearchKeywordToUndefined,
+  normalizedSearchKeywordSchema.pipe(z.string().max(100)).optional()
 );
 
 export const productListQuerySchema = z.object({

@@ -27,6 +27,44 @@ export default defineConfig(({ mode }) => {
         }
       }
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes("node_modules")) {
+              return undefined;
+            }
+
+            if (id.includes("firebase")) {
+              return "firebase";
+            }
+
+            if (id.includes("html5-qrcode") || id.includes("qrcode")) {
+              return "qr";
+            }
+
+            if (
+              id.includes("@tanstack/react-query") ||
+              id.includes("@hookform/resolvers") ||
+              id.includes("react-hook-form") ||
+              id.includes("zod")
+            ) {
+              return "forms-query";
+            }
+
+            if (
+              id.includes("react") ||
+              id.includes("react-dom") ||
+              id.includes("react-router-dom")
+            ) {
+              return "react";
+            }
+
+            return undefined;
+          }
+        }
+      }
+    },
     test: {
       environment: "jsdom",
       globals: true,

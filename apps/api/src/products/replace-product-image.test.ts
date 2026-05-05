@@ -44,10 +44,7 @@ describe("replaceProductImage", () => {
       updatedAt: createTimestamp("2026-04-18T09:30:00.000Z")
     });
     const productRef = {
-      get: vi
-        .fn()
-        .mockResolvedValueOnce(createDocumentSnapshot(preflightProduct))
-        .mockResolvedValue(createDocumentSnapshot(latestProduct)),
+      get: vi.fn().mockResolvedValue(createDocumentSnapshot(preflightProduct)),
       path: `products/${productId}`
     };
     const displayFile = createProductImageBucketFileMock();
@@ -176,6 +173,16 @@ describe("replaceProductImage", () => {
       productId,
       thumbnailFile
     });
+    const transaction = {
+      get: vi.fn(async (reference: unknown) => {
+        if (reference === productRef) {
+          return createDocumentSnapshot(latestProduct);
+        }
+
+        throw new Error("Unexpected transaction reference");
+      }),
+      set: vi.fn()
+    };
     const db = {
       collection: vi.fn((collectionName: string) => {
         if (collectionName === "products") {
@@ -186,7 +193,7 @@ describe("replaceProductImage", () => {
 
         throw new Error(`Unexpected collection ${collectionName}`);
       }),
-      runTransaction: vi.fn()
+      runTransaction: vi.fn(async (callback) => callback(transaction as never))
     };
     const sourceBuffer = await sharp({
       create: {
@@ -216,12 +223,13 @@ describe("replaceProductImage", () => {
       statusCode: 404
     });
 
-    expect(db.runTransaction).not.toHaveBeenCalled();
+    expect(db.runTransaction).toHaveBeenCalledTimes(1);
+    expect(transaction.set).not.toHaveBeenCalled();
     expect(displayFile.save).not.toHaveBeenCalled();
     expect(thumbnailFile.save).not.toHaveBeenCalled();
   });
 
-  it("does not update product metadata when storage replacement fails", async () => {
+  it("surfaces storage replacement failures after the metadata transaction", async () => {
     const productId = "HM-000001";
     const imageId = "img_existing_2";
     const product = createReplaceProductDocument();
@@ -240,6 +248,16 @@ describe("replaceProductImage", () => {
       productId,
       thumbnailFile
     });
+    const transaction = {
+      get: vi.fn(async (reference: unknown) => {
+        if (reference === productRef) {
+          return createDocumentSnapshot(product);
+        }
+
+        throw new Error("Unexpected transaction reference");
+      }),
+      set: vi.fn()
+    };
     const db = {
       collection: vi.fn((collectionName: string) => {
         if (collectionName === "products") {
@@ -250,7 +268,7 @@ describe("replaceProductImage", () => {
 
         throw new Error(`Unexpected collection ${collectionName}`);
       }),
-      runTransaction: vi.fn()
+      runTransaction: vi.fn(async (callback) => callback(transaction as never))
     };
     const sourceBuffer = await sharp({
       create: {
@@ -277,7 +295,8 @@ describe("replaceProductImage", () => {
       )
     ).rejects.toBe(storageError);
 
-    expect(db.runTransaction).not.toHaveBeenCalled();
+    expect(db.runTransaction).toHaveBeenCalledTimes(1);
+    expect(transaction.set).toHaveBeenCalledTimes(1);
     expect(displayFile.save).toHaveBeenCalledTimes(1);
     expect(thumbnailFile.save).toHaveBeenCalledTimes(1);
   });

@@ -24,6 +24,11 @@ interface PageNotice {
   type: "error" | "success";
 }
 
+interface CustomerListQueryParseResult {
+  errorMessage: string | null;
+  query: CustomerListQuery;
+}
+
 interface CustomerListFilterState {
   keyword: string;
   sortBy: CustomerSortBy;
@@ -45,6 +50,8 @@ const DEFAULT_FILTER_STATE: CustomerListFilterState = {
   sortBy: DEFAULT_QUERY.sortBy,
   sortOrder: DEFAULT_QUERY.sortOrder
 };
+const CUSTOMER_LIST_QUERY_ERROR_MESSAGE =
+  "\u691c\u7d22\u6761\u4ef6\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002";
 
 const customerListDateFormatter = new Intl.DateTimeFormat("ja-JP", {
   day: "2-digit",
@@ -71,16 +78,24 @@ function normalizeCustomerListQuery(query: CustomerListQuery): CustomerListQuery
   };
 }
 
-function parseCustomerListQuery(searchParams: URLSearchParams): CustomerListQuery {
+function parseCustomerListQuery(
+  searchParams: URLSearchParams
+): CustomerListQueryParseResult {
   const parsedQuery = customerListQuerySchema.safeParse(
     Object.fromEntries(searchParams.entries())
   );
 
   if (!parsedQuery.success) {
-    return DEFAULT_QUERY as CustomerListQuery;
+    return {
+      errorMessage: CUSTOMER_LIST_QUERY_ERROR_MESSAGE,
+      query: DEFAULT_QUERY as CustomerListQuery
+    };
   }
 
-  return normalizeCustomerListQuery(parsedQuery.data);
+  return {
+    errorMessage: null,
+    query: normalizeCustomerListQuery(parsedQuery.data)
+  };
 }
 
 function toFilterState(query: CustomerListQuery): CustomerListFilterState {
@@ -146,10 +161,11 @@ export function CustomerListPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchParamsString = searchParams.toString();
-  const currentQuery = useMemo(
+  const currentQueryParseResult = useMemo(
     () => parseCustomerListQuery(new URLSearchParams(searchParamsString)),
     [searchParamsString]
   );
+  const currentQuery = currentQueryParseResult.query;
   const [notice, setNotice] = useState<PageNotice | null>(null);
   const [draftFilters, setDraftFilters] = useState<CustomerListFilterState>(() =>
     toFilterState(currentQuery)
@@ -209,18 +225,30 @@ export function CustomerListPage() {
     event.preventDefault();
 
     const pageSize = currentQuery.pageSize ?? DEFAULT_QUERY.pageSize;
-    const nextQuery = normalizeCustomerListQuery({
+    const nextQueryInput: CustomerListQuery = {
       keyword: draftFilters.keyword || undefined,
       page: DEFAULT_QUERY.page,
       pageSize,
       sortBy: draftFilters.sortBy,
       sortOrder: draftFilters.sortOrder
-    });
+    };
+    const parsedNextQuery = customerListQuerySchema.safeParse(nextQueryInput);
 
+    if (!parsedNextQuery.success) {
+      setNotice({
+        message: CUSTOMER_LIST_QUERY_ERROR_MESSAGE,
+        type: "error"
+      });
+      return;
+    }
+
+    const nextQuery = normalizeCustomerListQuery(parsedNextQuery.data);
+    setNotice(null);
     setSearchParams(buildSearchParams(toFilterState(nextQuery), pageSize, DEFAULT_QUERY.page));
   };
 
   const clearFilters = () => {
+    setNotice(null);
     setDraftFilters(DEFAULT_FILTER_STATE);
     setSearchParams(
       buildSearchParams(DEFAULT_FILTER_STATE, currentQuery.pageSize ?? DEFAULT_PAGE_SIZE, 1)
@@ -228,6 +256,7 @@ export function CustomerListPage() {
   };
 
   const movePage = (nextPage: number) => {
+    setNotice(null);
     setSearchParams(
       buildSearchParams(
         toFilterState(currentQuery),
@@ -315,16 +344,16 @@ export function CustomerListPage() {
             最新の一覧を更新中です...
           </p>
         ) : null}
-        {notice ? (
+        {currentQueryParseResult.errorMessage || notice ? (
           <div
             className={
-              notice.type === "success"
+              notice?.type === "success" && !currentQueryParseResult.errorMessage
                 ? "management-page__notice is-success"
                 : "management-page__notice is-error"
             }
-            role={notice.type === "success" ? "status" : "alert"}
+            role={notice?.type === "success" && !currentQueryParseResult.errorMessage ? "status" : "alert"}
           >
-            <p>{notice.message}</p>
+            <p>{currentQueryParseResult.errorMessage ?? notice?.message}</p>
           </div>
         ) : null}
       </div>

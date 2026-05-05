@@ -32,6 +32,10 @@ import {
   PRODUCT_ERROR_MESSAGE_OVERRIDES,
   PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES
 } from "../messages/display-messages";
+import {
+  formatJstDate,
+  formatJstMediumDateTime
+} from "../utils/date-formatters";
 
 interface PageNotice {
   message: string;
@@ -43,19 +47,6 @@ interface TaskCompletionVariables {
   showCompleted: boolean;
   task: TaskItem;
 }
-
-const dateFormatter = new Intl.DateTimeFormat("ja-JP", {
-  day: "2-digit",
-  month: "2-digit",
-  timeZone: "Asia/Tokyo",
-  year: "numeric"
-});
-
-const dateTimeFormatter = new Intl.DateTimeFormat("ja-JP", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "Asia/Tokyo"
-});
 
 const priceFormatter = new Intl.NumberFormat("ja-JP", {
   currency: "JPY",
@@ -76,7 +67,7 @@ function formatDate(value: string | null) {
     return "期限未設定";
   }
 
-  return dateFormatter.format(new Date(`${value}T00:00:00+09:00`));
+  return formatJstDate(`${value}T00:00:00+09:00`);
 }
 
 function formatDateTime(value: string | null) {
@@ -84,14 +75,17 @@ function formatDateTime(value: string | null) {
     return "未設定";
   }
 
-  return dateTimeFormatter.format(new Date(value));
+  return formatJstMediumDateTime(value);
 }
 
 function formatPrice(price: number) {
   return priceFormatter.format(price);
 }
 
-function formatOptionalText(value: string | null | undefined, fallback = "未設定") {
+function formatOptionalText(
+  value: string | null | undefined,
+  fallback = "未設定"
+) {
   if (!value || value.trim().length === 0) {
     return fallback;
   }
@@ -134,7 +128,10 @@ function updateTasksSummary(
   return {
     ...data,
     tasksSummary: {
-      completedCount: Math.max(data.tasksSummary.completedCount + completedDelta, 0),
+      completedCount: Math.max(
+        data.tasksSummary.completedCount + completedDelta,
+        0
+      ),
       openCount: Math.max(data.tasksSummary.openCount + openDelta, 0)
     }
   };
@@ -150,7 +147,10 @@ function ProductTaskCard({
   task: TaskItem;
 }) {
   return (
-    <article className="management-card product-detail-page__task-card" role="listitem">
+    <article
+      className="management-card product-detail-page__task-card"
+      role="listitem"
+    >
       <div className="management-card__header">
         <div>
           <p className="management-card__subtitle">
@@ -323,7 +323,9 @@ export function ProductDetailPage() {
           }
 
           const nextItems = current.items.map((task) =>
-            task.taskId === data.taskId ? updateTaskWithCompletion(task, data) : task
+            task.taskId === data.taskId
+              ? updateTaskWithCompletion(task, data)
+              : task
           );
 
           return {
@@ -505,7 +507,8 @@ export function ProductDetailPage() {
   }
 
   const { images, product, tasksSummary } = productDetailQuery.data;
-  const tagText = product.tagNames.length > 0 ? product.tagNames.join(", ") : "タグなし";
+  const tagText =
+    product.tagNames.length > 0 ? product.tagNames.join(", ") : "タグなし";
   const taskItems = taskListQuery.data?.items ?? [];
   const pendingTaskId = updateTaskCompletionMutation.isPending
     ? updateTaskCompletionMutation.variables?.task.taskId
@@ -529,7 +532,9 @@ export function ProductDetailPage() {
         <p className="management-page__eyebrow">{APP_NAME}</p>
         <div className="product-detail-page__header-row">
           <div>
-            <p className="product-detail-page__product-id">{product.productId}</p>
+            <p className="product-detail-page__product-id">
+              {product.productId}
+            </p>
             <h1 id="product-detail-title">{product.name}</h1>
             <p className="management-page__lead">
               商品情報とQRコードを確認します。
@@ -577,10 +582,16 @@ export function ProductDetailPage() {
         ) : null}
       </div>
 
-      <section className="management-page__section" aria-labelledby="product-basic-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="product-basic-title"
+      >
         <div className="management-page__section-header">
           <div>
-            <h2 id="product-basic-title" className="management-page__section-title">
+            <h2
+              id="product-basic-title"
+              className="management-page__section-title"
+            >
               基本情報
             </h2>
             <p className="management-page__section-summary">
@@ -660,10 +671,16 @@ export function ProductDetailPage() {
         </article>
       </section>
 
-      <section className="management-page__section" aria-labelledby="product-tasks-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="product-tasks-title"
+      >
         <div className="management-page__section-header">
           <div>
-            <h2 id="product-tasks-title" className="management-page__section-title">
+            <h2
+              id="product-tasks-title"
+              className="management-page__section-title"
+            >
               関連タスク
             </h2>
             <p className="management-page__section-summary">
@@ -685,7 +702,10 @@ export function ProductDetailPage() {
           <label className="product-detail-page__completed-toggle">
             <input
               checked={showCompletedTasks}
-              disabled={taskListQuery.isFetching || updateTaskCompletionMutation.isPending}
+              disabled={
+                taskListQuery.isFetching ||
+                updateTaskCompletionMutation.isPending
+              }
               type="checkbox"
               onChange={(event) => {
                 setShowCompletedTasks(event.currentTarget.checked);
@@ -710,7 +730,10 @@ export function ProductDetailPage() {
         ) : taskItems.length === 0 ? (
           <ScreenEmptyState message={taskEmptyMessage} />
         ) : (
-          <div className="management-list product-detail-page__task-list" role="list">
+          <div
+            className="management-list product-detail-page__task-list"
+            role="list"
+          >
             {taskItems.map((task) => (
               <ProductTaskCard
                 key={task.taskId}
@@ -723,10 +746,16 @@ export function ProductDetailPage() {
         )}
       </section>
 
-      <section className="management-page__section" aria-labelledby="product-qr-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="product-qr-title"
+      >
         <div className="management-page__section-header">
           <div>
-            <h2 id="product-qr-title" className="management-page__section-title">
+            <h2
+              id="product-qr-title"
+              className="management-page__section-title"
+            >
               QRコード
             </h2>
             <p className="management-page__section-summary">
@@ -792,7 +821,9 @@ export function ProductDetailPage() {
         >
           <p className="product-detail-page__qr-print-title">QRコード</p>
           <p className="product-detail-page__qr-print-name">{product.name}</p>
-          <p className="product-detail-page__qr-print-id">{product.productId}</p>
+          <p className="product-detail-page__qr-print-id">
+            {product.productId}
+          </p>
           <div
             className="product-detail-page__qr-print-svg"
             dangerouslySetInnerHTML={{ __html: qrSvg }}

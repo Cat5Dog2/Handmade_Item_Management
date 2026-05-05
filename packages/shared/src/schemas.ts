@@ -1,12 +1,19 @@
 import { z } from "zod";
 import { API_ERROR_CODES } from "./error-codes";
 import {
-  hasSingleLineForbiddenCharacters,
   normalizeMultilineText,
-  normalizeSearchKeyword,
   normalizeSingleLineText
 } from "./normalization";
 import { PRODUCT_STATUSES } from "./statuses";
+import {
+  emptyBlankSearchKeywordToUndefined,
+  emptyBlankSingleLineStringToNull,
+  emptyBlankSingleLineStringToUndefined,
+  emptyStringToUndefined,
+  normalizedSearchKeywordSchema,
+  normalizedSingleLineStringSchema,
+  normalizeStringInput
+} from "./string-schemas";
 
 const PRODUCT_SORT_FIELDS = ["updatedAt", "name"] as const;
 const CUSTOMER_SORT_FIELDS = ["updatedAt", "lastPurchaseAt", "name"] as const;
@@ -38,97 +45,6 @@ export const healthResponseSchema = z.object({
   })
 });
 
-function normalizeStringInput(
-  value: unknown,
-  normalizer: (value: string) => string
-) {
-  if (typeof value !== "string") {
-    return value;
-  }
-
-  return normalizer(value);
-}
-
-function emptyStringToUndefined(value: unknown) {
-  if (value === "") {
-    return undefined;
-  }
-
-  return value;
-}
-
-function emptyBlankSingleLineStringToUndefined(value: unknown) {
-  if (value === undefined || value === null || value === "") {
-    return undefined;
-  }
-
-  if (typeof value !== "string") {
-    return value;
-  }
-
-  if (value.trim() === "" && !hasSingleLineForbiddenCharacters(value)) {
-    return undefined;
-  }
-
-  return value;
-}
-
-function emptyBlankSingleLineStringToNull(value: unknown) {
-  if (value === null || value === "") {
-    return null;
-  }
-
-  if (typeof value !== "string") {
-    return value;
-  }
-
-  if (value.trim() === "" && !hasSingleLineForbiddenCharacters(value)) {
-    return null;
-  }
-
-  return value;
-}
-
-function emptyBlankSearchKeywordToUndefined(value: unknown) {
-  if (value === undefined || value === null || value === "") {
-    return undefined;
-  }
-
-  if (typeof value !== "string") {
-    return value;
-  }
-
-  if (normalizeSearchKeyword(value) === "" && !hasSingleLineForbiddenCharacters(value)) {
-    return undefined;
-  }
-
-  return value;
-}
-
-const normalizedSingleLineStringSchema = z
-  .string()
-  .superRefine((value, ctx) => {
-    if (hasSingleLineForbiddenCharacters(value)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Line breaks and tabs are not allowed."
-      });
-    }
-  })
-  .transform(normalizeSingleLineText);
-
-const normalizedSearchKeywordSchema = z
-  .string()
-  .superRefine((value, ctx) => {
-    if (hasSingleLineForbiddenCharacters(value)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Search keyword must not include line breaks or tabs."
-      });
-    }
-  })
-  .transform(normalizeSearchKeyword);
-
 function isIsoDateString(value: string) {
   if (!ISO_DATE_PATTERN.test(value)) {
     return false;
@@ -147,7 +63,9 @@ function isIsoDateString(value: string) {
   );
 }
 
-const identifierSchema = normalizedSingleLineStringSchema.pipe(z.string().min(1));
+const identifierSchema = normalizedSingleLineStringSchema.pipe(
+  z.string().min(1)
+);
 
 const optionalIdentifierSchema = z.preprocess(
   emptyBlankSingleLineStringToUndefined,
@@ -164,7 +82,8 @@ const requiredSingleLineTextSchema = (maxLength: number) =>
 
 const optionalNullableSingleLineTextSchema = (maxLength?: number) =>
   z.preprocess(
-    (value) => (value === undefined ? undefined : emptyBlankSingleLineStringToNull(value)),
+    (value) =>
+      value === undefined ? undefined : emptyBlankSingleLineStringToNull(value),
     z
       .union([
         (maxLength === undefined
@@ -264,13 +183,16 @@ export const isoDateSchema = normalizedSingleLineStringSchema.pipe(
   z.string().regex(ISO_DATE_PATTERN).refine(isIsoDateString)
 );
 
-const optionalNullableIsoDateSchema = z.preprocess((value) => {
-  if (value === "") {
-    return undefined;
-  }
+const optionalNullableIsoDateSchema = z.preprocess(
+  (value) => {
+    if (value === "") {
+      return undefined;
+    }
 
-  return normalizeStringInput(value, normalizeSingleLineText);
-}, z.union([isoDateSchema, z.null()]).optional());
+    return normalizeStringInput(value, normalizeSingleLineText);
+  },
+  z.union([isoDateSchema, z.null()]).optional()
+);
 
 export const searchKeywordSchema = normalizedSearchKeywordSchema.pipe(
   z.string().min(1).max(100)

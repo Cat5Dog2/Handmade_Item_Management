@@ -5,10 +5,7 @@ import type {
   QrSellData,
   QrSellInput
 } from "@handmade/shared";
-import {
-  API_PATHS,
-  PRODUCT_STATUS_LABELS
-} from "@handmade/shared";
+import { API_PATHS, PRODUCT_STATUS_LABELS } from "@handmade/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   useCallback,
@@ -35,6 +32,7 @@ import {
   QR_SELL_ERROR_MESSAGE_OVERRIDES,
   QR_SELL_SUCCESS_MESSAGES
 } from "../messages/display-messages";
+import { formatJstDateTime } from "../utils/date-formatters";
 import { createQrScannerController } from "./qr-scanner-adapter";
 
 interface QrLaunchContext {
@@ -52,16 +50,6 @@ const customerSelectQuery = {
   sortOrder: "asc"
 } as const;
 const scannerLayoutRetryLimit = 10;
-const qrDateTimeFormatter = new Intl.DateTimeFormat("ja-JP", {
-  day: "2-digit",
-  hour: "2-digit",
-  hourCycle: "h23",
-  minute: "2-digit",
-  month: "2-digit",
-  timeZone: "Asia/Tokyo",
-  year: "numeric"
-});
-
 function isQrLaunchContext(value: unknown): value is QrLaunchContext {
   if (typeof value !== "object" || value === null) {
     return false;
@@ -75,7 +63,10 @@ function isQrLaunchContext(value: unknown): value is QrLaunchContext {
   );
 }
 
-function getScannerStatusMessage(cameraState: CameraState, lookupState: LookupState) {
+function getScannerStatusMessage(
+  cameraState: CameraState,
+  lookupState: LookupState
+) {
   if (cameraState === "starting") {
     return "カメラを起動しています...";
   }
@@ -99,7 +90,10 @@ function getScannerStatusMessage(cameraState: CameraState, lookupState: LookupSt
   return "新しいQR読み取りを開始できます。";
 }
 
-function getScannerStateLabel(cameraState: CameraState, lookupState: LookupState) {
+function getScannerStateLabel(
+  cameraState: CameraState,
+  lookupState: LookupState
+) {
   if (cameraState === "starting") {
     return "起動中";
   }
@@ -128,7 +122,7 @@ function formatLookupDetail(value: string | null) {
 }
 
 function formatDateTime(value: string) {
-  return qrDateTimeFormatter.format(new Date(value));
+  return formatJstDateTime(value);
 }
 
 function getSelectedCustomerLabel(
@@ -139,7 +133,10 @@ function getSelectedCustomerLabel(
     return "未選択";
   }
 
-  return customers.find((customer) => customer.customerId === selectedCustomerId)?.name ?? "未選択";
+  return (
+    customers.find((customer) => customer.customerId === selectedCustomerId)
+      ?.name ?? "未選択"
+  );
 }
 
 function buildQrSellInput(
@@ -165,13 +162,17 @@ export function QrPage() {
   const customerSelectId = useId().replace(/:/g, "-");
   const sellDialogTitleId = useId().replace(/:/g, "-");
   const lookupLockRef = useRef(false);
-  const launchContext = isQrLaunchContext(location.state) ? location.state : null;
+  const launchContext = isQrLaunchContext(location.state)
+    ? location.state
+    : null;
 
   const [cameraState, setCameraState] = useState<CameraState>("starting");
   const [lookupState, setLookupState] = useState<LookupState>("idle");
   const [lookupResult, setLookupResult] = useState<QrLookupData | null>(null);
   const [sellResult, setSellResult] = useState<QrSellData | null>(null);
-  const [lookupErrorMessage, setLookupErrorMessage] = useState<string | null>(null);
+  const [lookupErrorMessage, setLookupErrorMessage] = useState<string | null>(
+    null
+  );
   const [sellErrorMessage, setSellErrorMessage] = useState<string | null>(null);
   const [scannerErrorMessage, setScannerErrorMessage] = useState<string | null>(
     null
@@ -181,7 +182,8 @@ export function QrPage() {
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [isSellDialogOpen, setIsSellDialogOpen] = useState(false);
 
-  const isLookupResultVisible = lookupState === "success" && lookupResult !== null;
+  const isLookupResultVisible =
+    lookupState === "success" && lookupResult !== null;
   const isSellActionAvailable =
     isLookupResultVisible && lookupResult.canSell && sellResult === null;
 
@@ -189,10 +191,13 @@ export function QrPage() {
     enabled: isSellActionAvailable,
     queryKey: queryKeys.customers.list(customerSelectQuery),
     queryFn: async ({ signal }) => {
-      const response = await apiClient.get<CustomerListData>(API_PATHS.customers, {
-        query: customerSelectQuery,
-        signal
-      });
+      const response = await apiClient.get<CustomerListData>(
+        API_PATHS.customers,
+        {
+          query: customerSelectQuery,
+          signal
+        }
+      );
 
       return response.data;
     }
@@ -262,13 +267,12 @@ export function QrPage() {
         throw new Error("Product ID is missing.");
       }
 
-      const response = await apiClient.post<
-        QrSellData,
-        undefined,
-        QrSellInput
-      >(API_PATHS.qrSell, {
-        body: buildQrSellInput(lookupResult.productId, selectedCustomerId)
-      });
+      const response = await apiClient.post<QrSellData, undefined, QrSellInput>(
+        API_PATHS.qrSell,
+        {
+          body: buildQrSellInput(lookupResult.productId, selectedCustomerId)
+        }
+      );
 
       return response.data;
     },
@@ -336,11 +340,14 @@ export function QrPage() {
           }
 
           try {
-            const response = await apiClient.post<QrLookupData>(API_PATHS.qrLookup, {
-              body: {
-                qrCodeValue
+            const response = await apiClient.post<QrLookupData>(
+              API_PATHS.qrLookup,
+              {
+                body: {
+                  qrCodeValue
+                }
               }
-            });
+            );
 
             if (isCancelled) {
               return;
@@ -364,7 +371,9 @@ export function QrPage() {
         })
         .then(() => {
           if (!isCancelled) {
-            setCameraState((current) => (current === "starting" ? "ready" : current));
+            setCameraState((current) =>
+              current === "starting" ? "ready" : current
+            );
           }
         })
         .catch((error: unknown) => {
@@ -420,20 +429,28 @@ export function QrPage() {
       };
 
       try {
-        void scanner.stop().catch(() => undefined).finally(clearScanner);
+        void scanner
+          .stop()
+          .catch(() => undefined)
+          .finally(clearScanner);
       } catch {
         clearScanner();
       }
     };
   }, [apiClient, resetSellFlow, scanSessionId, scannerContainerId]);
 
-  const scannerStatusMessage = getScannerStatusMessage(cameraState, lookupState);
+  const scannerStatusMessage = getScannerStatusMessage(
+    cameraState,
+    lookupState
+  );
   const scannerStateLabel = getScannerStateLabel(cameraState, lookupState);
-  const resultStatus = sellResult ? sellResult.status : lookupResult?.status ?? null;
+  const resultStatus = sellResult
+    ? sellResult.status
+    : (lookupResult?.status ?? null);
   const resultCanSell = Boolean(!sellResult && lookupResult?.canSell);
   const resultMessage = sellResult
     ? QR_SELL_SUCCESS_MESSAGES.sellSucceeded
-    : lookupResult?.message ?? null;
+    : (lookupResult?.message ?? null);
   const resultSummaryTitle = sellResult
     ? "販売済更新完了"
     : resultCanSell
@@ -451,7 +468,8 @@ export function QrPage() {
     : lookupResult?.canSell
       ? "販売済更新可能"
       : "販売済更新不可";
-  const resultToneClass = resultCanSell || Boolean(sellResult) ? "is-success" : "is-error";
+  const resultToneClass =
+    resultCanSell || Boolean(sellResult) ? "is-success" : "is-error";
   const resultRole = resultCanSell || Boolean(sellResult) ? "status" : "alert";
 
   const handleOpenSellDialog = () => {
@@ -486,7 +504,10 @@ export function QrPage() {
   };
 
   return (
-    <section className="management-page qr-page" aria-labelledby="qr-page-title">
+    <section
+      className="management-page qr-page"
+      aria-labelledby="qr-page-title"
+    >
       <div className="management-page__header">
         <p className="management-page__eyebrow">{APP_NAME}</p>
         <div>
@@ -502,10 +523,16 @@ export function QrPage() {
         ) : null}
       </div>
 
-      <section className="management-page__section" aria-labelledby="qr-scanner-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="qr-scanner-title"
+      >
         <div className="management-page__section-header">
           <div>
-            <h2 id="qr-scanner-title" className="management-page__section-title">
+            <h2
+              id="qr-scanner-title"
+              className="management-page__section-title"
+            >
               カメラ読み取り
             </h2>
             <p className="management-page__section-summary">
@@ -517,7 +544,9 @@ export function QrPage() {
           <div className="qr-page__scanner-frame">
             <div className="qr-page__scanner-toolbar">
               <span className="qr-page__scanner-label">カメラプレビュー</span>
-              <span className="qr-page__scanner-badge">{scannerStateLabel}</span>
+              <span className="qr-page__scanner-badge">
+                {scannerStateLabel}
+              </span>
             </div>
             <div
               id={scannerContainerId}
@@ -532,7 +561,9 @@ export function QrPage() {
           </p>
           {cameraState === "error" ? (
             <ScreenErrorState
-              message={scannerErrorMessage ?? QR_ERROR_MESSAGES.cameraUnavailable}
+              message={
+                scannerErrorMessage ?? QR_ERROR_MESSAGES.cameraUnavailable
+              }
               onRetry={handleRetry}
             />
           ) : (
@@ -543,7 +574,10 @@ export function QrPage() {
         </article>
       </section>
 
-      <section className="management-page__section" aria-labelledby="qr-result-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="qr-result-title"
+      >
         <div className="management-page__section-header">
           <div>
             <h2 id="qr-result-title" className="management-page__section-title">
@@ -567,15 +601,24 @@ export function QrPage() {
           />
         ) : null}
         {isLookupResultVisible ? (
-          <article className={`management-card qr-page__result-card ${resultToneClass}`}>
-            <div className={`qr-page__result-summary ${resultToneClass}`} role={resultRole}>
+          <article
+            className={`management-card qr-page__result-card ${resultToneClass}`}
+          >
+            <div
+              className={`qr-page__result-summary ${resultToneClass}`}
+              role={resultRole}
+            >
               <span className="qr-page__result-mark" aria-hidden="true">
                 {resultCanSell || Boolean(sellResult) ? "OK" : "!"}
               </span>
               <div>
-                <p className="qr-page__result-summary-title">{resultSummaryTitle}</p>
+                <p className="qr-page__result-summary-title">
+                  {resultSummaryTitle}
+                </p>
                 {resultSummaryMessage ? (
-                  <p className="qr-page__result-summary-text">{resultSummaryMessage}</p>
+                  <p className="qr-page__result-summary-text">
+                    {resultSummaryMessage}
+                  </p>
                 ) : null}
               </div>
             </div>
@@ -583,7 +626,9 @@ export function QrPage() {
               <div>
                 <p className="management-card__subtitle">{resultSubtitle}</p>
                 <h3 className="management-card__title">
-                  {lookupResult.productId ? lookupResult.name : "該当する商品が見つかりません"}
+                  {lookupResult.productId
+                    ? lookupResult.name
+                    : "該当する商品が見つかりません"}
                 </h3>
               </div>
             </div>
@@ -595,7 +640,9 @@ export function QrPage() {
               <div>
                 <dt>現在ステータス</dt>
                 <dd>
-                  {resultStatus ? PRODUCT_STATUS_LABELS[resultStatus] : "未取得"}
+                  {resultStatus
+                    ? PRODUCT_STATUS_LABELS[resultStatus]
+                    : "未取得"}
                 </dd>
               </div>
               <div>
@@ -615,7 +662,10 @@ export function QrPage() {
             </dl>
             {isSellActionAvailable ? (
               <div className="management-page__field-group">
-                <label className="management-form__label" htmlFor={customerSelectId}>
+                <label
+                  className="management-form__label"
+                  htmlFor={customerSelectId}
+                >
                   購入者
                 </label>
                 <select
@@ -623,11 +673,16 @@ export function QrPage() {
                   className="management-form__select"
                   value={selectedCustomerId}
                   onChange={handleCustomerChange}
-                  disabled={customersQuery.isPending || sellProductMutation.isPending}
+                  disabled={
+                    customersQuery.isPending || sellProductMutation.isPending
+                  }
                 >
                   <option value="">未選択</option>
                   {availableCustomers.map((customer) => (
-                    <option key={customer.customerId} value={customer.customerId}>
+                    <option
+                      key={customer.customerId}
+                      value={customer.customerId}
+                    >
                       {customer.name}
                     </option>
                   ))}
@@ -645,14 +700,22 @@ export function QrPage() {
                   >
                     販売済更新
                   </button>
-                  <button className="secondary-button" type="button" onClick={handleRetry}>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={handleRetry}
+                  >
                     再読み取り
                   </button>
                 </div>
               </div>
             ) : (
               <div className="management-card__actions">
-                <button className="secondary-button" type="button" onClick={handleRetry}>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={handleRetry}
+                >
                   再読み取り
                 </button>
               </div>

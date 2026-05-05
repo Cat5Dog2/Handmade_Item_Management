@@ -25,6 +25,7 @@ import {
   TAG_ERROR_MESSAGE_OVERRIDES,
   TAG_ERROR_MESSAGES
 } from "../messages/display-messages";
+import { formatJstMediumDateTime } from "../utils/date-formatters";
 
 interface PageNotice {
   message: string;
@@ -35,14 +36,8 @@ const defaultTagFormValues: TagInput = {
   name: ""
 };
 
-const updatedAtFormatter = new Intl.DateTimeFormat("ja-JP", {
-  dateStyle: "medium",
-  timeZone: "Asia/Tokyo",
-  timeStyle: "short"
-});
-
 function formatUpdatedAt(updatedAt: string) {
-  return updatedAtFormatter.format(new Date(updatedAt));
+  return formatJstMediumDateTime(updatedAt);
 }
 
 function formatUsageLabel(tag: TagItem) {
@@ -58,7 +53,9 @@ export function TagManagementPage() {
   const queryClient = useQueryClient();
   const [editingTag, setEditingTag] = useState<TagItem | null>(null);
   const [notice, setNotice] = useState<PageNotice | null>(null);
-  const [pendingDeleteTag, setPendingDeleteTag] = useState<TagItem | null>(null);
+  const [pendingDeleteTag, setPendingDeleteTag] = useState<TagItem | null>(
+    null
+  );
   const tagForm = useZodForm(tagInputSchema, {
     defaultValues: defaultTagFormValues,
     mode: "onChange"
@@ -86,7 +83,10 @@ export function TagManagementPage() {
 
   const applyFormApiErrors = useCallback(
     (error: UiApiError) => {
-      if (error.code !== "VALIDATION_ERROR" && error.code !== "DUPLICATE_NAME") {
+      if (
+        error.code !== "VALIDATION_ERROR" &&
+        error.code !== "DUPLICATE_NAME"
+      ) {
         return false;
       }
 
@@ -98,7 +98,10 @@ export function TagManagementPage() {
             message:
               error.code === "DUPLICATE_NAME"
                 ? error.message
-                : getTagFormFieldErrorMessage(detail.field as TagFormFieldName, detail.message),
+                : getTagFormFieldErrorMessage(
+                    detail.field as TagFormFieldName,
+                    detail.message
+                  ),
             type: "server"
           });
           applied = true;
@@ -148,7 +151,9 @@ export function TagManagementPage() {
 
   const deleteTagMutation = useMutation({
     mutationFn: async (tagId: string) => {
-      const response = await apiClient.delete<TagMutationData>(getTagPath(tagId));
+      const response = await apiClient.delete<TagMutationData>(
+        getTagPath(tagId)
+      );
 
       return response.data;
     },
@@ -339,7 +344,10 @@ export function TagManagementPage() {
         ) : null}
       </div>
 
-      <section className="management-page__section" aria-labelledby="tag-form-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="tag-form-title"
+      >
         <div className="management-page__section-header">
           <div>
             <h2 id="tag-form-title" className="management-page__section-title">
@@ -392,7 +400,10 @@ export function TagManagementPage() {
         </form>
       </section>
 
-      <section className="management-page__section" aria-labelledby="tag-list-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="tag-list-title"
+      >
         <div className="management-page__section-header">
           <div>
             <h2 id="tag-list-title" className="management-page__section-title">
@@ -416,7 +427,10 @@ export function TagManagementPage() {
               >
                 <div className="management-card__header">
                   <div>
-                    <h3 id={`tag-name-${tag.tagId}`} className="management-card__title">
+                    <h3
+                      id={`tag-name-${tag.tagId}`}
+                      className="management-card__title"
+                    >
                       {tag.name}
                     </h3>
                     <p className="management-card__subtitle">

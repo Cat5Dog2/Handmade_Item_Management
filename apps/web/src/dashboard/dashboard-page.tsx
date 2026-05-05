@@ -19,17 +19,11 @@ import {
   ScreenErrorState,
   ScreenLoadingState
 } from "../components/screen-states";
-import { APP_NAME, DASHBOARD_ERROR_MESSAGES } from "../messages/display-messages";
-
-const dashboardDateTimeFormatter = new Intl.DateTimeFormat("ja-JP", {
-  day: "2-digit",
-  hour: "2-digit",
-  hourCycle: "h23",
-  minute: "2-digit",
-  month: "2-digit",
-  timeZone: "Asia/Tokyo",
-  year: "numeric"
-});
+import {
+  APP_NAME,
+  DASHBOARD_ERROR_MESSAGES
+} from "../messages/display-messages";
+import { formatJstDateTime } from "../utils/date-formatters";
 
 const productStatusBadgeClassNames: Record<ProductStatus, string> = {
   beforeProduction: "product-status-badge is-before-production",
@@ -58,18 +52,16 @@ function formatDueDate(dueDate: string) {
 }
 
 function formatUpdatedAt(updatedAt: string) {
-  return dashboardDateTimeFormatter.format(new Date(updatedAt));
+  return formatJstDateTime(updatedAt);
 }
 
 function EmptyImagePlaceholder() {
-  return <div className="dashboard-recent-product__image-placeholder">画像なし</div>;
+  return (
+    <div className="dashboard-recent-product__image-placeholder">画像なし</div>
+  );
 }
 
-function DashboardHeader({
-  isFetching
-}: {
-  isFetching?: boolean;
-}) {
+function DashboardHeader({ isFetching }: { isFetching?: boolean }) {
   return (
     <div className="management-page__header">
       <p className="management-page__eyebrow">{APP_NAME}</p>
@@ -88,13 +80,7 @@ function DashboardHeader({
   );
 }
 
-function CountCard({
-  label,
-  value
-}: {
-  label: string;
-  value: number;
-}) {
+function CountCard({ label, value }: { label: string; value: number }) {
   return (
     <article className="dashboard-count-card">
       <p className="dashboard-count-card__label">{label}</p>
@@ -188,7 +174,10 @@ export function DashboardPage() {
 
   if (dashboardQuery.isPending) {
     return (
-      <section className="management-page dashboard-page" aria-labelledby="dashboard-title">
+      <section
+        className="management-page dashboard-page"
+        aria-labelledby="dashboard-title"
+      >
         <DashboardHeader />
         <ScreenLoadingState message="ダッシュボードを読み込んでいます..." />
       </section>
@@ -197,7 +186,10 @@ export function DashboardPage() {
 
   if (dashboardQuery.isError) {
     return (
-      <section className="management-page dashboard-page" aria-labelledby="dashboard-title">
+      <section
+        className="management-page dashboard-page"
+        aria-labelledby="dashboard-title"
+      >
         <DashboardHeader />
         <ScreenErrorState
           message={getDashboardErrorMessage(dashboardQuery.error)}
@@ -212,13 +204,22 @@ export function DashboardPage() {
   const dashboard = dashboardQuery.data;
 
   return (
-    <section className="management-page dashboard-page" aria-labelledby="dashboard-title">
+    <section
+      className="management-page dashboard-page"
+      aria-labelledby="dashboard-title"
+    >
       <DashboardHeader isFetching={dashboardQuery.isFetching} />
 
-      <section className="management-page__section" aria-labelledby="dashboard-counts-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="dashboard-counts-title"
+      >
         <div className="management-page__section-header">
           <div>
-            <h2 id="dashboard-counts-title" className="management-page__section-title">
+            <h2
+              id="dashboard-counts-title"
+              className="management-page__section-title"
+            >
               件数
             </h2>
             <p className="management-page__section-summary">
@@ -239,16 +240,25 @@ export function DashboardPage() {
             <CountCard label="販売済件数" value={dashboard.soldCount} />
           </div>
           <div role="listitem">
-            <CountCard label="未完了タスク件数" value={dashboard.openTaskCount} />
+            <CountCard
+              label="未完了タスク件数"
+              value={dashboard.openTaskCount}
+            />
           </div>
         </div>
       </section>
 
       <div className="dashboard-page__columns">
-        <section className="management-page__section" aria-labelledby="dashboard-tasks-title">
+        <section
+          className="management-page__section"
+          aria-labelledby="dashboard-tasks-title"
+        >
           <div className="management-page__section-header">
             <div>
-              <h2 id="dashboard-tasks-title" className="management-page__section-title">
+              <h2
+                id="dashboard-tasks-title"
+                className="management-page__section-title"
+              >
                 納期が近いタスク
               </h2>
               <p className="management-page__section-summary">
@@ -269,10 +279,16 @@ export function DashboardPage() {
           )}
         </section>
 
-        <section className="management-page__section" aria-labelledby="dashboard-products-title">
+        <section
+          className="management-page__section"
+          aria-labelledby="dashboard-products-title"
+        >
           <div className="management-page__section-header">
             <div>
-              <h2 id="dashboard-products-title" className="management-page__section-title">
+              <h2
+                id="dashboard-products-title"
+                className="management-page__section-title"
+              >
                 最近更新した商品
               </h2>
               <p className="management-page__section-summary">

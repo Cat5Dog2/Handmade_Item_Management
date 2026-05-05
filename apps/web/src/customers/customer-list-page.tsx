@@ -7,8 +7,19 @@ import type {
 } from "@handmade/shared";
 import { API_PATHS, customerListQuerySchema } from "@handmade/shared";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type FormEvent
+} from "react";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams
+} from "react-router-dom";
 import { getApiErrorDisplayMessage } from "../api/api-error-display";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
@@ -17,17 +28,19 @@ import {
   ScreenErrorState,
   ScreenLoadingState
 } from "../components/screen-states";
-import { APP_NAME, CUSTOMER_ERROR_MESSAGES } from "../messages/display-messages";
+import {
+  parseListQuery,
+  useNavigationNotice,
+  type ListQueryParseResult,
+  type PageNotice
+} from "../lists/list-query";
+import {
+  APP_NAME,
+  CUSTOMER_ERROR_MESSAGES
+} from "../messages/display-messages";
+import { formatJstDate } from "../utils/date-formatters";
 
-interface PageNotice {
-  message: string;
-  type: "error" | "success";
-}
-
-interface CustomerListQueryParseResult {
-  errorMessage: string | null;
-  query: CustomerListQuery;
-}
+type CustomerListQueryParseResult = ListQueryParseResult<CustomerListQuery>;
 
 interface CustomerListFilterState {
   keyword: string;
@@ -53,22 +66,17 @@ const DEFAULT_FILTER_STATE: CustomerListFilterState = {
 const CUSTOMER_LIST_QUERY_ERROR_MESSAGE =
   "\u691c\u7d22\u6761\u4ef6\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002";
 
-const customerListDateFormatter = new Intl.DateTimeFormat("ja-JP", {
-  day: "2-digit",
-  month: "2-digit",
-  timeZone: "Asia/Tokyo",
-  year: "numeric"
-});
-
 function formatLastPurchaseAt(lastPurchaseAt: string | null) {
   if (!lastPurchaseAt) {
     return "購入なし";
   }
 
-  return customerListDateFormatter.format(new Date(lastPurchaseAt));
+  return formatJstDate(lastPurchaseAt);
 }
 
-function normalizeCustomerListQuery(query: CustomerListQuery): CustomerListQuery {
+function normalizeCustomerListQuery(
+  query: CustomerListQuery
+): CustomerListQuery {
   return {
     keyword: query.keyword,
     page: query.page ?? DEFAULT_QUERY.page,
@@ -81,21 +89,13 @@ function normalizeCustomerListQuery(query: CustomerListQuery): CustomerListQuery
 function parseCustomerListQuery(
   searchParams: URLSearchParams
 ): CustomerListQueryParseResult {
-  const parsedQuery = customerListQuerySchema.safeParse(
-    Object.fromEntries(searchParams.entries())
+  return parseListQuery(
+    customerListQuerySchema,
+    searchParams,
+    DEFAULT_QUERY as CustomerListQuery,
+    CUSTOMER_LIST_QUERY_ERROR_MESSAGE,
+    normalizeCustomerListQuery
   );
-
-  if (!parsedQuery.success) {
-    return {
-      errorMessage: CUSTOMER_LIST_QUERY_ERROR_MESSAGE,
-      query: DEFAULT_QUERY as CustomerListQuery
-    };
-  }
-
-  return {
-    errorMessage: null,
-    query: normalizeCustomerListQuery(parsedQuery.data)
-  };
 }
 
 function toFilterState(query: CustomerListQuery): CustomerListFilterState {
@@ -167,38 +167,15 @@ export function CustomerListPage() {
   );
   const currentQuery = currentQueryParseResult.query;
   const [notice, setNotice] = useState<PageNotice | null>(null);
-  const [draftFilters, setDraftFilters] = useState<CustomerListFilterState>(() =>
-    toFilterState(currentQuery)
+  const [draftFilters, setDraftFilters] = useState<CustomerListFilterState>(
+    () => toFilterState(currentQuery)
   );
 
   useEffect(() => {
     setDraftFilters(toFilterState(currentQuery));
   }, [currentQuery]);
 
-  useEffect(() => {
-    const nextNotice =
-      typeof location.state === "object" &&
-      location.state !== null &&
-      "notice" in location.state
-        ? (location.state.notice as PageNotice | null | undefined)
-        : null;
-
-    if (!nextNotice) {
-      return;
-    }
-
-    setNotice(nextNotice);
-    navigate(
-      {
-        pathname: location.pathname,
-        search: location.search
-      },
-      {
-        replace: true,
-        state: null
-      }
-    );
-  }, [location.pathname, location.search, location.state, navigate]);
+  useNavigationNotice(location, navigate, setNotice);
 
   const customersQuery = useQuery({
     queryKey: queryKeys.customers.list(currentQuery),
@@ -219,7 +196,8 @@ export function CustomerListPage() {
   const customerMeta = customersQuery.data?.meta;
   const isInitialLoading = customersQuery.isPending;
   const hasActiveFilters =
-    !isDefaultFilterState(draftFilters) || currentQuery.page !== DEFAULT_QUERY.page;
+    !isDefaultFilterState(draftFilters) ||
+    currentQuery.page !== DEFAULT_QUERY.page;
 
   const applyFilters = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -244,14 +222,20 @@ export function CustomerListPage() {
 
     const nextQuery = normalizeCustomerListQuery(parsedNextQuery.data);
     setNotice(null);
-    setSearchParams(buildSearchParams(toFilterState(nextQuery), pageSize, DEFAULT_QUERY.page));
+    setSearchParams(
+      buildSearchParams(toFilterState(nextQuery), pageSize, DEFAULT_QUERY.page)
+    );
   };
 
   const clearFilters = () => {
     setNotice(null);
     setDraftFilters(DEFAULT_FILTER_STATE);
     setSearchParams(
-      buildSearchParams(DEFAULT_FILTER_STATE, currentQuery.pageSize ?? DEFAULT_PAGE_SIZE, 1)
+      buildSearchParams(
+        DEFAULT_FILTER_STATE,
+        currentQuery.pageSize ?? DEFAULT_PAGE_SIZE,
+        1
+      )
     );
   };
 
@@ -268,7 +252,10 @@ export function CustomerListPage() {
 
   if (isInitialLoading) {
     return (
-      <section className="management-page customer-list-page" aria-labelledby="customers-title">
+      <section
+        className="management-page customer-list-page"
+        aria-labelledby="customers-title"
+      >
         <div className="management-page__header">
           <p className="management-page__eyebrow">{APP_NAME}</p>
           <div className="customer-list-page__header-row">
@@ -290,7 +277,10 @@ export function CustomerListPage() {
 
   if (customersQuery.isError) {
     return (
-      <section className="management-page customer-list-page" aria-labelledby="customers-title">
+      <section
+        className="management-page customer-list-page"
+        aria-labelledby="customers-title"
+      >
         <div className="management-page__header">
           <p className="management-page__eyebrow">{APP_NAME}</p>
           <div className="customer-list-page__header-row">
@@ -318,14 +308,19 @@ export function CustomerListPage() {
   }
 
   const totalCount = customerMeta?.totalCount ?? customerItems.length;
-  const currentPage = customerMeta?.page ?? currentQuery.page ?? DEFAULT_QUERY.page;
-  const pageSize = customerMeta?.pageSize ?? currentQuery.pageSize ?? DEFAULT_PAGE_SIZE;
+  const currentPage =
+    customerMeta?.page ?? currentQuery.page ?? DEFAULT_QUERY.page;
+  const pageSize =
+    customerMeta?.pageSize ?? currentQuery.pageSize ?? DEFAULT_PAGE_SIZE;
   const lastPage = Math.max(Math.ceil(totalCount / pageSize), 1);
   const canGoPrevious = currentPage > 1;
   const canGoNext = customerMeta?.hasNext ?? false;
 
   return (
-    <section className="management-page customer-list-page" aria-labelledby="customers-title">
+    <section
+      className="management-page customer-list-page"
+      aria-labelledby="customers-title"
+    >
       <div className="management-page__header">
         <p className="management-page__eyebrow">{APP_NAME}</p>
         <div className="customer-list-page__header-row">
@@ -347,21 +342,33 @@ export function CustomerListPage() {
         {currentQueryParseResult.errorMessage || notice ? (
           <div
             className={
-              notice?.type === "success" && !currentQueryParseResult.errorMessage
+              notice?.type === "success" &&
+              !currentQueryParseResult.errorMessage
                 ? "management-page__notice is-success"
                 : "management-page__notice is-error"
             }
-            role={notice?.type === "success" && !currentQueryParseResult.errorMessage ? "status" : "alert"}
+            role={
+              notice?.type === "success" &&
+              !currentQueryParseResult.errorMessage
+                ? "status"
+                : "alert"
+            }
           >
             <p>{currentQueryParseResult.errorMessage ?? notice?.message}</p>
           </div>
         ) : null}
       </div>
 
-      <section className="management-page__section" aria-labelledby="customer-filters-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="customer-filters-title"
+      >
         <div className="management-page__section-header">
           <div>
-            <h2 id="customer-filters-title" className="management-page__section-title">
+            <h2
+              id="customer-filters-title"
+              className="management-page__section-title"
+            >
               検索条件
             </h2>
             <p className="management-page__section-summary">
@@ -369,7 +376,11 @@ export function CustomerListPage() {
             </p>
           </div>
         </div>
-        <form className="management-form customer-list-filters" noValidate onSubmit={applyFilters}>
+        <form
+          className="management-form customer-list-filters"
+          noValidate
+          onSubmit={applyFilters}
+        >
           <div className="management-form__grid">
             <div className="auth-field">
               <label className="auth-field__label" htmlFor="customer-keyword">
@@ -411,7 +422,10 @@ export function CustomerListPage() {
             </div>
 
             <div className="auth-field">
-              <label className="auth-field__label" htmlFor="customer-sort-order">
+              <label
+                className="auth-field__label"
+                htmlFor="customer-sort-order"
+              >
                 並び順序
               </label>
               <select
@@ -447,10 +461,16 @@ export function CustomerListPage() {
         </form>
       </section>
 
-      <section className="management-page__section" aria-labelledby="customer-list-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="customer-list-title"
+      >
         <div className="management-page__section-header">
           <div>
-            <h2 id="customer-list-title" className="management-page__section-title">
+            <h2
+              id="customer-list-title"
+              className="management-page__section-title"
+            >
               顧客一覧
             </h2>
             <p className="management-page__section-summary">
@@ -465,7 +485,11 @@ export function CustomerListPage() {
         {customerItems.length === 0 ? (
           <ScreenEmptyState message="条件に一致する顧客はありません。">
             <div className="management-form__actions">
-              <button className="secondary-button" type="button" onClick={clearFilters}>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={clearFilters}
+              >
                 条件をクリア
               </button>
               <Link className="primary-button button-link" to="/customers/new">
@@ -486,7 +510,9 @@ export function CustomerListPage() {
                 >
                   <div className="management-card__header">
                     <div>
-                      <p className="customer-list-card__customer-id">{customer.customerId}</p>
+                      <p className="customer-list-card__customer-id">
+                        {customer.customerId}
+                      </p>
                       <h3
                         id={`customer-name-${customer.customerId}`}
                         className="management-card__title"
@@ -503,7 +529,9 @@ export function CustomerListPage() {
                     </div>
                     <div>
                       <dt>最終購入商品</dt>
-                      <dd>{customer.lastPurchaseProductName ?? "購入商品なし"}</dd>
+                      <dd>
+                        {customer.lastPurchaseProductName ?? "購入商品なし"}
+                      </dd>
                     </div>
                     <div>
                       <dt>購入回数</dt>

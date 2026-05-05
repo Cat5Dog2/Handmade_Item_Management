@@ -21,24 +21,15 @@ import {
   CUSTOMER_ERROR_MESSAGE_OVERRIDES,
   CUSTOMER_ERROR_MESSAGES
 } from "../messages/display-messages";
+import {
+  formatJstDate,
+  formatJstMediumDateTime
+} from "../utils/date-formatters";
 
 interface PageNotice {
   message: string;
   type: "error" | "success";
 }
-
-const dateFormatter = new Intl.DateTimeFormat("ja-JP", {
-  day: "2-digit",
-  month: "2-digit",
-  timeZone: "Asia/Tokyo",
-  year: "numeric"
-});
-
-const dateTimeFormatter = new Intl.DateTimeFormat("ja-JP", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "Asia/Tokyo"
-});
 
 const priceFormatter = new Intl.NumberFormat("ja-JP", {
   currency: "JPY",
@@ -50,7 +41,7 @@ function formatDate(value: string | null) {
     return "購入なし";
   }
 
-  return dateFormatter.format(new Date(value));
+  return formatJstDate(value);
 }
 
 function formatDateTime(value: string | null) {
@@ -58,7 +49,7 @@ function formatDateTime(value: string | null) {
     return "未設定";
   }
 
-  return dateTimeFormatter.format(new Date(value));
+  return formatJstMediumDateTime(value);
 }
 
 function formatOptionalText(value: string | null, fallback = "未設定") {
@@ -81,7 +72,9 @@ function formatPrice(price: number) {
   return priceFormatter.format(price);
 }
 
-function getSnsHeading(account: CustomerDetailData["customer"]["snsAccounts"][number]) {
+function getSnsHeading(
+  account: CustomerDetailData["customer"]["snsAccounts"][number]
+) {
   if (account.platform && account.accountName) {
     return `${account.platform}: ${account.accountName}`;
   }
@@ -97,7 +90,11 @@ function getSnsHeading(account: CustomerDetailData["customer"]["snsAccounts"][nu
   return "SNSアカウント";
 }
 
-function CustomerPurchaseCard({ purchase }: { purchase: CustomerPurchaseItem }) {
+function CustomerPurchaseCard({
+  purchase
+}: {
+  purchase: CustomerPurchaseItem;
+}) {
   return (
     <Link
       aria-labelledby={`purchase-name-${purchase.productId}`}
@@ -107,7 +104,9 @@ function CustomerPurchaseCard({ purchase }: { purchase: CustomerPurchaseItem }) 
     >
       <div className="management-card__header">
         <div>
-          <p className="customer-detail-page__purchase-id">{purchase.productId}</p>
+          <p className="customer-detail-page__purchase-id">
+            {purchase.productId}
+          </p>
           <h3
             id={`purchase-name-${purchase.productId}`}
             className="management-card__title"
@@ -227,7 +226,10 @@ export function CustomerDetailPage() {
 
   if (!customerId) {
     return (
-      <section className="management-page customer-detail-page" aria-labelledby="customer-detail-title">
+      <section
+        className="management-page customer-detail-page"
+        aria-labelledby="customer-detail-title"
+      >
         <div className="management-page__header">
           <p className="management-page__eyebrow">{APP_NAME}</p>
           <h1 id="customer-detail-title">顧客詳細</h1>
@@ -280,7 +282,10 @@ export function CustomerDetailPage() {
 
   if (isInitialLoading) {
     return (
-      <section className="management-page customer-detail-page" aria-labelledby="customer-detail-title">
+      <section
+        className="management-page customer-detail-page"
+        aria-labelledby="customer-detail-title"
+      >
         <div className="management-page__header">
           <p className="management-page__eyebrow">{APP_NAME}</p>
           <h1 id="customer-detail-title">顧客詳細</h1>
@@ -295,7 +300,10 @@ export function CustomerDetailPage() {
 
   if (loadError || !customerDetailQuery.data || !customerPurchasesQuery.data) {
     return (
-      <section className="management-page customer-detail-page" aria-labelledby="customer-detail-title">
+      <section
+        className="management-page customer-detail-page"
+        aria-labelledby="customer-detail-title"
+      >
         <div className="management-page__header">
           <p className="management-page__eyebrow">{APP_NAME}</p>
           <h1 id="customer-detail-title">顧客詳細</h1>
@@ -321,7 +329,10 @@ export function CustomerDetailPage() {
   const isPageBusy = isRefreshing || archiveCustomerMutation.isPending;
 
   return (
-    <section className="management-page customer-detail-page" aria-labelledby="customer-detail-title">
+    <section
+      className="management-page customer-detail-page"
+      aria-labelledby="customer-detail-title"
+    >
       <div className="management-page__header">
         <p className="management-page__eyebrow">{APP_NAME}</p>
         <div className="customer-detail-page__header-row">
@@ -374,10 +385,16 @@ export function CustomerDetailPage() {
         ) : null}
       </div>
 
-      <section className="management-page__section" aria-labelledby="customer-basic-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="customer-basic-title"
+      >
         <div className="management-page__section-header">
           <div>
-            <h2 id="customer-basic-title" className="management-page__section-title">
+            <h2
+              id="customer-basic-title"
+              className="management-page__section-title"
+            >
               基本情報
             </h2>
             <p className="management-page__section-summary">
@@ -421,10 +438,16 @@ export function CustomerDetailPage() {
         </article>
       </section>
 
-      <section className="management-page__section" aria-labelledby="customer-sns-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="customer-sns-title"
+      >
         <div className="management-page__section-header">
           <div>
-            <h2 id="customer-sns-title" className="management-page__section-title">
+            <h2
+              id="customer-sns-title"
+              className="management-page__section-title"
+            >
               SNSアカウントとメモ
             </h2>
             <p className="management-page__section-summary">
@@ -436,7 +459,10 @@ export function CustomerDetailPage() {
         {customer.snsAccounts.length === 0 ? (
           <ScreenEmptyState message="SNSアカウントは登録されていません。" />
         ) : (
-          <div className="management-list customer-detail-page__sns-list" role="list">
+          <div
+            className="management-list customer-detail-page__sns-list"
+            role="list"
+          >
             {customer.snsAccounts.map((account, index) => (
               <article
                 key={`${account.platform ?? "sns"}-${account.accountName ?? "account"}-${index}`}
@@ -445,7 +471,9 @@ export function CustomerDetailPage() {
               >
                 <div className="management-card__header">
                   <div>
-                    <h3 className="management-card__title">{getSnsHeading(account)}</h3>
+                    <h3 className="management-card__title">
+                      {getSnsHeading(account)}
+                    </h3>
                   </div>
                 </div>
                 <dl className="management-card__details">
@@ -496,10 +524,16 @@ export function CustomerDetailPage() {
         </article>
       </section>
 
-      <section className="management-page__section" aria-labelledby="customer-summary-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="customer-summary-title"
+      >
         <div className="management-page__section-header">
           <div>
-            <h2 id="customer-summary-title" className="management-page__section-title">
+            <h2
+              id="customer-summary-title"
+              className="management-page__section-title"
+            >
               購入サマリ
             </h2>
             <p className="management-page__section-summary">
@@ -525,10 +559,16 @@ export function CustomerDetailPage() {
         </article>
       </section>
 
-      <section className="management-page__section" aria-labelledby="customer-purchases-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="customer-purchases-title"
+      >
         <div className="management-page__section-header">
           <div>
-            <h2 id="customer-purchases-title" className="management-page__section-title">
+            <h2
+              id="customer-purchases-title"
+              className="management-page__section-title"
+            >
               購入商品一覧
             </h2>
             <p className="management-page__section-summary">
@@ -541,7 +581,10 @@ export function CustomerDetailPage() {
         ) : (
           <div className="management-list" role="list">
             {purchaseItems.map((purchase) => (
-              <CustomerPurchaseCard key={purchase.productId} purchase={purchase} />
+              <CustomerPurchaseCard
+                key={purchase.productId}
+                purchase={purchase}
+              />
             ))}
           </div>
         )}

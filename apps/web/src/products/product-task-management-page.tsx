@@ -38,6 +38,10 @@ import {
   PRODUCT_ERROR_MESSAGE_OVERRIDES,
   PRODUCT_TASK_ERROR_MESSAGE_OVERRIDES
 } from "../messages/display-messages";
+import {
+  formatJstDate,
+  formatJstMediumDateTime
+} from "../utils/date-formatters";
 
 interface PageNotice {
   message: string;
@@ -58,25 +62,12 @@ const defaultTaskFormValues = {
   name: ""
 };
 
-const dateFormatter = new Intl.DateTimeFormat("ja-JP", {
-  day: "2-digit",
-  month: "2-digit",
-  timeZone: "Asia/Tokyo",
-  year: "numeric"
-});
-
-const dateTimeFormatter = new Intl.DateTimeFormat("ja-JP", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "Asia/Tokyo"
-});
-
 function formatDate(value: string | null) {
   if (!value) {
     return "期限未設定";
   }
 
-  return dateFormatter.format(new Date(`${value}T00:00:00+09:00`));
+  return formatJstDate(`${value}T00:00:00+09:00`);
 }
 
 function formatDateTime(value: string | null) {
@@ -84,7 +75,7 @@ function formatDateTime(value: string | null) {
     return "未設定";
   }
 
-  return dateTimeFormatter.format(new Date(value));
+  return formatJstMediumDateTime(value);
 }
 
 function updateTaskWithCompletion(
@@ -114,7 +105,10 @@ function updateTasksSummary(
   return {
     ...data,
     tasksSummary: {
-      completedCount: Math.max(data.tasksSummary.completedCount + completedDelta, 0),
+      completedCount: Math.max(
+        data.tasksSummary.completedCount + completedDelta,
+        0
+      ),
       openCount: Math.max(data.tasksSummary.openCount + openDelta, 0)
     }
   };
@@ -136,7 +130,10 @@ function TaskManagementCard({
   task: TaskItem;
 }) {
   return (
-    <article className="management-card task-management-page__task-card" role="listitem">
+    <article
+      className="management-card task-management-page__task-card"
+      role="listitem"
+    >
       <div className="management-card__header">
         <div>
           <p className="management-card__subtitle">
@@ -353,7 +350,9 @@ export function ProductTaskManagementPage() {
           }
 
           const nextItems = current.items.map((task) =>
-            task.taskId === data.taskId ? updateTaskWithCompletion(task, data) : task
+            task.taskId === data.taskId
+              ? updateTaskWithCompletion(task, data)
+              : task
           );
 
           return {
@@ -406,7 +405,9 @@ export function ProductTaskManagementPage() {
 
   const deleteTaskMutation = useMutation({
     mutationFn: async (taskId: string) => {
-      const response = await apiClient.delete<TaskDeleteData>(getTaskPath(taskId));
+      const response = await apiClient.delete<TaskDeleteData>(
+        getTaskPath(taskId)
+      );
 
       return response.data;
     },
@@ -672,7 +673,9 @@ export function ProductTaskManagementPage() {
         <p className="management-page__eyebrow">{APP_NAME}</p>
         <div className="task-management-page__header-row">
           <div>
-            <p className="task-management-page__product-id">{product.productId}</p>
+            <p className="task-management-page__product-id">
+              {product.productId}
+            </p>
             <h1 id="task-management-title">{product.name}のタスク管理</h1>
             <p className="management-page__lead">
               商品に紐づく作業と期限を確認します。
@@ -704,7 +707,10 @@ export function ProductTaskManagementPage() {
         ) : null}
       </div>
 
-      <section className="management-page__section" aria-labelledby="task-list-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="task-list-title"
+      >
         <div className="management-page__section-header">
           <div>
             <h2 id="task-list-title" className="management-page__section-title">
@@ -731,7 +737,10 @@ export function ProductTaskManagementPage() {
           <label className="task-management-page__completed-toggle">
             <input
               checked={showCompletedTasks}
-              disabled={taskListQuery.isFetching || updateTaskCompletionMutation.isPending}
+              disabled={
+                taskListQuery.isFetching ||
+                updateTaskCompletionMutation.isPending
+              }
               type="checkbox"
               onChange={(event) => {
                 setNotice(null);
@@ -755,7 +764,10 @@ export function ProductTaskManagementPage() {
         ) : taskItems.length === 0 ? (
           <ScreenEmptyState message={taskEmptyMessage} />
         ) : (
-          <div className="management-list task-management-page__task-list" role="list">
+          <div
+            className="management-list task-management-page__task-list"
+            role="list"
+          >
             {taskItems.map((task) => (
               <TaskManagementCard
                 key={task.taskId}
@@ -772,10 +784,16 @@ export function ProductTaskManagementPage() {
       </section>
 
       {formMode !== "hidden" ? (
-        <section className="management-page__section" aria-labelledby="task-form-title">
+        <section
+          className="management-page__section"
+          aria-labelledby="task-form-title"
+        >
           <div className="management-page__section-header">
             <div>
-              <h2 id="task-form-title" className="management-page__section-title">
+              <h2
+                id="task-form-title"
+                className="management-page__section-title"
+              >
                 {formMode === "edit" ? "タスク編集" : "タスク追加"}
               </h2>
               <p className="management-page__section-summary">

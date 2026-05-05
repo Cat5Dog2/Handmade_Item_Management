@@ -109,7 +109,7 @@ const sellResponse = {
 function renderQrPage() {
   const queryClient = createAppQueryClient();
 
-  render(
+  return render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter
         future={{
@@ -151,6 +151,44 @@ describe("QrPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("keeps the camera preview UI visible when the camera cannot start", async () => {
+    scannerMock.start.mockRejectedValueOnce(new Error("camera unavailable"));
+
+    renderQrPage();
+
+    expect(
+      screen.getByRole("region", {
+        name: "QRコード読み取り用カメラプレビュー"
+      })
+    ).toBeInTheDocument();
+    expect(screen.getByText("カメラプレビュー")).toBeInTheDocument();
+
+    expect(await screen.findByText("確認不可")).toBeInTheDocument();
+    expect(
+      screen.getByText("カメラを確認できません。権限や接続を確認してください。")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("カメラを利用できません。端末設定を確認してください。")
+    ).toBeInTheDocument();
+  });
+
+  it("ignores inactive scanner stop errors during cleanup", async () => {
+    scannerMock.stop.mockImplementationOnce(() => {
+      throw new Error("scanner is not running");
+    });
+
+    const { unmount } = renderQrPage();
+
+    await waitFor(() => {
+      expect(scannerMock.start).toHaveBeenCalledTimes(1);
+    });
+
+    expect(() => {
+      unmount();
+    }).not.toThrow();
+    expect(scannerMock.clear).toHaveBeenCalledTimes(1);
+  });
+
   it("opens the confirmation dialog and returns to the scanner when canceled", async () => {
     apiClientMock.get.mockResolvedValue(emptyCustomerListResponse);
     apiClientMock.post.mockImplementation(async (path: string) => {
@@ -171,6 +209,11 @@ describe("QrPage", () => {
       scannerMock.getSuccessHandler()?.("HM-000001");
     });
 
+    expect(await screen.findByText("QR読み取り成功")).toBeInTheDocument();
+    expect(screen.getByText("読み取り成功")).toBeInTheDocument();
+    expect(
+      screen.getByText("商品情報を確認できました。販売済更新に進めます。")
+    ).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Blue Ribbon" })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: "購入者" })).toHaveValue("");
 

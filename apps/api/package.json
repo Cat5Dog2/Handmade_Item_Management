@@ -7,7 +7,7 @@
     "build": "npm --workspace @handmade/shared run build && tsc -p tsconfig.build.json",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run --globals --no-file-parallelism"
+    "test": "vitest run --globals --no-file-parallelism --pool=forks --poolOptions.forks.singleFork"
   },
   "dependencies": {
     "cors": "^2.8.5",

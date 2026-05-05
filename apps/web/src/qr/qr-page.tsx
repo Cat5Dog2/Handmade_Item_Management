@@ -51,6 +51,7 @@ const customerSelectQuery = {
   sortBy: "name",
   sortOrder: "asc"
 } as const;
+const scannerLayoutRetryLimit = 10;
 
 function isQrLaunchContext(value: unknown): value is QrLaunchContext {
   if (typeof value !== "object" || value === null) {
@@ -70,12 +71,20 @@ function getScannerStatusMessage(cameraState: CameraState, lookupState: LookupSt
     return "カメラを起動しています...";
   }
 
+  if (cameraState === "error") {
+    return "カメラを確認できません。権限や接続を確認してください。";
+  }
+
   if (cameraState === "ready") {
     return "QRコードを画面にかざしてください。";
   }
 
   if (cameraState === "paused" && lookupState === "pending") {
     return "読み取り結果を確認しています...";
+  }
+
+  if (cameraState === "paused" && lookupState === "success") {
+    return "QR読み取り成功。結果を確認してください。";
   }
 
   return "新しいQR読み取りを開始できます。";
@@ -92,6 +101,10 @@ function getScannerStateLabel(cameraState: CameraState, lookupState: LookupState
 
   if (cameraState === "paused" && lookupState === "pending") {
     return "照合中";
+  }
+
+  if (cameraState === "paused" && lookupState === "success") {
+    return "読み取り成功";
   }
 
   if (cameraState === "paused") {
@@ -269,102 +282,139 @@ export function QrPage() {
 
   useEffect(() => {
     let isCancelled = false;
+    let scannerStartFrameId: number | null = null;
     const scanner = createQrScannerController(scannerContainerId);
     lookupLockRef.current = false;
     setCameraState("starting");
     setScannerErrorMessage(null);
 
-    void scanner
-      .start(async (decodedText) => {
-        if (isCancelled || lookupLockRef.current) {
-          return;
-        }
+    const startScanner = () => {
+      if (isCancelled) {
+        return;
+      }
 
-        const qrCodeValue = decodedText.trim();
+      void scanner
+        .start(async (decodedText) => {
+          if (isCancelled || lookupLockRef.current) {
+            return;
+          }
 
-        if (!qrCodeValue) {
+          const qrCodeValue = decodedText.trim();
+
+          if (!qrCodeValue) {
+            lookupLockRef.current = true;
+            setCameraState("paused");
+            setLookupState("error");
+            setLookupErrorMessage(QR_ERROR_MESSAGES.lookupValidationFailed);
+            setLookupResult(null);
+            setLastScannedValue(null);
+            resetSellFlow();
+            return;
+          }
+
           lookupLockRef.current = true;
-          setCameraState("paused");
-          setLookupState("error");
-          setLookupErrorMessage(QR_ERROR_MESSAGES.lookupValidationFailed);
+          setLastScannedValue(qrCodeValue);
+          setLookupState("pending");
+          setLookupErrorMessage(null);
           setLookupResult(null);
-          setLastScannedValue(null);
           resetSellFlow();
-          return;
-        }
+          setCameraState("paused");
 
-        lookupLockRef.current = true;
-        setLastScannedValue(qrCodeValue);
-        setLookupState("pending");
-        setLookupErrorMessage(null);
-        setLookupResult(null);
-        resetSellFlow();
-        setCameraState("paused");
+          try {
+            scanner.pause(true);
+          } catch {
+            // The controller can already be paused when the lookup starts.
+          }
 
-        try {
-          scanner.pause(true);
-        } catch {
-          // The controller can already be paused when the lookup starts.
-        }
+          try {
+            const response = await apiClient.post<QrLookupData>(API_PATHS.qrLookup, {
+              body: {
+                qrCodeValue
+              }
+            });
 
-        try {
-          const response = await apiClient.post<QrLookupData>(API_PATHS.qrLookup, {
-            body: {
-              qrCodeValue
+            if (isCancelled) {
+              return;
             }
-          });
 
+            setLookupResult(response.data);
+            setLookupState("success");
+          } catch (error) {
+            if (isCancelled) {
+              return;
+            }
+
+            setLookupErrorMessage(
+              getApiErrorDisplayMessage(error, {
+                codeMessages: QR_LOOKUP_ERROR_MESSAGE_OVERRIDES,
+                fallbackMessage: QR_ERROR_MESSAGES.lookupFailed
+              })
+            );
+            setLookupState("error");
+          }
+        })
+        .then(() => {
+          if (!isCancelled) {
+            setCameraState((current) => (current === "starting" ? "ready" : current));
+          }
+        })
+        .catch((error: unknown) => {
           if (isCancelled) {
             return;
           }
 
-          setLookupResult(response.data);
-          setLookupState("success");
-        } catch (error) {
-          if (isCancelled) {
-            return;
-          }
-
-          setLookupErrorMessage(
+          setScannerErrorMessage(
             getApiErrorDisplayMessage(error, {
-              codeMessages: QR_LOOKUP_ERROR_MESSAGE_OVERRIDES,
-              fallbackMessage: QR_ERROR_MESSAGES.lookupFailed
+              fallbackMessage: QR_ERROR_MESSAGES.cameraUnavailable
             })
           );
-          setLookupState("error");
-        }
-      })
-      .then(() => {
-        if (!isCancelled) {
-          setCameraState((current) => (current === "starting" ? "ready" : current));
-        }
-      })
-      .catch((error: unknown) => {
-        if (isCancelled) {
-          return;
-        }
+          setCameraState("error");
+        });
+    };
 
-        setScannerErrorMessage(
-          getApiErrorDisplayMessage(error, {
-            fallbackMessage: QR_ERROR_MESSAGES.cameraUnavailable
-          })
-        );
-        setCameraState("error");
+    const scheduleScannerStart = (remainingRetries: number) => {
+      if (isCancelled) {
+        return;
+      }
+
+      const scannerElement = document.getElementById(scannerContainerId);
+      const hasLayout =
+        scannerElement !== null &&
+        scannerElement.clientWidth > 0 &&
+        scannerElement.clientHeight > 0;
+
+      if (hasLayout || remainingRetries <= 0) {
+        startScanner();
+        return;
+      }
+
+      scannerStartFrameId = window.requestAnimationFrame(() => {
+        scheduleScannerStart(remainingRetries - 1);
       });
+    };
+
+    scannerStartFrameId = window.requestAnimationFrame(() => {
+      scheduleScannerStart(scannerLayoutRetryLimit);
+    });
 
     return () => {
       isCancelled = true;
+      if (scannerStartFrameId !== null) {
+        window.cancelAnimationFrame(scannerStartFrameId);
+      }
+      const clearScanner = () => {
+        try {
+          scanner.clear();
+        } catch {
+          // Ignore cleanup errors during route changes.
+        }
+      };
 
-      void scanner
-        .stop()
-        .catch(() => undefined)
-        .finally(() => {
-          try {
-            scanner.clear();
-          } catch {
-            // Ignore cleanup errors during route changes.
-          }
-        });
+      try {
+        void scanner.stop().catch(() => undefined).finally(clearScanner);
+      } catch {
+        clearScanner();
+      }
     };
   }, [apiClient, resetSellFlow, scanSessionId, scannerContainerId]);
 
@@ -375,6 +425,18 @@ export function QrPage() {
   const resultMessage = sellResult
     ? QR_SELL_SUCCESS_MESSAGES.sellSucceeded
     : lookupResult?.message ?? null;
+  const resultSummaryTitle = sellResult
+    ? "販売済更新完了"
+    : resultCanSell
+      ? "QR読み取り成功"
+      : lookupResult?.productId
+        ? "QR読み取り完了"
+        : "読み取り結果を確認してください";
+  const resultSummaryMessage = sellResult
+    ? QR_SELL_SUCCESS_MESSAGES.sellSucceeded
+    : resultCanSell
+      ? "商品情報を確認できました。販売済更新に進めます。"
+      : resultMessage;
   const resultSubtitle = sellResult
     ? "販売済更新完了"
     : lookupResult?.canSell
@@ -442,34 +504,34 @@ export function QrPage() {
             </p>
           </div>
         </div>
-        {cameraState === "error" ? (
-          <ScreenErrorState
-            message={scannerErrorMessage ?? QR_ERROR_MESSAGES.cameraUnavailable}
-            onRetry={handleRetry}
-          />
-        ) : (
-          <article className="management-card qr-page__scanner-card">
-            <div className="qr-page__scanner-frame">
-              <div className="qr-page__scanner-toolbar">
-                <span className="qr-page__scanner-label">カメラプレビュー</span>
-                <span className="qr-page__scanner-badge">{scannerStateLabel}</span>
-              </div>
-              <div
-                id={scannerContainerId}
-                className="qr-page__scanner-target"
-                role="region"
-                aria-label="QRコード読み取り用カメラプレビュー"
-              />
-              <div className="qr-page__scanner-guide" aria-hidden="true" />
-              <p className="qr-page__scanner-status" role="status">
-                {scannerStatusMessage}
-              </p>
+        <article className="management-card qr-page__scanner-card">
+          <div className="qr-page__scanner-frame">
+            <div className="qr-page__scanner-toolbar">
+              <span className="qr-page__scanner-label">カメラプレビュー</span>
+              <span className="qr-page__scanner-badge">{scannerStateLabel}</span>
             </div>
+            <div
+              id={scannerContainerId}
+              className="qr-page__scanner-target"
+              role="region"
+              aria-label="QRコード読み取り用カメラプレビュー"
+            />
+            <div className="qr-page__scanner-guide" aria-hidden="true" />
+          </div>
+          <p className="qr-page__scanner-status" role="status">
+            {scannerStatusMessage}
+          </p>
+          {cameraState === "error" ? (
+            <ScreenErrorState
+              message={scannerErrorMessage ?? QR_ERROR_MESSAGES.cameraUnavailable}
+              onRetry={handleRetry}
+            />
+          ) : (
             <p className="management-form__hint">
               読み取り後は結果を表示します。再試行でスキャンをやり直せます。
             </p>
-          </article>
-        )}
+          )}
+        </article>
       </section>
 
       <section className="management-page__section" aria-labelledby="qr-result-title">
@@ -497,6 +559,17 @@ export function QrPage() {
         ) : null}
         {isLookupResultVisible ? (
           <article className={`management-card qr-page__result-card ${resultToneClass}`}>
+            <div className={`qr-page__result-summary ${resultToneClass}`} role={resultRole}>
+              <span className="qr-page__result-mark" aria-hidden="true">
+                {resultCanSell || Boolean(sellResult) ? "OK" : "!"}
+              </span>
+              <div>
+                <p className="qr-page__result-summary-title">{resultSummaryTitle}</p>
+                {resultSummaryMessage ? (
+                  <p className="qr-page__result-summary-text">{resultSummaryMessage}</p>
+                ) : null}
+              </div>
+            </div>
             <div className="management-card__header">
               <div>
                 <p className="management-card__subtitle">{resultSubtitle}</p>
@@ -531,16 +604,6 @@ export function QrPage() {
                 </div>
               ) : null}
             </dl>
-            <div
-              className={
-                resultCanSell || Boolean(sellResult)
-                  ? "management-page__notice is-success"
-                  : "management-page__notice is-error"
-              }
-              role={resultRole}
-            >
-              <p>{resultMessage}</p>
-            </div>
             {isSellActionAvailable ? (
               <div className="management-page__field-group">
                 <label className="management-form__label" htmlFor={customerSelectId}>

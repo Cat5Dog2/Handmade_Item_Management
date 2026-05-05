@@ -17,6 +17,7 @@ import type {
 import type { ZodError } from "zod";
 import { createValidationError } from "../errors/api-errors";
 import { getFirestoreDb, getStorageBucket } from "../firebase/firebase-admin";
+import { getStorageReadUrl } from "../firebase/storage-read-url";
 
 interface ProductImageDocument {
   displayPath: string;
@@ -208,10 +209,11 @@ async function getThumbnailUrl(
   const expiresAt = new Date(
     now().getTime() + signedUrlExpiresMinutes * 60 * 1000
   );
-  const [thumbnailUrl] = await bucket.file(thumbnailPath).getSignedUrl({
-    action: "read",
-    expires: expiresAt
-  });
+  const thumbnailUrl = await getStorageReadUrl(
+    bucket,
+    thumbnailPath,
+    expiresAt
+  );
 
   return thumbnailUrl;
 }

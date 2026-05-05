@@ -37,6 +37,7 @@ const defaultTagFormValues: TagInput = {
 
 const updatedAtFormatter = new Intl.DateTimeFormat("ja-JP", {
   dateStyle: "medium",
+  timeZone: "Asia/Tokyo",
   timeStyle: "short"
 });
 

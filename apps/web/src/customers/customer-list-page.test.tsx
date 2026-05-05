@@ -202,6 +202,50 @@ describe("CustomerListPage", () => {
     );
   }, 10000);
 
+  it("shows a validation notice without applying invalid search keywords", async () => {
+    renderCustomerList("/customers");
+
+    const keywordInput = await screen.findByRole("searchbox", undefined, {
+      timeout: 8000
+    });
+
+    fireEvent.change(keywordInput, {
+      target: { value: "a".repeat(101) }
+    });
+    fireEvent.submit(keywordInput.closest("form") as HTMLFormElement);
+
+    expect(
+      await screen.findByText("検索条件を確認してください。", undefined, {
+        timeout: 8000
+      })
+    ).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location-probe").textContent).toBe("");
+    });
+  }, 10000);
+
+  it("shows a validation notice when URL query values are invalid", async () => {
+    renderCustomerList(`/customers?keyword=${"a".repeat(101)}`);
+
+    expect(
+      await screen.findByText("検索条件を確認してください。", undefined, {
+        timeout: 8000
+      })
+    ).toBeInTheDocument();
+
+    const customerCall = getLatestCustomerCall();
+    expect(customerCall).toBeDefined();
+    expect(customerCall?.[1]).toEqual(
+      expect.objectContaining({
+        query: expect.objectContaining({
+          page: 1,
+          pageSize: 50
+        })
+      })
+    );
+  }, 10000);
+
   it("moves between pages with the pagination controls", async () => {
     renderCustomerList("/customers?pageSize=1");
 

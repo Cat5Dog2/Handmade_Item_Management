@@ -268,6 +268,48 @@ describe("ProductListPage", () => {
     );
   }, 10000);
 
+  it("shows a validation notice without applying invalid search keywords", async () => {
+    renderProductList("/products");
+
+    await screen.findByLabelText("キーワード", undefined, { timeout: 8000 });
+
+    fireEvent.change(screen.getByLabelText("キーワード"), {
+      target: { value: "a".repeat(101) }
+    });
+    fireEvent.click(screen.getByRole("button", { name: "絞り込む" }));
+
+    expect(
+      await screen.findByText("検索条件を確認してください。", undefined, {
+        timeout: 8000
+      })
+    ).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location-probe").textContent).toBe("");
+    });
+  }, 10000);
+
+  it("shows a validation notice when URL query values are invalid", async () => {
+    renderProductList(`/products?keyword=${"a".repeat(101)}`);
+
+    expect(
+      await screen.findByText("検索条件を確認してください。", undefined, {
+        timeout: 8000
+      })
+    ).toBeInTheDocument();
+
+    const productCall = getLatestProductCall();
+    expect(productCall).toBeDefined();
+    expect(productCall?.[1]).toEqual(
+      expect.objectContaining({
+        query: expect.objectContaining({
+          page: 1,
+          pageSize: 50
+        })
+      })
+    );
+  }, 10000);
+
   it("moves between pages with the pagination controls", async () => {
     renderProductList("/products?pageSize=1");
 

@@ -393,6 +393,38 @@ describe("customers routes", () => {
     });
   });
 
+  it("keeps customer update responses successful when operation log writing fails", async () => {
+    updateCustomerMock.mockResolvedValue({
+      customerId: "cus_000001",
+      updatedAt: "2026-04-24T09:00:00.000Z",
+      changedFields: ["memo"]
+    });
+    writeOperationLogMock.mockRejectedValue(new Error("log write failed"));
+
+    const response = await request(
+      createTestApp({
+        verifyIdToken: async () => ({
+          uid: "uid-1",
+          email: "owner@example.com"
+        })
+      })
+    )
+      .put("/api/customers/cus_000001")
+      .set("Authorization", "Bearer valid-token")
+      .send({
+        name: "Hanako Handmade",
+        memo: "Updated memo"
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        customerId: "cus_000001",
+        updatedAt: "2026-04-24T09:00:00.000Z"
+      }
+    });
+  });
+
   it("returns AUTH_REQUIRED for unauthenticated customer archive requests", async () => {
     const response = await request(createTestApp()).delete(
       "/api/customers/cus_000001"

@@ -15,6 +15,7 @@ const DEFAULT_SERVICE_NAME = "handmade-sales-api";
 
 interface CreateAppContext {
   apiBasePath: string;
+  logger: ApiLogger;
 }
 
 export interface CreateProtectedAppContext extends CreateAppContext {
@@ -60,16 +61,19 @@ export function createApp(options: CreateAppOptions = {}) {
   });
 
   options.registerPublicRoutes?.(publicApiRouter, {
-    apiBasePath
+    apiBasePath,
+    logger
   });
 
   registerDefaultProtectedRoutes(protectedApiRouter, {
     apiBasePath,
+    logger,
     requireAuthMiddleware
   });
 
   options.registerProtectedRoutes?.(protectedApiRouter, {
     apiBasePath,
+    logger,
     requireAuthMiddleware
   });
 

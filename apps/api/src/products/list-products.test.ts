@@ -63,9 +63,12 @@ describe("listProducts", () => {
         })
       ]
     });
-    const productsWhere = vi.fn().mockReturnValue({
-      get: productsGet
-    });
+    const productQuery = {
+      get: productsGet,
+      where: vi.fn()
+    };
+    productQuery.where.mockReturnValue(productQuery);
+    const productsWhere = vi.fn().mockReturnValue(productQuery);
     const categoriesGet = vi.fn().mockResolvedValue({
       docs: [
         createDocumentSnapshot({
@@ -165,6 +168,13 @@ describe("listProducts", () => {
     });
 
     expect(productsWhere).toHaveBeenCalledWith("isDeleted", "==", false);
+    expect(productQuery.where).toHaveBeenCalledWith("categoryId", "==", "cat-a");
+    expect(productQuery.where).toHaveBeenCalledWith("status", "==", "onDisplay");
+    expect(productQuery.where).toHaveBeenCalledWith(
+      "tagIds",
+      "array-contains",
+      "tag-a"
+    );
     expect(fileMock).toHaveBeenCalledWith("products/HM-000001/thumb/img-001.webp");
   });
 
@@ -193,13 +203,17 @@ describe("listProducts", () => {
         })
       ]
     });
+    const productQuery = {
+      get: productsGet,
+      where: vi.fn()
+    };
+    productQuery.where.mockReturnValue(productQuery);
+    const productsWhere = vi.fn().mockReturnValue(productQuery);
     const db = {
       collection: vi.fn((collectionName: string) => {
         if (collectionName === "products") {
           return {
-            where: vi.fn().mockReturnValue({
-              get: productsGet
-            })
+            where: productsWhere
           };
         }
 
@@ -261,6 +275,8 @@ describe("listProducts", () => {
         totalCount: 1
       }
     });
+    expect(productsWhere).toHaveBeenCalledWith("isDeleted", "==", false);
+    expect(productQuery.where).toHaveBeenCalledWith("status", "==", "sold");
   });
 
   it("rejects invalid list queries", async () => {

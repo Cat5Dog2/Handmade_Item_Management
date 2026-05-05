@@ -3,11 +3,11 @@
 ハンドメイド作品を一点物単位で管理する、モバイルファーストの在庫・販売管理アプリです。  
 商品情報、画像、カテゴリ、タグ、商品別タスク、顧客情報、QRコードによる識別と販売済更新、顧客別購入履歴、ダッシュボード集計をまとめて扱います。
 
-この README は、**Codex で実装を始めるための最小ガイド**として作成しています。仕様の正本は設計書群です。
+この README は、**MVP 実装をローカルで起動・確認するためのガイド**です。仕様の正本は設計書群です。
 
 > 補足:
-> - 現在のこのリポジトリは、設計書・Firebase設定に加えて、**最小の workspace 基盤** まで含む初期実装セットです。
-> - `npm install`、`npm run dev`、`docker compose --env-file .env.docker up --build` などの実行系コマンドは利用できますが、業務機能はこれから段階的に実装する前提です。
+> - 現在のこのリポジトリは、設計書・Firebase設定に加えて、MVP の業務機能実装を含みます。
+> - `npm install`、`npm run dev`、`docker compose --env-file .env.docker up --build` などの実行系コマンドで、Web / API / Firebase Emulator を使ったローカル確認ができます。
 > - フロントの API 呼び出し先は `/api` に統一し、ローカル開発時は Vite dev server の proxy で API へ中継します。
 
 ## 1. MVPの対象

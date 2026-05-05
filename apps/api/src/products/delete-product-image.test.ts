@@ -266,7 +266,7 @@ describe("deleteProductImage", () => {
     expect(thumbnailFile.delete).toHaveBeenCalledTimes(1);
   });
 
-  it("does not update product metadata when storage deletion fails", async () => {
+  it("surfaces storage deletion failures after the metadata transaction", async () => {
     const productId = "HM-000003";
     const imageId = "img_existing_1";
     const product = createDeleteProductDocument(productId, [
@@ -298,6 +298,16 @@ describe("deleteProductImage", () => {
       productId,
       thumbnailFile
     });
+    const transaction = {
+      get: vi.fn(async (reference: unknown) => {
+        if (reference === productRef) {
+          return createDocumentSnapshot(product);
+        }
+
+        throw new Error("Unexpected transaction reference");
+      }),
+      set: vi.fn()
+    };
     const db = {
       collection: vi.fn((collectionName: string) => {
         if (collectionName === "products") {
@@ -308,7 +318,7 @@ describe("deleteProductImage", () => {
 
         throw new Error(`Unexpected collection ${collectionName}`);
       }),
-      runTransaction: vi.fn()
+      runTransaction: vi.fn(async (callback) => callback(transaction as never))
     };
 
     await expect(
@@ -320,7 +330,8 @@ describe("deleteProductImage", () => {
       })
     ).rejects.toBe(storageError);
 
-    expect(db.runTransaction).not.toHaveBeenCalled();
+    expect(db.runTransaction).toHaveBeenCalledTimes(1);
+    expect(transaction.set).toHaveBeenCalledTimes(1);
     expect(displayFile.delete).toHaveBeenCalledTimes(1);
     expect(thumbnailFile.delete).toHaveBeenCalledTimes(1);
   });

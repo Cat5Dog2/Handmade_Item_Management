@@ -52,6 +52,15 @@ const customerSelectQuery = {
   sortOrder: "asc"
 } as const;
 const scannerLayoutRetryLimit = 10;
+const qrDateTimeFormatter = new Intl.DateTimeFormat("ja-JP", {
+  day: "2-digit",
+  hour: "2-digit",
+  hourCycle: "h23",
+  minute: "2-digit",
+  month: "2-digit",
+  timeZone: "Asia/Tokyo",
+  year: "numeric"
+});
 
 function isQrLaunchContext(value: unknown): value is QrLaunchContext {
   if (typeof value !== "object" || value === null) {
@@ -119,7 +128,7 @@ function formatLookupDetail(value: string | null) {
 }
 
 function formatDateTime(value: string) {
-  return new Date(value).toLocaleString("ja-JP");
+  return qrDateTimeFormatter.format(new Date(value));
 }
 
 function getSelectedCustomerLabel(

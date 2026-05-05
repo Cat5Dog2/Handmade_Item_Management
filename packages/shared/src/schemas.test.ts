@@ -14,7 +14,7 @@ describe("shared schemas", () => {
   it("normalizes product create input for shared reuse", () => {
     expect(
       productCreateInputSchema.parse({
-        name: "  Spring Accessory \r\n",
+        name: "  Spring Accessory ",
         description: "line1\r\nline2",
         price: "2800",
         categoryId: " cat_001 ",
@@ -38,7 +38,7 @@ describe("shared schemas", () => {
         pageSize: "25",
         sortBy: "updatedAt",
         sortOrder: "desc",
-        keyword: "  Handmade\t Bag  ",
+        keyword: "  Handmade  Bag  ",
         includeSold: "false"
       })
     ).toEqual({
@@ -67,7 +67,37 @@ describe("shared schemas", () => {
   });
 
   it("treats blank query keywords as unspecified", () => {
-    expect(productListQuerySchema.parse({ keyword: " \t " })).toEqual({});
+    expect(productListQuerySchema.parse({ keyword: "   " })).toEqual({});
+  });
+
+  it("rejects line breaks and tabs in single-line fields and search keywords", () => {
+    expect(() =>
+      productCreateInputSchema.parse({
+        name: "Spring\nAccessory",
+        price: 2800,
+        categoryId: "cat_001",
+        status: "completed"
+      })
+    ).toThrow();
+
+    expect(() =>
+      taskCreateInputSchema.parse({
+        name: "Prepare\tDisplay"
+      })
+    ).toThrow();
+
+    expect(() =>
+      categoryInputSchema.parse({
+        name: "Earrings\nSet",
+        sortOrder: null
+      })
+    ).toThrow();
+
+    expect(() =>
+      customerListQuerySchema.parse({
+        keyword: "Hanako\tInstagram"
+      })
+    ).toThrow();
   });
 
   it("validates due dates and normalizes optional task fields", () => {
@@ -212,7 +242,7 @@ describe("shared schemas", () => {
       customerListQuerySchema.parse({
         page: "2",
         pageSize: "25",
-        keyword: "  Hanako\t Instagram  ",
+        keyword: "  Hanako  Instagram  ",
         sortBy: "lastPurchaseAt",
         sortOrder: "asc"
       })

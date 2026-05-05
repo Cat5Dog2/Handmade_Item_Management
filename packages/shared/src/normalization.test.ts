@@ -1,4 +1,5 @@
 import {
+  hasSingleLineForbiddenCharacters,
   normalizeName,
   normalizeMultilineText,
   normalizeOptionalSearchKeyword,
@@ -15,8 +16,10 @@ describe("normalization helpers", () => {
     expect(normalizeSearchKeyword("One\u0000\t Two\u0007")).toBe("one two");
   });
 
-  it("removes tabs and line breaks from single-line names", () => {
-    expect(normalizeName("\tHandmade\r\nBag\t")).toBe("Handmade Bag");
+  it("keeps interior tabs and line breaks for schema-level rejection", () => {
+    expect(normalizeName("\tHandmade\r\nBag\t")).toBe("Handmade\nBag");
+    expect(hasSingleLineForbiddenCharacters("Handmade\nBag")).toBe(true);
+    expect(hasSingleLineForbiddenCharacters("Handmade\tBag")).toBe(true);
   });
 
   it("normalizes multiline text line endings to LF", () => {

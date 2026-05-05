@@ -650,7 +650,7 @@ MVPでは **operationLogs の自動削除は実装しない**。
 
 ### 15.3 prod 監査結果の再評価
 
-- 2026年5月4日時点の `npm audit --omit=dev --audit-level=moderate` では、prod 側に 10 件（low 2 件 / moderate 8 件）が残る
+- 2026年5月5日時点の `npm audit --omit=dev --audit-level=moderate` では、prod 側に 10 件（low 2 件 / moderate 8 件）が残る
 - 対象は `firebase-admin@13.8.0` 配下の推移依存（`@google-cloud/firestore`, `@google-cloud/storage`, `google-gax`, `gaxios`, `teeny-request`, `retry-request`, `http-proxy-agent`, `@tootallnate/once`, `uuid` など）に由来する
 - `npm view firebase-admin version` では `13.8.0` が最新版であり、`npm audit fix --omit=dev` でも非破壊な修正は適用されなかった
 - `npm audit` が提示する自動修正案は **`npm audit fix --force` による `firebase-admin@10.1.0` へのダウングレード** であり、破壊的変更かつ最新版より後退するため採用しない
@@ -670,19 +670,17 @@ MVPでは **operationLogs の自動削除は実装しない**。
 
 ## 16. フロントビルド警告メモ
 
-### 16.1 2026年4月13日時点の状況
+### 16.1 2026年5月5日時点の状況
 
-- `npm run build:web` および `npm run ci` 実行時に、Vite から
-  `Some chunks are larger than 500 kB after minification` の警告が出る
-- 現時点では **ビルド失敗ではなく警告のみ** であり、MVP 開発継続を止める条件とはしない
-- ただし、モバイル環境を含む初回表示性能には影響しうるため、**技術負債として管理する**
+- `apps/web/vite.config.ts` の `build.rollupOptions.output.manualChunks` で、Firebase / React / フォーム・Query / QR 系依存を分割した
+- `npm run build:web` では最大 chunk が 500 kB 未満になり、Vite の
+  `Some chunks are larger than 500 kB after minification` 警告は出ていない
+- `chunkSizeWarningLimit` を上げて警告だけを隠す対応は行っていない
 
 ### 16.2 現時点の判断
 
-- 2026年4月13日時点では、機能開発を優先し **警告は許容** とする
-- 単に `chunkSizeWarningLimit` を上げて警告だけを消す対応は行わない
-- パフォーマンス対策としては、まず **route 単位の dynamic import による code splitting** を優先検討する
-- 必要に応じて `build.rollupOptions.output.manualChunks` を追加する
+- MVP 初期リリース時点の Web 配信物サイズとしては、Vite の既定警告基準を満たしている
+- 今後さらに画面数や依存が増える場合は、route 単位の dynamic import も追加検討する
 
 ### 16.3 再評価タイミング
 

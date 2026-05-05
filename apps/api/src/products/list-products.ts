@@ -250,12 +250,24 @@ export async function listProducts(
   const normalizedKeyword = query.keyword
     ? normalizeSearchKeyword(query.keyword)
     : undefined;
+  let productQuery = db
+    .collection("products")
+    .where("isDeleted", "==", false);
+
+  if (query.categoryId) {
+    productQuery = productQuery.where("categoryId", "==", query.categoryId);
+  }
+
+  if (query.status) {
+    productQuery = productQuery.where("status", "==", query.status);
+  }
+
+  if (query.tagId) {
+    productQuery = productQuery.where("tagIds", "array-contains", query.tagId);
+  }
 
   const [productSnapshot, categorySnapshot, tagSnapshot] = await Promise.all([
-    db
-      .collection("products")
-      .where("isDeleted", "==", false)
-      .get() as unknown as Promise<{
+    productQuery.get() as unknown as Promise<{
       docs: Array<QueryDocumentSnapshot<ProductDocument>>;
     }>,
     db.collection("categories").get() as unknown as Promise<{

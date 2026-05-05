@@ -32,6 +32,11 @@ interface PageNotice {
   type: "error" | "success";
 }
 
+interface ProductListQueryParseResult {
+  errorMessage: string | null;
+  query: ProductListQuery;
+}
+
 interface ProductListFilterState {
   categoryId: string;
   includeSold: boolean;
@@ -62,6 +67,8 @@ const DEFAULT_FILTER_STATE: ProductListFilterState = {
   status: "",
   tagId: ""
 };
+const PRODUCT_LIST_QUERY_ERROR_MESSAGE =
+  "\u691c\u7d22\u6761\u4ef6\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002";
 
 const productListDateTimeFormatter = new Intl.DateTimeFormat("ja-JP", {
   day: "2-digit",
@@ -109,16 +116,24 @@ function normalizeProductListQuery(query: ProductListQuery): ProductListQuery {
   return normalized;
 }
 
-function parseProductListQuery(searchParams: URLSearchParams): ProductListQuery {
+function parseProductListQuery(
+  searchParams: URLSearchParams
+): ProductListQueryParseResult {
   const parsedQuery = productListQuerySchema.safeParse(
     Object.fromEntries(searchParams.entries())
   );
 
   if (!parsedQuery.success) {
-    return DEFAULT_QUERY as ProductListQuery;
+    return {
+      errorMessage: PRODUCT_LIST_QUERY_ERROR_MESSAGE,
+      query: DEFAULT_QUERY as ProductListQuery
+    };
   }
 
-  return normalizeProductListQuery(parsedQuery.data);
+  return {
+    errorMessage: null,
+    query: normalizeProductListQuery(parsedQuery.data)
+  };
 }
 
 function toFilterState(query: ProductListQuery): ProductListFilterState {
@@ -220,10 +235,11 @@ export function ProductListPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchParamsString = searchParams.toString();
-  const currentQuery = useMemo(
+  const currentQueryParseResult = useMemo(
     () => parseProductListQuery(new URLSearchParams(searchParamsString)),
     [searchParamsString]
   );
+  const currentQuery = currentQueryParseResult.query;
   const [notice, setNotice] = useState<PageNotice | null>(null);
   const [draftFilters, setDraftFilters] = useState<ProductListFilterState>(() =>
     toFilterState(currentQuery)
@@ -310,7 +326,7 @@ export function ProductListPage() {
     const pageSize = currentQuery.pageSize ?? DEFAULT_QUERY.pageSize;
     const includeSold =
       draftFilters.status === "sold" ? true : draftFilters.includeSold;
-    const nextQuery = normalizeProductListQuery({
+    const nextQueryInput: ProductListQuery = {
       categoryId: draftFilters.categoryId || undefined,
       includeSold,
       keyword: draftFilters.keyword || undefined,
@@ -320,12 +336,24 @@ export function ProductListPage() {
       sortOrder: draftFilters.sortOrder,
       status: draftFilters.status || undefined,
       tagId: draftFilters.tagId || undefined
-    });
+    };
+    const parsedNextQuery = productListQuerySchema.safeParse(nextQueryInput);
 
+    if (!parsedNextQuery.success) {
+      setNotice({
+        message: PRODUCT_LIST_QUERY_ERROR_MESSAGE,
+        type: "error"
+      });
+      return;
+    }
+
+    const nextQuery = normalizeProductListQuery(parsedNextQuery.data);
+    setNotice(null);
     setSearchParams(buildSearchParams(toFilterState(nextQuery), pageSize, DEFAULT_QUERY.page));
   };
 
   const clearFilters = () => {
+    setNotice(null);
     previousIncludeSoldRef.current = DEFAULT_FILTER_STATE.includeSold;
     setDraftFilters(DEFAULT_FILTER_STATE);
     setSearchParams(
@@ -334,6 +362,7 @@ export function ProductListPage() {
   };
 
   const movePage = (nextPage: number) => {
+    setNotice(null);
     setSearchParams(
       buildSearchParams(
         toFilterState(currentQuery),
@@ -446,16 +475,16 @@ export function ProductListPage() {
             最新の一覧を更新中です...
           </p>
         ) : null}
-        {notice ? (
+        {currentQueryParseResult.errorMessage || notice ? (
           <div
             className={
-              notice.type === "success"
+              notice?.type === "success" && !currentQueryParseResult.errorMessage
                 ? "management-page__notice is-success"
                 : "management-page__notice is-error"
             }
-            role={notice.type === "success" ? "status" : "alert"}
+            role={notice?.type === "success" && !currentQueryParseResult.errorMessage ? "status" : "alert"}
           >
-            <p>{notice.message}</p>
+            <p>{currentQueryParseResult.errorMessage ?? notice?.message}</p>
           </div>
         ) : null}
       </div>

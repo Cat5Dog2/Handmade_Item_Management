@@ -131,6 +131,26 @@ describe("QrPage", () => {
     scannerMock.reset();
   });
 
+  it("shows the camera preview frame and active scanning state while reading", async () => {
+    renderQrPage();
+
+    expect(
+      screen.getByRole("region", {
+        name: "QRコード読み取り用カメラプレビュー"
+      })
+    ).toBeInTheDocument();
+    expect(screen.getByText("カメラプレビュー")).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(scannerMock.start).toHaveBeenCalledTimes(1);
+    });
+
+    expect(await screen.findByText("読み取り中")).toBeInTheDocument();
+    expect(
+      screen.getByText("QRコードを画面にかざしてください。")
+    ).toBeInTheDocument();
+  });
+
   it("opens the confirmation dialog and returns to the scanner when canceled", async () => {
     apiClientMock.get.mockResolvedValue(emptyCustomerListResponse);
     apiClientMock.post.mockImplementation(async (path: string) => {

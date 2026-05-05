@@ -81,6 +81,26 @@ function getScannerStatusMessage(cameraState: CameraState, lookupState: LookupSt
   return "新しいQR読み取りを開始できます。";
 }
 
+function getScannerStateLabel(cameraState: CameraState, lookupState: LookupState) {
+  if (cameraState === "starting") {
+    return "起動中";
+  }
+
+  if (cameraState === "ready") {
+    return "読み取り中";
+  }
+
+  if (cameraState === "paused" && lookupState === "pending") {
+    return "照合中";
+  }
+
+  if (cameraState === "paused") {
+    return "一時停止中";
+  }
+
+  return "確認不可";
+}
+
 function formatLookupDetail(value: string | null) {
   return value ?? "未設定";
 }
@@ -349,6 +369,7 @@ export function QrPage() {
   }, [apiClient, resetSellFlow, scanSessionId, scannerContainerId]);
 
   const scannerStatusMessage = getScannerStatusMessage(cameraState, lookupState);
+  const scannerStateLabel = getScannerStateLabel(cameraState, lookupState);
   const resultStatus = sellResult ? sellResult.status : lookupResult?.status ?? null;
   const resultCanSell = Boolean(!sellResult && lookupResult?.canSell);
   const resultMessage = sellResult
@@ -429,7 +450,17 @@ export function QrPage() {
         ) : (
           <article className="management-card qr-page__scanner-card">
             <div className="qr-page__scanner-frame">
-              <div id={scannerContainerId} className="qr-page__scanner-target" />
+              <div className="qr-page__scanner-toolbar">
+                <span className="qr-page__scanner-label">カメラプレビュー</span>
+                <span className="qr-page__scanner-badge">{scannerStateLabel}</span>
+              </div>
+              <div
+                id={scannerContainerId}
+                className="qr-page__scanner-target"
+                role="region"
+                aria-label="QRコード読み取り用カメラプレビュー"
+              />
+              <div className="qr-page__scanner-guide" aria-hidden="true" />
               <p className="qr-page__scanner-status" role="status">
                 {scannerStatusMessage}
               </p>

@@ -153,6 +153,7 @@ const emptyTasksResponse = {
 let detailMode: "success" | "emptyImage" | "sold" | "error" | "notFound" =
   "success";
 let taskMode: "success" | "empty" | "error" = "success";
+let printMock: ReturnType<typeof vi.fn>;
 
 function renderProductDetail(initialEntry = "/products/HM-000001") {
   const queryClient = createAppQueryClient();
@@ -182,6 +183,11 @@ describe("ProductDetailPage", () => {
     apiClientMock.delete.mockReset();
     apiClientMock.get.mockReset();
     apiClientMock.patch.mockReset();
+    printMock = vi.fn();
+    Object.defineProperty(window, "print", {
+      configurable: true,
+      value: printMock
+    });
     qrCodeMock.toString.mockReset();
     qrCodeMock.toString.mockResolvedValue("<svg viewBox=\"0 0 10 10\"></svg>");
     apiClientMock.delete.mockResolvedValue({
@@ -249,7 +255,7 @@ describe("ProductDetailPage", () => {
         signal: expect.any(AbortSignal)
       })
     );
-    expect(screen.getAllByText("HM-000001")).toHaveLength(3);
+    expect(screen.getAllByText("HM-000001").length).toBeGreaterThanOrEqual(3);
     expect(screen.getByText("アクセサリー")).toBeInTheDocument();
     expect(screen.getByText("春, 一点もの")).toBeInTheDocument();
     expect(screen.getAllByText("2件").length).toBeGreaterThanOrEqual(1);
@@ -283,6 +289,7 @@ describe("ProductDetailPage", () => {
       );
     });
     expect(await screen.findByTestId("product-qr-svg")).toContainHTML("<svg");
+    expect(screen.getByRole("button", { name: "QRコードを印刷" })).toBeEnabled();
     expect(screen.getByRole("link", { name: "編集する" })).toHaveAttribute(
       "href",
       "/products/HM-000001/edit"
@@ -299,6 +306,20 @@ describe("ProductDetailPage", () => {
       "href",
       "/qr"
     );
+  });
+
+  it("prints the generated QR code from product detail", async () => {
+    renderProductDetail();
+
+    expect(await screen.findByTestId("product-qr-svg")).toBeInTheDocument();
+    const printArea = screen.getByLabelText("HM-000001 の印刷用QRコード");
+    expect(within(printArea).getByText("QRコード")).toBeInTheDocument();
+    expect(within(printArea).getByText("Blue Ribbon")).toBeInTheDocument();
+    expect(within(printArea).getAllByText("HM-000001")).toHaveLength(2);
+
+    fireEvent.click(screen.getByRole("button", { name: "QRコードを印刷" }));
+
+    expect(printMock).toHaveBeenCalledTimes(1);
   });
 
   it("shows completed related tasks when the completed toggle is enabled", async () => {

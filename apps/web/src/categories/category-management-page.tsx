@@ -29,6 +29,7 @@ import {
   CATEGORY_ERROR_MESSAGE_OVERRIDES,
   CATEGORY_ERROR_MESSAGES
 } from "../messages/display-messages";
+import { formatJstMediumDateTime } from "../utils/date-formatters";
 
 interface PageNotice {
   message: string;
@@ -40,14 +41,8 @@ const defaultCategoryFormValues: CategoryInput = {
   sortOrder: null
 };
 
-const updatedAtFormatter = new Intl.DateTimeFormat("ja-JP", {
-  dateStyle: "medium",
-  timeZone: "Asia/Tokyo",
-  timeStyle: "short"
-});
-
 function formatUpdatedAt(updatedAt: string) {
-  return updatedAtFormatter.format(new Date(updatedAt));
+  return formatJstMediumDateTime(updatedAt);
 }
 
 function formatUsageLabel(category: CategoryItem) {
@@ -74,7 +69,9 @@ export function CategoryManagementPage() {
   const categoriesQuery = useQuery({
     queryKey: queryKeys.categories.list,
     queryFn: async () => {
-      const response = await apiClient.get<CategoryListData>(API_PATHS.categories);
+      const response = await apiClient.get<CategoryListData>(
+        API_PATHS.categories
+      );
 
       return response.data;
     }
@@ -94,7 +91,10 @@ export function CategoryManagementPage() {
 
   const applyFormApiErrors = useCallback(
     (error: UiApiError) => {
-      if (error.code !== "VALIDATION_ERROR" && error.code !== "DUPLICATE_NAME") {
+      if (
+        error.code !== "VALIDATION_ERROR" &&
+        error.code !== "DUPLICATE_NAME"
+      ) {
         return false;
       }
 
@@ -352,10 +352,16 @@ export function CategoryManagementPage() {
         ) : null}
       </div>
 
-      <section className="management-page__section" aria-labelledby="category-form-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="category-form-title"
+      >
         <div className="management-page__section-header">
           <div>
-            <h2 id="category-form-title" className="management-page__section-title">
+            <h2
+              id="category-form-title"
+              className="management-page__section-title"
+            >
               {editingCategory ? "カテゴリ更新" : "カテゴリ登録"}
             </h2>
             <p className="management-page__section-summary">
@@ -363,7 +369,11 @@ export function CategoryManagementPage() {
             </p>
           </div>
         </div>
-        <form className="management-form" noValidate onSubmit={handleCategorySubmit}>
+        <form
+          className="management-form"
+          noValidate
+          onSubmit={handleCategorySubmit}
+        >
           <div className="management-form__grid">
             <div className="auth-field">
               <label className="auth-field__label" htmlFor="category-name">
@@ -383,7 +393,10 @@ export function CategoryManagementPage() {
               ) : null}
             </div>
             <div className="auth-field">
-              <label className="auth-field__label" htmlFor="category-sort-order">
+              <label
+                className="auth-field__label"
+                htmlFor="category-sort-order"
+              >
                 表示順
               </label>
               <input
@@ -437,10 +450,16 @@ export function CategoryManagementPage() {
         </form>
       </section>
 
-      <section className="management-page__section" aria-labelledby="category-list-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="category-list-title"
+      >
         <div className="management-page__section-header">
           <div>
-            <h2 id="category-list-title" className="management-page__section-title">
+            <h2
+              id="category-list-title"
+              className="management-page__section-title"
+            >
               カテゴリ一覧
             </h2>
             <p className="management-page__section-summary">

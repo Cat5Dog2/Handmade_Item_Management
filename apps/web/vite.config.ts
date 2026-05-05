@@ -4,6 +4,40 @@ import { defineConfig, loadEnv } from "vite";
 
 const envDir = path.resolve(__dirname, "../..");
 
+const vendorChunks = [
+  {
+    includes: ["firebase"],
+    name: "firebase"
+  },
+  {
+    includes: ["html5-qrcode", "qrcode"],
+    name: "qr"
+  },
+  {
+    includes: [
+      "@tanstack/react-query",
+      "@hookform/resolvers",
+      "react-hook-form",
+      "zod"
+    ],
+    name: "forms-query"
+  },
+  {
+    includes: ["react", "react-dom", "react-router-dom"],
+    name: "react"
+  }
+] as const;
+
+function getManualChunk(id: string) {
+  if (!id.includes("node_modules")) {
+    return undefined;
+  }
+
+  return vendorChunks.find((chunk) =>
+    chunk.includes.some((dependency) => id.includes(dependency))
+  )?.name;
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, envDir, "");
   const apiProxyTarget =
@@ -30,38 +64,7 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         output: {
-          manualChunks(id) {
-            if (!id.includes("node_modules")) {
-              return undefined;
-            }
-
-            if (id.includes("firebase")) {
-              return "firebase";
-            }
-
-            if (id.includes("html5-qrcode") || id.includes("qrcode")) {
-              return "qr";
-            }
-
-            if (
-              id.includes("@tanstack/react-query") ||
-              id.includes("@hookform/resolvers") ||
-              id.includes("react-hook-form") ||
-              id.includes("zod")
-            ) {
-              return "forms-query";
-            }
-
-            if (
-              id.includes("react") ||
-              id.includes("react-dom") ||
-              id.includes("react-router-dom")
-            ) {
-              return "react";
-            }
-
-            return undefined;
-          }
+          manualChunks: getManualChunk
         }
       }
     },

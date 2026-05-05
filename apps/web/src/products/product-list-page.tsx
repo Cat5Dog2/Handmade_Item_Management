@@ -15,8 +15,20 @@ import {
   productListQuerySchema
 } from "@handmade/shared";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent
+} from "react";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams
+} from "react-router-dom";
 import { getApiErrorDisplayMessage } from "../api/api-error-display";
 import { useApiClient } from "../api/api-client-context";
 import { queryKeys } from "../api/query-keys";
@@ -25,17 +37,16 @@ import {
   ScreenErrorState,
   ScreenLoadingState
 } from "../components/screen-states";
+import {
+  parseListQuery,
+  useNavigationNotice,
+  type ListQueryParseResult,
+  type PageNotice
+} from "../lists/list-query";
 import { APP_NAME, PRODUCT_ERROR_MESSAGES } from "../messages/display-messages";
+import { formatJstDateTime } from "../utils/date-formatters";
 
-interface PageNotice {
-  message: string;
-  type: "error" | "success";
-}
-
-interface ProductListQueryParseResult {
-  errorMessage: string | null;
-  query: ProductListQuery;
-}
+type ProductListQueryParseResult = ListQueryParseResult<ProductListQuery>;
 
 interface ProductListFilterState {
   categoryId: string;
@@ -49,7 +60,10 @@ interface ProductListFilterState {
 
 const DEFAULT_PAGE_SIZE = 50;
 const DEFAULT_QUERY: Required<
-  Pick<ProductListQuery, "includeSold" | "page" | "pageSize" | "sortBy" | "sortOrder">
+  Pick<
+    ProductListQuery,
+    "includeSold" | "page" | "pageSize" | "sortBy" | "sortOrder"
+  >
 > = {
   includeSold: true,
   page: 1,
@@ -70,16 +84,6 @@ const DEFAULT_FILTER_STATE: ProductListFilterState = {
 const PRODUCT_LIST_QUERY_ERROR_MESSAGE =
   "\u691c\u7d22\u6761\u4ef6\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002";
 
-const productListDateTimeFormatter = new Intl.DateTimeFormat("ja-JP", {
-  day: "2-digit",
-  hour: "2-digit",
-  hourCycle: "h23",
-  minute: "2-digit",
-  month: "2-digit",
-  timeZone: "Asia/Tokyo",
-  year: "numeric"
-});
-
 const productStatusBadgeClassNames: Record<ProductStatus, string> = {
   beforeProduction: "product-status-badge is-before-production",
   completed: "product-status-badge is-completed",
@@ -90,7 +94,7 @@ const productStatusBadgeClassNames: Record<ProductStatus, string> = {
 };
 
 function formatUpdatedAt(updatedAt: string) {
-  return productListDateTimeFormatter.format(new Date(updatedAt));
+  return formatJstDateTime(updatedAt);
 }
 
 function normalizeProductListQuery(query: ProductListQuery): ProductListQuery {
@@ -119,21 +123,13 @@ function normalizeProductListQuery(query: ProductListQuery): ProductListQuery {
 function parseProductListQuery(
   searchParams: URLSearchParams
 ): ProductListQueryParseResult {
-  const parsedQuery = productListQuerySchema.safeParse(
-    Object.fromEntries(searchParams.entries())
+  return parseListQuery(
+    productListQuerySchema,
+    searchParams,
+    DEFAULT_QUERY as ProductListQuery,
+    PRODUCT_LIST_QUERY_ERROR_MESSAGE,
+    normalizeProductListQuery
   );
-
-  if (!parsedQuery.success) {
-    return {
-      errorMessage: PRODUCT_LIST_QUERY_ERROR_MESSAGE,
-      query: DEFAULT_QUERY as ProductListQuery
-    };
-  }
-
-  return {
-    errorMessage: null,
-    query: normalizeProductListQuery(parsedQuery.data)
-  };
 }
 
 function toFilterState(query: ProductListQuery): ProductListFilterState {
@@ -254,35 +250,14 @@ export function ProductListPage() {
     }
   }, [currentQuery]);
 
-  useEffect(() => {
-    const nextNotice =
-      typeof location.state === "object" &&
-      location.state !== null &&
-      "notice" in location.state
-        ? (location.state.notice as PageNotice | null | undefined)
-        : null;
-
-    if (!nextNotice) {
-      return;
-    }
-
-    setNotice(nextNotice);
-    navigate(
-      {
-        pathname: location.pathname,
-        search: location.search
-      },
-      {
-        replace: true,
-        state: null
-      }
-    );
-  }, [location.pathname, location.search, location.state, navigate]);
+  useNavigationNotice(location, navigate, setNotice);
 
   const categoriesQuery = useQuery({
     queryKey: queryKeys.categories.list,
     queryFn: async () => {
-      const response = await apiClient.get<CategoryListData>(API_PATHS.categories);
+      const response = await apiClient.get<CategoryListData>(
+        API_PATHS.categories
+      );
 
       return response.data;
     }
@@ -318,7 +293,8 @@ export function ProductListPage() {
   const productMeta = productsQuery.data?.meta;
   const isInitialLoading = productsQuery.isPending;
   const hasActiveFilters =
-    !isDefaultFilterState(draftFilters) || currentQuery.page !== DEFAULT_QUERY.page;
+    !isDefaultFilterState(draftFilters) ||
+    currentQuery.page !== DEFAULT_QUERY.page;
 
   const applyFilters = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -349,7 +325,9 @@ export function ProductListPage() {
 
     const nextQuery = normalizeProductListQuery(parsedNextQuery.data);
     setNotice(null);
-    setSearchParams(buildSearchParams(toFilterState(nextQuery), pageSize, DEFAULT_QUERY.page));
+    setSearchParams(
+      buildSearchParams(toFilterState(nextQuery), pageSize, DEFAULT_QUERY.page)
+    );
   };
 
   const clearFilters = () => {
@@ -357,7 +335,11 @@ export function ProductListPage() {
     previousIncludeSoldRef.current = DEFAULT_FILTER_STATE.includeSold;
     setDraftFilters(DEFAULT_FILTER_STATE);
     setSearchParams(
-      buildSearchParams(DEFAULT_FILTER_STATE, currentQuery.pageSize ?? DEFAULT_PAGE_SIZE, 1)
+      buildSearchParams(
+        DEFAULT_FILTER_STATE,
+        currentQuery.pageSize ?? DEFAULT_PAGE_SIZE,
+        1
+      )
     );
   };
 
@@ -399,7 +381,10 @@ export function ProductListPage() {
 
   if (isInitialLoading) {
     return (
-      <section className="management-page product-list-page" aria-labelledby="products-title">
+      <section
+        className="management-page product-list-page"
+        aria-labelledby="products-title"
+      >
         <div className="management-page__header">
           <p className="management-page__eyebrow">{APP_NAME}</p>
           <div className="product-list-page__header-row">
@@ -421,7 +406,10 @@ export function ProductListPage() {
 
   if (productsQuery.isError) {
     return (
-      <section className="management-page product-list-page" aria-labelledby="products-title">
+      <section
+        className="management-page product-list-page"
+        aria-labelledby="products-title"
+      >
         <div className="management-page__header">
           <p className="management-page__eyebrow">{APP_NAME}</p>
           <div className="product-list-page__header-row">
@@ -449,14 +437,19 @@ export function ProductListPage() {
   }
 
   const totalCount = productMeta?.totalCount ?? productItems.length;
-  const currentPage = productMeta?.page ?? currentQuery.page ?? DEFAULT_QUERY.page;
-  const pageSize = productMeta?.pageSize ?? currentQuery.pageSize ?? DEFAULT_PAGE_SIZE;
+  const currentPage =
+    productMeta?.page ?? currentQuery.page ?? DEFAULT_QUERY.page;
+  const pageSize =
+    productMeta?.pageSize ?? currentQuery.pageSize ?? DEFAULT_PAGE_SIZE;
   const lastPage = Math.max(Math.ceil(totalCount / pageSize), 1);
   const canGoPrevious = currentPage > 1;
   const canGoNext = productMeta?.hasNext ?? false;
 
   return (
-    <section className="management-page product-list-page" aria-labelledby="products-title">
+    <section
+      className="management-page product-list-page"
+      aria-labelledby="products-title"
+    >
       <div className="management-page__header">
         <p className="management-page__eyebrow">{APP_NAME}</p>
         <div className="product-list-page__header-row">
@@ -478,21 +471,33 @@ export function ProductListPage() {
         {currentQueryParseResult.errorMessage || notice ? (
           <div
             className={
-              notice?.type === "success" && !currentQueryParseResult.errorMessage
+              notice?.type === "success" &&
+              !currentQueryParseResult.errorMessage
                 ? "management-page__notice is-success"
                 : "management-page__notice is-error"
             }
-            role={notice?.type === "success" && !currentQueryParseResult.errorMessage ? "status" : "alert"}
+            role={
+              notice?.type === "success" &&
+              !currentQueryParseResult.errorMessage
+                ? "status"
+                : "alert"
+            }
           >
             <p>{currentQueryParseResult.errorMessage ?? notice?.message}</p>
           </div>
         ) : null}
       </div>
 
-      <section className="management-page__section" aria-labelledby="product-filters-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="product-filters-title"
+      >
         <div className="management-page__section-header">
           <div>
-            <h2 id="product-filters-title" className="management-page__section-title">
+            <h2
+              id="product-filters-title"
+              className="management-page__section-title"
+            >
               検索条件
             </h2>
             <p className="management-page__section-summary">
@@ -500,7 +505,11 @@ export function ProductListPage() {
             </p>
           </div>
         </div>
-        <form className="management-form product-list-filters" noValidate onSubmit={applyFilters}>
+        <form
+          className="management-form product-list-filters"
+          noValidate
+          onSubmit={applyFilters}
+        >
           <div className="management-form__grid">
             <div className="auth-field">
               <label className="auth-field__label" htmlFor="product-keyword">
@@ -629,7 +638,11 @@ export function ProductListPage() {
 
             <label className="product-list-filters__toggle">
               <input
-                checked={draftFilters.status === "sold" ? true : draftFilters.includeSold}
+                checked={
+                  draftFilters.status === "sold"
+                    ? true
+                    : draftFilters.includeSold
+                }
                 disabled={draftFilters.status === "sold"}
                 type="checkbox"
                 onChange={(event) =>
@@ -665,10 +678,16 @@ export function ProductListPage() {
         </form>
       </section>
 
-      <section className="management-page__section" aria-labelledby="product-list-title">
+      <section
+        className="management-page__section"
+        aria-labelledby="product-list-title"
+      >
         <div className="management-page__section-header">
           <div>
-            <h2 id="product-list-title" className="management-page__section-title">
+            <h2
+              id="product-list-title"
+              className="management-page__section-title"
+            >
               商品一覧
             </h2>
             <p className="management-page__section-summary">
@@ -683,7 +702,11 @@ export function ProductListPage() {
         {productItems.length === 0 ? (
           <ScreenEmptyState message="条件に合う商品が見つかりませんでした。">
             <div className="management-form__actions">
-              <button className="secondary-button" type="button" onClick={clearFilters}>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={clearFilters}
+              >
                 条件をクリア
               </button>
               <Link className="primary-button button-link" to="/products/new">
@@ -718,7 +741,9 @@ export function ProductListPage() {
                   <div className="product-list-card__body">
                     <div className="product-list-card__header">
                       <div>
-                        <p className="product-list-card__product-id">{product.productId}</p>
+                        <p className="product-list-card__product-id">
+                          {product.productId}
+                        </p>
                         <h3
                           id={`product-name-${product.productId}`}
                           className="product-list-card__title"
@@ -726,7 +751,9 @@ export function ProductListPage() {
                           {product.name}
                         </h3>
                       </div>
-                      <span className={productStatusBadgeClassNames[product.status]}>
+                      <span
+                        className={productStatusBadgeClassNames[product.status]}
+                      >
                         {PRODUCT_STATUS_LABELS[product.status]}
                       </span>
                     </div>

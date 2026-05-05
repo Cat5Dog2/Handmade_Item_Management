@@ -70,6 +70,7 @@ export async function getStorageReadUrl(
   options: StorageReadUrlOptions = {}
 ) {
   if (isStorageEmulatorEnabled()) {
+    // Local signed URLs must be generated against the emulator host the browser can reach.
     const bucketName = resolveBucketName(bucket);
 
     if (!bucketName) {

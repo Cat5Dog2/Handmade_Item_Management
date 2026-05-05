@@ -12,12 +12,12 @@ import {
 } from "./product-image-documents";
 import { createImageNotFoundError } from "./product-image-errors";
 import type {
-  FirestoreTransactionLike,
   ProductDocument,
   ProductImageBucket,
   ProductImageDocument
 } from "./product-image-service-types";
 import { deleteProductImageStorageFiles } from "./product-image-storage";
+import { updateProductImageMetadataInTransaction } from "./product-image-transactions";
 
 interface DeleteProductImageOptions {
   bucket?: ProductImageBucket;
@@ -33,6 +33,7 @@ function normalizeImagesAfterDelete(
   images: ProductImageDocument[],
   deletedImageId: string
 ) {
+  // Deletion keeps product images as a 1-based ordered list and reselects primary image when needed.
   const sortedImages = sortProductImages(images);
   const deletedImage = sortedImages.find(
     (image) => image.imageId === deletedImageId
@@ -46,8 +47,8 @@ function normalizeImagesAfterDelete(
     (image) => image.imageId !== deletedImageId
   );
   const primaryImageId = deletedImage.isPrimary
-    ? remainingImages[0]?.imageId ?? null
-    : remainingImages.find((image) => image.isPrimary)?.imageId ?? null;
+    ? (remainingImages[0]?.imageId ?? null)
+    : (remainingImages.find((image) => image.isPrimary)?.imageId ?? null);
 
   return {
     deletedImage,
@@ -76,31 +77,30 @@ export async function deleteProductImage(
   const currentImages = product.images ?? [];
   findProductImageOrThrow(currentImages, imageId);
 
-  const result = await db.runTransaction(async (transaction) => {
-    const typedTransaction = transaction as unknown as FirestoreTransactionLike;
-    const latestSnapshot = await typedTransaction.get(productReference);
+  const result = await db.runTransaction((transaction) =>
+    updateProductImageMetadataInTransaction(
+      transaction,
+      productReference,
+      imageId,
+      now,
+      (latestProduct, updatedAt) => {
+        const latestImages = latestProduct.images ?? [];
+        const { deletedImage, images: updatedImages } =
+          normalizeImagesAfterDelete(latestImages, imageId);
 
-    assertRelatedProductAvailable(latestSnapshot);
-
-    const latestProduct = latestSnapshot.data() as ProductDocument;
-    const latestImages = latestProduct.images ?? [];
-    const { deletedImage, images: updatedImages } = normalizeImagesAfterDelete(
-      latestImages,
-      imageId
-    );
-    const updatedAt = now();
-
-    typedTransaction.set(productReference, {
-      ...latestProduct,
-      images: updatedImages,
-      updatedAt
-    });
-
-    return {
-      deletedImage,
-      updatedAt
-    };
-  });
+        return {
+          data: {
+            ...latestProduct,
+            images: updatedImages,
+            updatedAt
+          },
+          result: {
+            deletedImage
+          }
+        };
+      }
+    )
+  );
   const bucket = options.bucket ?? getStorageBucket();
 
   await deleteProductImageStorageFiles(bucket, result.deletedImage);

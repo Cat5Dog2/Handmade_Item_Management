@@ -250,6 +250,8 @@ export async function listProducts(
   const normalizedKeyword = query.keyword
     ? normalizeSearchKeyword(query.keyword)
     : undefined;
+
+  // Apply only index-friendly filters in Firestore; keyword matching is resolved below for MVP-scale data.
   let productQuery = db
     .collection("products")
     .where("isDeleted", "==", false);

@@ -14,11 +14,11 @@ import {
 } from "../images/product-image-processing";
 import { findProductImageOrThrow } from "./product-image-documents";
 import type {
-  FirestoreTransactionLike,
   ProductDocument,
   ProductImageBucket
 } from "./product-image-service-types";
 import { saveProductImageStorageFiles } from "./product-image-storage";
+import { updateProductImageMetadataInTransaction } from "./product-image-transactions";
 
 interface ReplaceProductImageOptions {
   bucket?: ProductImageBucket;
@@ -52,27 +52,21 @@ export async function replaceProductImage(
 
   const processedImage = await processProductImageBuffer(file.buffer);
   const storagePaths = getProductImageStoragePaths(productId, imageId);
-  const result = await db.runTransaction(async (transaction) => {
-    const typedTransaction = transaction as unknown as FirestoreTransactionLike;
-    const latestSnapshot = await typedTransaction.get(productReference);
-
-    assertRelatedProductAvailable(latestSnapshot);
-
-    const latestProduct = latestSnapshot.data() as ProductDocument;
-
-    findProductImageOrThrow(latestProduct.images, imageId);
-
-    const updatedAt = now();
-
-    typedTransaction.set(productReference, {
-      ...latestProduct,
-      updatedAt
-    });
-
-    return {
-      updatedAt
-    };
-  });
+  const result = await db.runTransaction((transaction) =>
+    updateProductImageMetadataInTransaction(
+      transaction,
+      productReference,
+      imageId,
+      now,
+      (latestProduct, updatedAt) => ({
+        data: {
+          ...latestProduct,
+          updatedAt
+        },
+        result: {}
+      })
+    )
+  );
   const bucket = options.bucket ?? getStorageBucket();
 
   await saveProductImageStorageFiles(

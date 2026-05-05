@@ -458,6 +458,10 @@ export function ProductDetailPage() {
     }
   };
 
+  const handleQrPrint = () => {
+    window.print();
+  };
+
   if (productDetailQuery.isPending) {
     return (
       <section
@@ -768,10 +772,34 @@ export function ProductDetailPage() {
               >
                 QR読み取りへ
               </Link>
+              <button
+                className="secondary-button"
+                disabled={!qrSvg || qrError}
+                type="button"
+                onClick={handleQrPrint}
+              >
+                QRコードを印刷
+              </button>
             </div>
           </div>
         </article>
       </section>
+
+      {qrSvg ? (
+        <aside
+          className="product-detail-page__qr-print"
+          aria-label={`${product.productId} の印刷用QRコード`}
+        >
+          <p className="product-detail-page__qr-print-title">QRコード</p>
+          <p className="product-detail-page__qr-print-name">{product.name}</p>
+          <p className="product-detail-page__qr-print-id">{product.productId}</p>
+          <div
+            className="product-detail-page__qr-print-svg"
+            dangerouslySetInnerHTML={{ __html: qrSvg }}
+          />
+          <p className="product-detail-page__qr-print-value">{qrCodeValue}</p>
+        </aside>
+      ) : null}
 
       {isDeleteDialogOpen ? (
         <div className="app-dialog__backdrop" role="presentation">

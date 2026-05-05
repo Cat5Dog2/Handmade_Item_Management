@@ -80,6 +80,7 @@ export async function createProductImage(
   const storagePaths = getProductImageStoragePaths(productId, imageId);
   let shouldCleanup = false;
 
+  // Store bytes first, then remove them if Firestore rejects the latest product state.
   try {
     shouldCleanup = true;
     await saveProductImageStorageFiles(

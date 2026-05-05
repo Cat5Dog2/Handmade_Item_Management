@@ -226,6 +226,8 @@ export async function updateProduct(
     );
     const changedFields = getChangedFields(product, parsedInput.data);
     const updatedAt = now();
+
+    // Sale fields are owned here: soldAt is stable while sold, and customer snapshots exist only for sold products.
     const soldAt =
       parsedInput.data.status === "sold" ? product.soldAt ?? updatedAt : null;
     const soldCustomerId =

@@ -24,6 +24,8 @@ export async function updateProductImageMetadataInTransaction<
   ) => ProductImageMetadataUpdate<TResult>
 ): Promise<TResult & { updatedAt: Timestamp }> {
   const typedTransaction = transaction as unknown as FirestoreTransactionLike;
+
+  // Re-read inside the transaction so concurrent image changes cannot bypass availability checks.
   const latestSnapshot = await typedTransaction.get(productReference);
 
   assertRelatedProductAvailable(latestSnapshot);

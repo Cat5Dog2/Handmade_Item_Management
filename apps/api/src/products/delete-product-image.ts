@@ -33,6 +33,7 @@ function normalizeImagesAfterDelete(
   images: ProductImageDocument[],
   deletedImageId: string
 ) {
+  // Deletion keeps product images as a 1-based ordered list and reselects primary image when needed.
   const sortedImages = sortProductImages(images);
   const deletedImage = sortedImages.find(
     (image) => image.imageId === deletedImageId

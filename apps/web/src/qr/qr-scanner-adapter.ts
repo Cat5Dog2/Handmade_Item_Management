@@ -5,13 +5,8 @@ import {
 } from "html5-qrcode";
 
 const QR_CAMERA_SCAN_CONFIG: Html5QrcodeCameraScanConfig = {
-  aspectRatio: 1,
   disableFlip: true,
-  fps: 10,
-  qrbox: {
-    height: 240,
-    width: 240
-  }
+  fps: 10
 };
 
 type Html5QrcodeLike = Pick<Html5Qrcode, "clear" | "pause" | "resume" | "start" | "stop">;
@@ -50,17 +45,25 @@ export function createQrScannerController(
       scanner.resume();
     },
     start(onSuccess) {
-      return scanner.start(
-        { facingMode: "environment" },
-        QR_CAMERA_SCAN_CONFIG,
-        (decodedText) => {
-          onSuccess(decodedText);
-        },
-        () => undefined
-      );
+      try {
+        return scanner.start(
+          { facingMode: "environment" },
+          QR_CAMERA_SCAN_CONFIG,
+          (decodedText) => {
+            onSuccess(decodedText);
+          },
+          () => undefined
+        );
+      } catch (error) {
+        return Promise.reject(error);
+      }
     },
     stop() {
-      return scanner.stop();
+      try {
+        return scanner.stop();
+      } catch {
+        return Promise.resolve();
+      }
     }
   };
 }

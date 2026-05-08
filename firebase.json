@@ -40,7 +40,7 @@
         "source": "/api/**",
         "run": {
           "serviceId": "handmade-sales-api",
-          "region": "asia-northeast1"
+          "region": "asia-northeast2"
         }
       },
       {

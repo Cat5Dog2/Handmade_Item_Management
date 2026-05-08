@@ -104,10 +104,10 @@ MVPでは、次のようなシンプルな命名を推奨する。
 | Firebase / GCP Project ID | `your-project-id` |
 | Cloud Run service | `handmade-sales-api` |
 | Artifact Registry repository | `handmade-sales-api` |
-| Cloud Run region | `asia-northeast1` |
+| Cloud Run region | `asia-northeast2` |
 | Hosting site | default site |
 
-リージョンは利用者が日本前提のため、**`asia-northeast1` を第一候補**とする。
+リージョンは利用者が日本前提のため、**`asia-northeast2` を第一候補**とする。
 
 ---
 
@@ -168,7 +168,7 @@ Cloud Run に渡す API コンテナを保存するため、Docker リポジト�
 ```bash
 gcloud artifacts repositories create handmade-sales-api \
   --repository-format=docker \
-  --location=asia-northeast1 \
+  --location=asia-northeast2 \
   --description="Handmade sales API images"
 ```
 
@@ -364,11 +364,11 @@ gcloud builds submit \
 
 ```bash
 gcloud run deploy handmade-sales-api \
-  --image asia-northeast1-docker.pkg.dev/your-project-id/handmade-sales-api/api:latest \
-  --region asia-northeast1 \
+  --image asia-northeast2-docker.pkg.dev/your-project-id/handmade-sales-api/api:latest \
+  --region asia-northeast2 \
   --platform managed \
   --allow-unauthenticated \
-  --set-env-vars PORT=8080,API_BASE_PATH=/api,APP_OWNER_EMAIL=your-login-email@example.com,CORS_ORIGIN=https://your-project-id.web.app,GOOGLE_CLOUD_PROJECT=your-project-id,FIREBASE_PROJECT_ID=your-project-id,FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com,SIGNED_URL_EXPIRES_MINUTES=60,IMAGE_MAX_FILE_SIZE_MB=10,IMAGE_MAX_COUNT_PER_PRODUCT=10,IMAGE_DISPLAY_MAX_EDGE_PX=2000,IMAGE_THUMB_MAX_EDGE_PX=400,IMAGE_OUTPUT_FORMAT=webp,IMAGE_DISPLAY_WEBP_QUALITY=82,IMAGE_THUMB_WEBP_QUALITY=75,PRODUCT_ID_PREFIX=HM-,PRODUCT_ID_DIGITS=6,PRODUCT_COUNTER_DOCUMENT_PATH=counters/product
+  --set-env-vars API_BASE_PATH=/api,APP_OWNER_EMAIL=your-login-email@example.com,CORS_ORIGIN=https://your-project-id.web.app,GOOGLE_CLOUD_PROJECT=your-project-id,FIREBASE_PROJECT_ID=your-project-id,FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com,SIGNED_URL_EXPIRES_MINUTES=60,IMAGE_MAX_FILE_SIZE_MB=10,IMAGE_MAX_COUNT_PER_PRODUCT=10,IMAGE_DISPLAY_MAX_EDGE_PX=2000,IMAGE_THUMB_MAX_EDGE_PX=400,IMAGE_OUTPUT_FORMAT=webp,IMAGE_DISPLAY_WEBP_QUALITY=82,IMAGE_THUMB_WEBP_QUALITY=75,PRODUCT_ID_PREFIX=HM-,PRODUCT_ID_DIGITS=6,PRODUCT_COUNTER_DOCUMENT_PATH=counters/product
 ```
 
 補足:
@@ -577,7 +577,7 @@ firebase emulators:start --only auth,firestore,storage,hosting
 
 ```bash
 docker build -f apps/api/Dockerfile \
-  -t asia-northeast1-docker.pkg.dev/your-project-id/handmade-sales-api/api:latest \
+  -t asia-northeast2-docker.pkg.dev/your-project-id/handmade-sales-api/api:latest \
   .
 ```
 
@@ -591,11 +591,11 @@ gcloud builds submit --config cloudbuild.yaml --substitutions=_APP_OWNER_EMAIL=y
 
 ```bash
 gcloud run deploy handmade-sales-api \
-  --image asia-northeast1-docker.pkg.dev/your-project-id/handmade-sales-api/api:latest \
-  --region asia-northeast1 \
+  --image asia-northeast2-docker.pkg.dev/your-project-id/handmade-sales-api/api:latest \
+  --region asia-northeast2 \
   --platform managed \
   --allow-unauthenticated \
-  --set-env-vars PORT=8080,API_BASE_PATH=/api,APP_OWNER_EMAIL=your-login-email@example.com,CORS_ORIGIN=https://your-project-id.web.app,GOOGLE_CLOUD_PROJECT=your-project-id,FIREBASE_PROJECT_ID=your-project-id,FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com,SIGNED_URL_EXPIRES_MINUTES=60,IMAGE_MAX_FILE_SIZE_MB=10,IMAGE_MAX_COUNT_PER_PRODUCT=10,IMAGE_DISPLAY_MAX_EDGE_PX=2000,IMAGE_THUMB_MAX_EDGE_PX=400,IMAGE_OUTPUT_FORMAT=webp,IMAGE_DISPLAY_WEBP_QUALITY=82,IMAGE_THUMB_WEBP_QUALITY=75,PRODUCT_ID_PREFIX=HM-,PRODUCT_ID_DIGITS=6,PRODUCT_COUNTER_DOCUMENT_PATH=counters/product
+  --set-env-vars API_BASE_PATH=/api,APP_OWNER_EMAIL=your-login-email@example.com,CORS_ORIGIN=https://your-project-id.web.app,GOOGLE_CLOUD_PROJECT=your-project-id,FIREBASE_PROJECT_ID=your-project-id,FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com,SIGNED_URL_EXPIRES_MINUTES=60,IMAGE_MAX_FILE_SIZE_MB=10,IMAGE_MAX_COUNT_PER_PRODUCT=10,IMAGE_DISPLAY_MAX_EDGE_PX=2000,IMAGE_THUMB_MAX_EDGE_PX=400,IMAGE_OUTPUT_FORMAT=webp,IMAGE_DISPLAY_WEBP_QUALITY=82,IMAGE_THUMB_WEBP_QUALITY=75,PRODUCT_ID_PREFIX=HM-,PRODUCT_ID_DIGITS=6,PRODUCT_COUNTER_DOCUMENT_PATH=counters/product
 ```
 
 ### Web ビルド

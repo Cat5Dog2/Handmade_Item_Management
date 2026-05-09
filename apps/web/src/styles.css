@@ -836,20 +836,36 @@ input {
 .dashboard-count-grid,
 .dashboard-page__columns {
   display: grid;
-  gap: 12px;
+  gap: 8px;
+}
+
+.dashboard-count-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dashboard-count-grid > * {
+  min-width: 0;
 }
 
 .dashboard-count-card {
   display: grid;
-  gap: 8px;
-  min-height: 112px;
-  padding: 16px;
+  align-content: space-between;
+  gap: 6px;
+  min-height: 88px;
+  padding: 10px 8px;
   border: 1px solid #d5e2d8;
   border-radius: 8px;
   background: #ffffff;
 }
 
-.dashboard-count-card__label,
+.dashboard-count-card__label {
+  margin: 0;
+  color: #52606d;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
 .dashboard-link-card__id {
   margin: 0;
   color: #52606d;
@@ -859,7 +875,7 @@ input {
 .dashboard-count-card__value {
   margin: 0;
   color: #1f2933;
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 800;
   line-height: 1;
 }
@@ -1453,6 +1469,20 @@ input {
 
   .dashboard-count-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .dashboard-count-card {
+    min-height: 112px;
+    padding: 16px;
+  }
+
+  .dashboard-count-card__label {
+    font-size: 0.875rem;
+  }
+
+  .dashboard-count-card__value {
+    font-size: 2rem;
   }
 
   .dashboard-page__columns {

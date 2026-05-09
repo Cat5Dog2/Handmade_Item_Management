@@ -1597,7 +1597,8 @@ input {
 
 @media print {
   @page {
-    margin: 12mm;
+    size: A4 portrait;
+    margin: 10mm;
   }
 
   html,
@@ -1608,6 +1609,7 @@ input {
 
   body {
     min-width: 0;
+    margin: 0;
     background: #ffffff;
   }
 
@@ -1632,47 +1634,61 @@ input {
   .product-detail-page__qr-print {
     position: static;
     display: grid;
-    justify-items: center;
-    gap: 6px;
-    width: 72mm;
-    min-height: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+    width: 190mm;
+    height: 277mm;
     margin: 0 auto;
     padding: 0;
     background: #ffffff;
     color: #111827;
     text-align: center;
+  }
+
+  .product-detail-page__qr-print-label {
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 2mm;
+    min-width: 0;
+    padding: 3mm 5mm;
+    border: 0.2mm solid #d1d5db;
+    background: #ffffff;
+    box-sizing: border-box;
+    overflow: hidden;
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  .product-detail-page__qr-print-title,
   .product-detail-page__qr-print-name,
-  .product-detail-page__qr-print-id,
-  .product-detail-page__qr-print-value {
+  .product-detail-page__qr-print-id {
     margin: 0;
   }
 
-  .product-detail-page__qr-print-title {
-    font-size: 12pt;
-    font-weight: 700;
-  }
-
   .product-detail-page__qr-print-name {
-    max-width: 72mm;
-    font-size: 14pt;
+    display: -webkit-box;
+    max-width: 100%;
+    overflow: hidden;
+    color: #111827;
+    font-size: 9pt;
     font-weight: 700;
+    line-height: 1.2;
     overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
-  .product-detail-page__qr-print-id,
-  .product-detail-page__qr-print-value {
-    font-size: 10pt;
+  .product-detail-page__qr-print-id {
+    color: #374151;
+    font-size: 9pt;
+    font-weight: 700;
+    line-height: 1.2;
   }
 
   .product-detail-page__qr-print-svg,
   .product-detail-page__qr-print-svg svg {
     display: block;
-    width: 52mm;
-    height: 52mm;
+    width: 34mm;
+    height: 34mm;
   }
 }

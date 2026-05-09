@@ -278,7 +278,13 @@ input {
   gap: 12px;
 }
 
+.app-header__title-group {
+  min-width: 0;
+}
+
 .header-button {
+  flex: 0 0 auto;
+  margin-left: auto;
   padding: 10px 14px;
   border: 1px solid #cbd8cf;
   border-radius: 8px;

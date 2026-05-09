@@ -158,6 +158,12 @@ function AppHeader() {
   return (
     <header className="app-header">
       <div className="app-header__main">
+        <div className="app-header__title-group">
+          <p className="app-header__brand">{APP_NAME}</p>
+          <p className="app-header__title">
+            {currentRoute?.title ?? "ワークスペース"}
+          </p>
+        </div>
         {canGoBack ? (
           <button
             className="header-button"
@@ -167,12 +173,6 @@ function AppHeader() {
             戻る
           </button>
         ) : null}
-        <div>
-          <p className="app-header__brand">{APP_NAME}</p>
-          <p className="app-header__title">
-            {currentRoute?.title ?? "ワークスペース"}
-          </p>
-        </div>
       </div>
     </header>
   );

@@ -1,5 +1,5 @@
 ﻿import { QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { useLocation, MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { API_PATHS } from "@handmade/shared";
@@ -10,8 +10,16 @@ const apiClientMock = vi.hoisted(() => ({
   get: vi.fn()
 }));
 
+const qrCodeMock = vi.hoisted(() => ({
+  toString: vi.fn()
+}));
+
 vi.mock("../api/api-client-context", () => ({
   useApiClient: () => apiClientMock
+}));
+
+vi.mock("qrcode", () => ({
+  toString: qrCodeMock.toString
 }));
 
 const categoriesResponse = {
@@ -61,7 +69,22 @@ const soldProduct = {
   updatedAt: "2026-04-17T00:00:00Z"
 };
 
+const bulkPrintProducts = Array.from({ length: 11 }, (_, index) => {
+  const productNumber = index + 1;
+  const productId = `HM-${String(productNumber).padStart(6, "0")}`;
+
+  return {
+    categoryName: "アクセサリー",
+    name: `Bulk Product ${String(productNumber).padStart(2, "0")}`,
+    productId,
+    status: "inStock" as const,
+    thumbnailUrl: null,
+    updatedAt: "2026-04-18T00:00:00Z"
+  };
+});
+
 let productsMode: "success" | "error" = "success";
+let printMock: ReturnType<typeof vi.fn>;
 
 function LocationProbe() {
   const location = useLocation();
@@ -102,6 +125,13 @@ describe("ProductListPage", () => {
   beforeEach(() => {
     productsMode = "success";
     apiClientMock.get.mockReset();
+    qrCodeMock.toString.mockReset();
+    qrCodeMock.toString.mockResolvedValue("<svg viewBox=\"0 0 10 10\"></svg>");
+    printMock = vi.fn();
+    Object.defineProperty(window, "print", {
+      configurable: true,
+      value: printMock
+    });
     apiClientMock.get.mockImplementation(async (path: string, options?: { query?: Record<string, unknown> }) => {
       if (path === API_PATHS.categories) {
         return categoriesResponse;
@@ -131,6 +161,20 @@ describe("ProductListPage", () => {
               page,
               pageSize,
               totalCount: 0
+            }
+          };
+        }
+
+        if (keyword === "bulk") {
+          return {
+            data: {
+              items: bulkPrintProducts
+            },
+            meta: {
+              hasNext: false,
+              page,
+              pageSize,
+              totalCount: bulkPrintProducts.length
             }
           };
         }
@@ -373,5 +417,43 @@ describe("ProductListPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "再試行" }));
 
     await screen.findByRole("listitem", undefined, { timeout: 8000 });
+  }, 10000);
+
+  it("selects ten products and prints their QR codes in bulk", async () => {
+    renderProductList("/products?keyword=bulk");
+
+    await screen.findByText("Bulk Product 01", undefined, { timeout: 8000 });
+
+    fireEvent.click(screen.getByRole("button", { name: "まとめて印刷" }));
+
+    expect(
+      screen.getByRole("button", { name: "選択したQRを印刷" })
+    ).toBeDisabled();
+
+    for (const product of bulkPrintProducts.slice(0, 10)) {
+      fireEvent.click(
+        screen.getByLabelText(`${product.name}を印刷対象に選択`)
+      );
+    }
+
+    expect(screen.getByText("10 / 10件選択中")).toBeInTheDocument();
+    expect(
+      screen.getByLabelText("Bulk Product 11を印刷対象に選択")
+    ).toBeDisabled();
+
+    const printArea = screen.getByLabelText("まとめて印刷用QRコード");
+    expect(within(printArea).getAllByRole("listitem")).toHaveLength(10);
+    expect(within(printArea).getByText("Bulk Product 01")).toBeInTheDocument();
+    expect(within(printArea).getByText("HM-000010")).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "選択したQRを印刷" })
+      ).toBeEnabled();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "選択したQRを印刷" }));
+
+    expect(printMock).toHaveBeenCalledTimes(1);
   }, 10000);
 });

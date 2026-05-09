@@ -822,25 +822,21 @@ export function ProductDetailPage() {
 
       {qrSvg ? (
         <aside
-          className="product-detail-page__qr-print"
+          className="qr-print-sheet product-detail-page__qr-print"
           aria-label={`${product.productId} の印刷用QRコード`}
           role="list"
         >
           {QR_PRINT_LABEL_INDICES.map((index) => (
             <article
               key={index}
-              className="product-detail-page__qr-print-label"
+              className="qr-print-label"
               aria-label={`${product.productId} の印刷用QRコード ${index + 1}`}
               role="listitem"
             >
-              <p className="product-detail-page__qr-print-name">
-                {product.name}
-              </p>
-              <p className="product-detail-page__qr-print-id">
-                {product.productId}
-              </p>
+              <p className="qr-print-name">{product.name}</p>
+              <p className="qr-print-id">{product.productId}</p>
               <div
-                className="product-detail-page__qr-print-svg"
+                className="qr-print-svg"
                 dangerouslySetInnerHTML={{ __html: qrSvg }}
               />
             </article>

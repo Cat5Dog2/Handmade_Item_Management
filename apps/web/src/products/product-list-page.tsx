@@ -1,6 +1,7 @@
 import type {
   CategoryListData,
   ProductListData,
+  ProductListItem,
   ProductListMeta,
   ProductListQuery,
   ProductSortBy,
@@ -15,6 +16,7 @@ import {
   productListQuerySchema
 } from "@handmade/shared";
 import { useQuery } from "@tanstack/react-query";
+import { toString as generateQRCodeSvg } from "qrcode";
 import {
   useEffect,
   useMemo,
@@ -58,7 +60,14 @@ interface ProductListFilterState {
   tagId: string;
 }
 
+interface ProductQrPrintItem {
+  name: string;
+  productId: string;
+  qrCodeValue: string;
+}
+
 const DEFAULT_PAGE_SIZE = 50;
+const BULK_QR_PRINT_LIMIT = 10;
 const DEFAULT_QUERY: Required<
   Pick<
     ProductListQuery,
@@ -225,6 +234,63 @@ function EmptyImagePlaceholder() {
   return <div className="product-list-card__image-placeholder">画像なし</div>;
 }
 
+function toProductQrPrintItem(product: ProductListItem): ProductQrPrintItem {
+  return {
+    name: product.name,
+    productId: product.productId,
+    qrCodeValue: product.productId
+  };
+}
+
+function ProductListCardContent({ product }: { product: ProductListItem }) {
+  return (
+    <>
+      <div className="product-list-card__image">
+        {product.thumbnailUrl ? (
+          <img
+            alt={product.name}
+            className="product-list-card__image-element"
+            loading="lazy"
+            src={product.thumbnailUrl}
+          />
+        ) : (
+          <EmptyImagePlaceholder />
+        )}
+      </div>
+
+      <div className="product-list-card__body">
+        <div className="product-list-card__header">
+          <div>
+            <p className="product-list-card__product-id">
+              {product.productId}
+            </p>
+            <h3
+              id={`product-name-${product.productId}`}
+              className="product-list-card__title"
+            >
+              {product.name}
+            </h3>
+          </div>
+          <span className={productStatusBadgeClassNames[product.status]}>
+            {PRODUCT_STATUS_LABELS[product.status]}
+          </span>
+        </div>
+
+        <dl className="product-list-card__details">
+          <div>
+            <dt>カテゴリ</dt>
+            <dd>{product.categoryName ?? "未設定"}</dd>
+          </div>
+          <div>
+            <dt>更新日時</dt>
+            <dd>{formatUpdatedAt(product.updatedAt)}</dd>
+          </div>
+        </dl>
+      </div>
+    </>
+  );
+}
+
 export function ProductListPage() {
   const apiClient = useApiClient();
   const location = useLocation();
@@ -240,6 +306,14 @@ export function ProductListPage() {
   const [draftFilters, setDraftFilters] = useState<ProductListFilterState>(() =>
     toFilterState(currentQuery)
   );
+  const [isBulkPrintMode, setIsBulkPrintMode] = useState(false);
+  const [selectedPrintProducts, setSelectedPrintProducts] = useState<
+    ProductQrPrintItem[]
+  >([]);
+  const [bulkPrintQrSvgs, setBulkPrintQrSvgs] = useState<
+    Record<string, string>
+  >({});
+  const [hasBulkPrintQrError, setHasBulkPrintQrError] = useState(false);
   const previousIncludeSoldRef = useRef(DEFAULT_FILTER_STATE.includeSold);
 
   useEffect(() => {
@@ -251,6 +325,45 @@ export function ProductListPage() {
   }, [currentQuery]);
 
   useNavigationNotice(location, navigate, setNotice);
+
+  useEffect(() => {
+    if (selectedPrintProducts.length === 0) {
+      setBulkPrintQrSvgs({});
+      setHasBulkPrintQrError(false);
+      return;
+    }
+
+    let isCurrent = true;
+    setHasBulkPrintQrError(false);
+
+    void Promise.all(
+      selectedPrintProducts.map(async (product) => {
+        const svg = await generateQRCodeSvg(product.qrCodeValue, {
+          errorCorrectionLevel: "M",
+          margin: 2,
+          type: "svg",
+          width: 160
+        });
+
+        return [product.productId, svg] as const;
+      })
+    )
+      .then((entries) => {
+        if (isCurrent) {
+          setBulkPrintQrSvgs(Object.fromEntries(entries));
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setHasBulkPrintQrError(true);
+          setBulkPrintQrSvgs({});
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [selectedPrintProducts]);
 
   const categoriesQuery = useQuery({
     queryKey: queryKeys.categories.list,
@@ -379,6 +492,69 @@ export function ProductListPage() {
     });
   };
 
+  const startBulkPrintMode = () => {
+    setNotice(null);
+    setIsBulkPrintMode(true);
+  };
+
+  const stopBulkPrintMode = () => {
+    setNotice(null);
+    setIsBulkPrintMode(false);
+    setSelectedPrintProducts([]);
+  };
+
+  const clearBulkPrintSelection = () => {
+    setNotice(null);
+    setSelectedPrintProducts([]);
+  };
+
+  const togglePrintProduct = (
+    product: ProductListItem,
+    isSelected: boolean
+  ) => {
+    setNotice(null);
+    setSelectedPrintProducts((current) => {
+      if (!isSelected) {
+        return current.filter((item) => item.productId !== product.productId);
+      }
+
+      if (current.some((item) => item.productId === product.productId)) {
+        return current;
+      }
+
+      if (current.length >= BULK_QR_PRINT_LIMIT) {
+        return current;
+      }
+
+      return [...current, toProductQrPrintItem(product)];
+    });
+  };
+
+  const handleBulkPrint = () => {
+    if (selectedPrintProducts.length !== BULK_QR_PRINT_LIMIT) {
+      setNotice({
+        message: "まとめて印刷する商品を10件選択してください。",
+        type: "error"
+      });
+      return;
+    }
+
+    if (
+      hasBulkPrintQrError ||
+      selectedPrintProducts.some(
+        (product) => !bulkPrintQrSvgs[product.productId]
+      )
+    ) {
+      setNotice({
+        message: "QRコードを生成できませんでした。再度お試しください。",
+        type: "error"
+      });
+      return;
+    }
+
+    window.print();
+  };
+
   if (isInitialLoading) {
     return (
       <section
@@ -444,6 +620,14 @@ export function ProductListPage() {
   const lastPage = Math.max(Math.ceil(totalCount / pageSize), 1);
   const canGoPrevious = currentPage > 1;
   const canGoNext = productMeta?.hasNext ?? false;
+  const selectedPrintCount = selectedPrintProducts.length;
+  const canSelectMorePrintProducts = selectedPrintCount < BULK_QR_PRINT_LIMIT;
+  const canPrintSelectedProducts =
+    selectedPrintCount === BULK_QR_PRINT_LIMIT &&
+    !hasBulkPrintQrError &&
+    selectedPrintProducts.every(
+      (product) => Boolean(bulkPrintQrSvgs[product.productId])
+    );
 
   return (
     <section
@@ -459,9 +643,18 @@ export function ProductListPage() {
               条件を整えて必要な一点へすばやくたどり着きます。
             </p>
           </div>
-          <Link className="primary-button button-link" to="/products/new">
-            商品登録
-          </Link>
+          <div className="product-list-page__header-actions">
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={startBulkPrintMode}
+            >
+              まとめて印刷
+            </button>
+            <Link className="primary-button button-link" to="/products/new">
+              商品登録
+            </Link>
+          </div>
         </div>
         {productsQuery.isFetching ? (
           <p className="management-page__sync" role="status">
@@ -708,6 +901,47 @@ export function ProductListPage() {
           </p>
         </div>
 
+        {isBulkPrintMode ? (
+          <div className="management-card product-list-print-toolbar">
+            <div>
+              <h3 className="product-list-print-toolbar__title">
+                まとめて印刷
+              </h3>
+              <p className="management-form__hint">
+                A4縦向きに2列×5行で印刷する商品を10件選択してください。
+              </p>
+              <p className="product-list-print-toolbar__status" role="status">
+                {selectedPrintCount} / {BULK_QR_PRINT_LIMIT}件選択中
+              </p>
+            </div>
+            <div className="management-card__actions">
+              <button
+                className="primary-button"
+                disabled={!canPrintSelectedProducts}
+                type="button"
+                onClick={handleBulkPrint}
+              >
+                選択したQRを印刷
+              </button>
+              <button
+                className="secondary-button"
+                disabled={selectedPrintCount === 0}
+                type="button"
+                onClick={clearBulkPrintSelection}
+              >
+                選択解除
+              </button>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={stopBulkPrintMode}
+              >
+                終了
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         {productItems.length === 0 ? (
           <ScreenEmptyState message="条件に合う商品が見つかりませんでした。">
             <div className="management-form__actions">
@@ -726,60 +960,53 @@ export function ProductListPage() {
         ) : (
           <>
             <div className="product-list-grid" role="list">
-              {productItems.map((product) => (
-                <Link
-                  key={product.productId}
-                  aria-labelledby={`product-name-${product.productId}`}
-                  className="product-list-card"
-                  role="listitem"
-                  to={`/products/${product.productId}`}
-                >
-                  <div className="product-list-card__image">
-                    {product.thumbnailUrl ? (
-                      <img
-                        alt={product.name}
-                        className="product-list-card__image-element"
-                        loading="lazy"
-                        src={product.thumbnailUrl}
-                      />
-                    ) : (
-                      <EmptyImagePlaceholder />
-                    )}
-                  </div>
+              {productItems.map((product) => {
+                const isPrintSelected = selectedPrintProducts.some(
+                  (item) => item.productId === product.productId
+                );
 
-                  <div className="product-list-card__body">
-                    <div className="product-list-card__header">
-                      <div>
-                        <p className="product-list-card__product-id">
-                          {product.productId}
-                        </p>
-                        <h3
-                          id={`product-name-${product.productId}`}
-                          className="product-list-card__title"
-                        >
-                          {product.name}
-                        </h3>
-                      </div>
-                      <span
-                        className={productStatusBadgeClassNames[product.status]}
-                      >
-                        {PRODUCT_STATUS_LABELS[product.status]}
-                      </span>
-                    </div>
+                if (isBulkPrintMode) {
+                  return (
+                    <article
+                      key={product.productId}
+                      aria-labelledby={`product-name-${product.productId}`}
+                      className="product-list-card product-list-card--selectable"
+                      role="listitem"
+                    >
+                      <label className="product-list-card__select">
+                        <input
+                          aria-label={`${product.name}を印刷対象に選択`}
+                          checked={isPrintSelected}
+                          disabled={
+                            !isPrintSelected && !canSelectMorePrintProducts
+                          }
+                          type="checkbox"
+                          onChange={(event) =>
+                            togglePrintProduct(
+                              product,
+                              event.currentTarget.checked
+                            )
+                          }
+                        />
+                        <span>選択</span>
+                      </label>
+                      <ProductListCardContent product={product} />
+                    </article>
+                  );
+                }
 
-                    <dl className="product-list-card__details">
-                      <div>
-                        <dt>カテゴリ</dt>
-                        <dd>{product.categoryName ?? "未設定"}</dd>
-                      </div>
-                      <div>
-                        <dt>更新日時</dt>
-                        <dd>{formatUpdatedAt(product.updatedAt)}</dd>
-                      </div>
-                    </dl>
-                  </div>
-                </Link>
-              ))}
+                return (
+                  <Link
+                    key={product.productId}
+                    aria-labelledby={`product-name-${product.productId}`}
+                    className="product-list-card"
+                    role="listitem"
+                    to={`/products/${product.productId}`}
+                  >
+                    <ProductListCardContent product={product} />
+                  </Link>
+                );
+              })}
             </div>
 
             <div className="product-list-pagination" aria-label="ページング">
@@ -806,6 +1033,36 @@ export function ProductListPage() {
           </>
         )}
       </section>
+
+      {selectedPrintProducts.length > 0 ? (
+        <aside
+          className="qr-print-sheet product-list-page__qr-print"
+          aria-label="まとめて印刷用QRコード"
+          role="list"
+        >
+          {selectedPrintProducts.map((product, index) => {
+            const qrSvg = bulkPrintQrSvgs[product.productId];
+
+            return (
+              <article
+                key={product.productId}
+                className="qr-print-label"
+                aria-label={`${product.productId} の印刷用QRコード ${index + 1}`}
+                role="listitem"
+              >
+                <p className="qr-print-name">{product.name}</p>
+                <p className="qr-print-id">{product.productId}</p>
+                {qrSvg ? (
+                  <div
+                    className="qr-print-svg"
+                    dangerouslySetInnerHTML={{ __html: qrSvg }}
+                  />
+                ) : null}
+              </article>
+            );
+          })}
+        </aside>
+      ) : null}
     </section>
   );
 }

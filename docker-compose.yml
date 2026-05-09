@@ -49,6 +49,8 @@ services:
       FIREBASE_AUTH_EMULATOR_HOST: "firebase-emulators:9099"
       FIRESTORE_EMULATOR_HOST: "firebase-emulators:8081"
       FIREBASE_STORAGE_EMULATOR_HOST: "firebase-emulators:9199"
+      FIREBASE_STORAGE_BUCKET: "${VITE_FIREBASE_STORAGE_BUCKET:-handmade-item-management.firebasestorage.app}"
+      GOOGLE_APPLICATION_CREDENTIALS: "/workspace/firebase/service-account.docker.json"
       GOOGLE_CLOUD_PROJECT: "${FIREBASE_PROJECT_ID:-handmade-item-management}"
       FIREBASE_PROJECT_ID: "${FIREBASE_PROJECT_ID:-handmade-item-management}"
     volumes:

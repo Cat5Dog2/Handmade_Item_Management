@@ -18,7 +18,7 @@ import {
   taskCreateInputSchema
 } from "@handmade/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiClientError } from "../api/api-client";
 import { getApiErrorDisplayMessage } from "../api/api-error-display";
@@ -208,11 +208,33 @@ export function ProductTaskManagementPage() {
   const [pendingDeleteTask, setPendingDeleteTask] = useState<TaskItem | null>(
     null
   );
+  const [formGuideRequestId, setFormGuideRequestId] = useState(0);
   const [showCompletedTasks, setShowCompletedTasks] = useState(false);
+  const taskFormSectionRef = useRef<HTMLElement | null>(null);
   const taskForm = useZodForm(taskCreateInputSchema, {
     defaultValues: defaultTaskFormValues,
     mode: "onChange"
   });
+  const { setFocus } = taskForm;
+
+  useEffect(() => {
+    if (formMode === "hidden" || formGuideRequestId === 0) {
+      return;
+    }
+
+    const taskFormSection = taskFormSectionRef.current;
+    const prefersReducedMotion =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+
+    if (typeof taskFormSection?.scrollIntoView === "function") {
+      taskFormSection.scrollIntoView({
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+        block: "start"
+      });
+    }
+
+    setFocus("name");
+  }, [formGuideRequestId, formMode, setFocus]);
 
   const productDetailQuery = useQuery({
     enabled: Boolean(productId),
@@ -447,6 +469,7 @@ export function ProductTaskManagementPage() {
     setNotice(null);
     setEditingTask(null);
     setFormMode("create");
+    setFormGuideRequestId((current) => current + 1);
     taskForm.clearErrors();
     taskForm.reset(defaultTaskFormValues);
   };
@@ -455,6 +478,7 @@ export function ProductTaskManagementPage() {
     setNotice(null);
     setEditingTask(task);
     setFormMode("edit");
+    setFormGuideRequestId((current) => current + 1);
     taskForm.clearErrors();
     taskForm.reset({
       content: task.content,
@@ -785,7 +809,8 @@ export function ProductTaskManagementPage() {
 
       {formMode !== "hidden" ? (
         <section
-          className="management-page__section"
+          ref={taskFormSectionRef}
+          className="management-page__section task-management-page__form-section"
           aria-labelledby="task-form-title"
         >
           <div className="management-page__section-header">

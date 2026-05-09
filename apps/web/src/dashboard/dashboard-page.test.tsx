@@ -113,8 +113,9 @@ describe("DashboardPage", () => {
       })
     );
     expect(screen.getByText("制作前")).toBeInTheDocument();
-    expect(screen.getByText("販売済件数")).toBeInTheDocument();
-    expect(screen.getByText("未完了タスク件数")).toBeInTheDocument();
+    expect(screen.getByText("商品合計")).toBeInTheDocument();
+    expect(screen.getByText("21")).toBeInTheDocument();
+    expect(screen.getByText("残タスク")).toBeInTheDocument();
     expect(screen.getByText("8")).toBeInTheDocument();
 
     const taskLink = screen.getByRole("link", {

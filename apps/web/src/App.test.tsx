@@ -207,6 +207,11 @@ describe("App routing", () => {
       "aria-current",
       "page"
     );
+    expect(
+      within(screen.getByRole("banner")).queryByRole("button", {
+        name: "ログアウト"
+      })
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "ログアウト" })).toBeInTheDocument();
   });
 
@@ -220,6 +225,9 @@ describe("App routing", () => {
 
     expect(screen.getByRole("heading", { name: "商品編集" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "戻る" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "ログアウト" })
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "商品一覧" })).toHaveAttribute(
       "aria-current",
       "page"
@@ -353,7 +361,7 @@ describe("App routing", () => {
     expect(authMock.sendPasswordReset).toHaveBeenCalledWith("owner@example.com");
   });
 
-  it("logs out from protected screens", async () => {
+  it("logs out from the dashboard footer action", async () => {
     authMock.setUser({
       email: "owner@example.com",
       getIdToken: async () => "test-id-token",

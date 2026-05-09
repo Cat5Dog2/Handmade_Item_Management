@@ -55,6 +55,13 @@ function formatUpdatedAt(updatedAt: string) {
   return formatJstDateTime(updatedAt);
 }
 
+function getProductTotalCount(dashboard: DashboardResponseData) {
+  return PRODUCT_STATUSES.reduce(
+    (total, status) => total + dashboard.statusCounts[status],
+    0
+  );
+}
+
 function EmptyImagePlaceholder() {
   return (
     <div className="dashboard-recent-product__image-placeholder">画像なし</div>
@@ -202,6 +209,7 @@ export function DashboardPage() {
   }
 
   const dashboard = dashboardQuery.data;
+  const productTotalCount = getProductTotalCount(dashboard);
 
   return (
     <section
@@ -223,7 +231,7 @@ export function DashboardPage() {
               件数
             </h2>
             <p className="management-page__section-summary">
-              ステータス別件数、販売済件数、未完了タスク件数を表示します。
+              ステータス別件数、商品合計、残タスクを表示します。
             </p>
           </div>
         </div>
@@ -237,11 +245,11 @@ export function DashboardPage() {
             </div>
           ))}
           <div role="listitem">
-            <CountCard label="販売済件数" value={dashboard.soldCount} />
+            <CountCard label="商品合計" value={productTotalCount} />
           </div>
           <div role="listitem">
             <CountCard
-              label="未完了タスク件数"
+              label="残タスク"
               value={dashboard.openTaskCount}
             />
           </div>

@@ -64,11 +64,68 @@ const emptySnsAccount: CustomerSnsAccount = {
   url: ""
 };
 
+const snsPlatformOptions = [
+  {
+    label: "Instagram",
+    value: "Instagram",
+    buildUrl: (accountName: string) =>
+      `https://www.instagram.com/${accountName}`
+  },
+  {
+    label: "X",
+    value: "X",
+    buildUrl: (accountName: string) => `https://x.com/${accountName}`
+  },
+  {
+    label: "TikTok",
+    value: "TikTok",
+    buildUrl: (accountName: string) => `https://www.tiktok.com/@${accountName}`
+  },
+  {
+    label: "Facebook",
+    value: "Facebook",
+    buildUrl: (accountName: string) =>
+      `https://www.facebook.com/${accountName}`
+  },
+  {
+    label: "Threads",
+    value: "Threads",
+    buildUrl: (accountName: string) =>
+      `https://www.threads.com/@${accountName}`
+  },
+  {
+    label: "YouTube",
+    value: "YouTube",
+    buildUrl: (accountName: string) =>
+      `https://www.youtube.com/@${accountName}`
+  }
+] as const;
+
 const genderOptions = ["女性", "男性", "その他"] as const;
 const ageGroupOptions = ["10代", "20代", "30代", "40代", "50代", "60代以上"] as const;
 
 function toFormText(value: string | null | undefined) {
   return value ?? "";
+}
+
+function normalizeSnsAccountNameForUrl(value: string | null | undefined) {
+  return (value ?? "").trim().replace(/^@+/, "");
+}
+
+function buildSnsAccountUrl(
+  platform: string | null | undefined,
+  accountName: string | null | undefined
+) {
+  const normalizedAccountName = normalizeSnsAccountNameForUrl(accountName);
+  const platformOption = snsPlatformOptions.find(
+    (option) => option.value === platform
+  );
+
+  if (!platformOption || normalizedAccountName.length === 0) {
+    return "";
+  }
+
+  return platformOption.buildUrl(encodeURIComponent(normalizedAccountName));
 }
 
 function toCustomerFormValues(data: CustomerDetailData): CustomerFormInput {
@@ -80,12 +137,17 @@ function toCustomerFormValues(data: CustomerDetailData): CustomerFormInput {
     gender: toFormText(customer.gender),
     memo: toFormText(customer.memo),
     name: customer.name,
-    snsAccounts: customer.snsAccounts.map((account) => ({
-      accountName: toFormText(account.accountName),
-      note: toFormText(account.note),
-      platform: toFormText(account.platform),
-      url: toFormText(account.url)
-    }))
+    snsAccounts: customer.snsAccounts.map((account) => {
+      const accountName = toFormText(account.accountName);
+      const platform = toFormText(account.platform);
+
+      return {
+        accountName,
+        note: toFormText(account.note),
+        platform,
+        url: buildSnsAccountUrl(platform, accountName)
+      };
+    })
   };
 }
 
@@ -116,6 +178,30 @@ export function CustomerFormPage() {
     control: customerForm.control,
     name: "snsAccounts"
   });
+  const updateSnsAccountUrl = useCallback(
+    (
+      index: number,
+      nextValue: Partial<Pick<CustomerSnsAccount, "accountName" | "platform">>
+    ) => {
+      const currentSnsAccounts = (customerForm.getValues("snsAccounts") ??
+        []) as CustomerSnsAccount[];
+      const currentSnsAccount = currentSnsAccounts[index];
+      const nextPlatform =
+        nextValue.platform ?? currentSnsAccount?.platform ?? "";
+      const nextAccountName =
+        nextValue.accountName ?? currentSnsAccount?.accountName ?? "";
+
+      customerForm.setValue(
+        `snsAccounts.${index}.url`,
+        buildSnsAccountUrl(nextPlatform, nextAccountName),
+        {
+          shouldDirty: true,
+          shouldValidate: true
+        }
+      );
+    },
+    [customerForm]
+  );
 
   const customerDetailQuery = useQuery({
     enabled: isEditMode && Boolean(customerId),
@@ -555,13 +641,24 @@ export function CustomerFormPage() {
                         >
                           プラットフォーム
                         </label>
-                        <input
-                          {...customerForm.register(`snsAccounts.${index}.platform`)}
+                        <select
+                          {...customerForm.register(`snsAccounts.${index}.platform`, {
+                            onChange: (event) =>
+                              updateSnsAccountUrl(index, {
+                                platform: event.target.value
+                              })
+                          })}
                           id={`customer-sns-platform-${field.id}`}
                           className="auth-field__input"
                           disabled={isPageBusy}
-                          type="text"
-                        />
+                        >
+                          <option value="">選択してください</option>
+                          {snsPlatformOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div className="auth-field">
                         <label
@@ -571,7 +668,12 @@ export function CustomerFormPage() {
                           アカウント名
                         </label>
                         <input
-                          {...customerForm.register(`snsAccounts.${index}.accountName`)}
+                          {...customerForm.register(`snsAccounts.${index}.accountName`, {
+                            onChange: (event) =>
+                              updateSnsAccountUrl(index, {
+                                accountName: event.target.value
+                              })
+                          })}
                           id={`customer-sns-account-${field.id}`}
                           className="auth-field__input"
                           disabled={isPageBusy}
@@ -590,6 +692,7 @@ export function CustomerFormPage() {
                           id={`customer-sns-url-${field.id}`}
                           className="auth-field__input"
                           disabled={isPageBusy}
+                          readOnly
                           type="url"
                         />
                       </div>

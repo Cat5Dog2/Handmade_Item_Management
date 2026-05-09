@@ -510,8 +510,8 @@ export function ProductListPage() {
           noValidate
           onSubmit={applyFilters}
         >
-          <div className="management-form__grid">
-            <div className="auth-field">
+          <div className="management-form__grid product-list-filters__grid">
+            <div className="auth-field product-list-filters__keyword">
               <label className="auth-field__label" htmlFor="product-keyword">
                 キーワード
               </label>
@@ -597,6 +597,40 @@ export function ProductListPage() {
             </div>
 
             <div className="auth-field">
+              <label
+                className="auth-field__label"
+                htmlFor="product-include-sold"
+              >
+                販売済み
+              </label>
+              <select
+                id="product-include-sold"
+                className="auth-field__input"
+                value={
+                  draftFilters.status === "sold" || draftFilters.includeSold
+                    ? "true"
+                    : "false"
+                }
+                disabled={draftFilters.status === "sold"}
+                onChange={(event) =>
+                  setDraftFilters((current) => ({
+                    ...current,
+                    includeSold: event.target.value === "true"
+                  }))
+                }
+              >
+                <option value="true">含める</option>
+                <option value="false">含めない</option>
+              </select>
+            </div>
+
+            {draftFilters.status === "sold" ? (
+              <p className="management-form__hint product-list-filters__note">
+                ※ステータスで販売済みを選ぶと「含める」固定になります。
+              </p>
+            ) : null}
+
+            <div className="auth-field">
               <label className="auth-field__label" htmlFor="product-sort-by">
                 並び順
               </label>
@@ -635,31 +669,6 @@ export function ProductListPage() {
                 <option value="asc">昇順</option>
               </select>
             </div>
-
-            <label className="product-list-filters__toggle">
-              <input
-                checked={
-                  draftFilters.status === "sold"
-                    ? true
-                    : draftFilters.includeSold
-                }
-                disabled={draftFilters.status === "sold"}
-                type="checkbox"
-                onChange={(event) =>
-                  setDraftFilters((current) => ({
-                    ...current,
-                    includeSold: event.target.checked
-                  }))
-                }
-              />
-              <span>販売済みを含める</span>
-            </label>
-
-            {draftFilters.status === "sold" ? (
-              <p className="management-form__hint product-list-filters__note">
-                販売済みを選ぶと自動で ON になります。
-              </p>
-            ) : null}
           </div>
 
           <div className="management-form__actions">

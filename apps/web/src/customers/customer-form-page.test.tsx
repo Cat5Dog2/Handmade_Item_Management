@@ -151,15 +151,15 @@ describe("CustomerFormPage", () => {
     const snsCard = screen.getByRole("heading", { name: "SNSアカウント 1" })
       .closest("article") as HTMLElement;
 
-    fireEvent.input(within(snsCard).getByLabelText("プラットフォーム"), {
-      target: { value: " Instagram " }
+    fireEvent.change(within(snsCard).getByLabelText("プラットフォーム"), {
+      target: { value: "Instagram" }
     });
     fireEvent.input(within(snsCard).getByLabelText("アカウント名"), {
       target: { value: " hanako_handmade " }
     });
-    fireEvent.input(within(snsCard).getByLabelText("URL"), {
-      target: { value: " https://example.com/hanako " }
-    });
+    expect(within(snsCard).getByLabelText("URL")).toHaveValue(
+      "https://www.instagram.com/hanako_handmade"
+    );
     fireEvent.input(within(snsCard).getByLabelText("補足"), {
       target: { value: "DM購入あり" }
     });
@@ -183,7 +183,7 @@ describe("CustomerFormPage", () => {
               accountName: "hanako_handmade",
               note: "DM購入あり",
               platform: "Instagram",
-              url: "https://example.com/hanako"
+              url: "https://www.instagram.com/hanako_handmade"
             }
           ]
         }
@@ -199,6 +199,34 @@ describe("CustomerFormPage", () => {
       );
     });
   });
+
+  it.each([
+    ["Instagram", "https://www.instagram.com/hanako_handmade"],
+    ["X", "https://x.com/hanako_handmade"],
+    ["TikTok", "https://www.tiktok.com/@hanako_handmade"],
+    ["Facebook", "https://www.facebook.com/hanako_handmade"],
+    ["Threads", "https://www.threads.com/@hanako_handmade"],
+    ["YouTube", "https://www.youtube.com/@hanako_handmade"]
+  ] as const)(
+    "generates a %s profile URL from the selected platform and account name",
+    (platform, expectedUrl) => {
+      renderCustomerForm();
+
+      fireEvent.click(screen.getByRole("button", { name: "SNSを追加" }));
+
+      const snsCard = screen.getByRole("heading", { name: "SNSアカウント 1" })
+        .closest("article") as HTMLElement;
+
+      fireEvent.input(within(snsCard).getByLabelText("アカウント名"), {
+        target: { value: " @hanako_handmade " }
+      });
+      fireEvent.change(within(snsCard).getByLabelText("プラットフォーム"), {
+        target: { value: platform }
+      });
+
+      expect(within(snsCard).getByLabelText("URL")).toHaveValue(expectedUrl);
+    }
+  );
 
   it("shows a customer name error when required input is blank", async () => {
     renderCustomerForm();
@@ -225,6 +253,9 @@ describe("CustomerFormPage", () => {
 
     expect(await screen.findByDisplayValue("山田 花子")).toBeInTheDocument();
     expect(screen.getByDisplayValue("@hanako")).toBeInTheDocument();
+    expect(
+      screen.getByDisplayValue("https://www.instagram.com/hanako")
+    ).toBeInTheDocument();
 
     fireEvent.input(screen.getByLabelText("顧客名"), {
       target: { value: "山田 華子" }
@@ -249,7 +280,7 @@ describe("CustomerFormPage", () => {
               accountName: "@hanako",
               note: "DMで連絡",
               platform: "Instagram",
-              url: "https://example.com/hanako"
+              url: "https://www.instagram.com/hanako"
             }
           ]
         }

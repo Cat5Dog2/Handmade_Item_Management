@@ -189,7 +189,7 @@ describe("ProductListPage", () => {
 
     expect(screen.getByLabelText("キーワード")).toHaveValue("blue");
     expect(screen.getByLabelText("ステータス")).toHaveValue("onDisplay");
-    expect(screen.getByLabelText("販売済みを含める")).toBeChecked();
+    expect(screen.getByLabelText("販売済み")).toHaveValue("true");
 
     const productCard = screen.getByRole("listitem");
     expect(productCard).toHaveAttribute("href", "/products/HM-000001");
@@ -240,8 +240,8 @@ describe("ProductListPage", () => {
       target: { value: "sold" }
     });
 
-    expect(screen.getByLabelText("販売済みを含める")).toBeChecked();
-    expect(screen.getByLabelText("販売済みを含める")).toBeDisabled();
+    expect(screen.getByLabelText("販売済み")).toHaveValue("true");
+    expect(screen.getByLabelText("販売済み")).toBeDisabled();
 
     fireEvent.click(screen.getByRole("button", { name: "絞り込む" }));
 

@@ -468,23 +468,32 @@ input {
   justify-content: space-between;
 }
 
-.product-list-filters__toggle,
 .product-list-filters__note {
+  grid-column: 1 / -1;
+  font-size: 10px;
+}
+
+.product-list-filters__grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.product-list-filters__keyword {
   grid-column: 1 / -1;
 }
 
-.product-list-filters__toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  color: #1f2933;
-  font-weight: 600;
+.product-list-filters .auth-field {
+  gap: 5px;
+  min-width: 0;
 }
 
-.product-list-filters__toggle input {
-  width: 18px;
-  height: 18px;
-  accent-color: #0f766e;
+.product-list-filters .auth-field__label {
+  font-size: 0.875rem;
+}
+
+.product-list-filters .auth-field__input {
+  min-height: 40px;
+  padding: 8px 10px;
 }
 
 .product-list-grid {

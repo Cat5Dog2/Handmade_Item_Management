@@ -770,6 +770,10 @@ input {
   min-width: 0;
 }
 
+.task-management-page__form-section {
+  scroll-margin-top: 96px;
+}
+
 .task-management-page__content-field,
 .task-management-page__memo-field {
   grid-column: 1 / -1;

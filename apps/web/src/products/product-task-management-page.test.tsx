@@ -104,6 +104,7 @@ const emptyTasksResponse = {
 
 let productMode: "success" | "notFound" = "success";
 let taskMode: "success" | "empty" | "error" = "success";
+const scrollIntoViewMock = vi.fn();
 
 function renderTaskManagement(initialEntry = "/products/HM-000001/tasks") {
   const queryClient = createAppQueryClient();
@@ -132,6 +133,11 @@ describe("ProductTaskManagementPage", () => {
   beforeEach(() => {
     productMode = "success";
     taskMode = "success";
+    scrollIntoViewMock.mockReset();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoViewMock
+    });
     apiClientMock.delete.mockReset();
     apiClientMock.get.mockReset();
     apiClientMock.patch.mockReset();
@@ -306,6 +312,12 @@ describe("ProductTaskManagementPage", () => {
     expect(await screen.findByText("金具チェック")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "タスクを追加" }));
+    await waitFor(() => {
+      expect(scrollIntoViewMock).toHaveBeenCalledWith({
+        behavior: "smooth",
+        block: "start"
+      });
+    });
     fireEvent.change(screen.getByLabelText("タスク名"), {
       target: { value: "ラッピング準備" }
     });

@@ -34,7 +34,7 @@ function LogoutButton() {
 
   return (
     <button
-      className="header-button"
+      className="footer-logout-button"
       type="button"
       disabled={isLoggingOut}
       onClick={() => {
@@ -72,9 +72,6 @@ function AppHeader() {
             {currentRoute?.title ?? "ワークスペース"}
           </p>
         </div>
-        <div className="app-header__actions">
-          <LogoutButton />
-        </div>
       </div>
     </header>
   );
@@ -103,6 +100,14 @@ function AppNavigation() {
   );
 }
 
+function AppFooter() {
+  return (
+    <footer className="app-footer">
+      <LogoutButton />
+    </footer>
+  );
+}
+
 function ProtectedLayout() {
   return (
     <div className="app-layout">
@@ -110,6 +115,7 @@ function ProtectedLayout() {
       <AppNavigation />
       <main className="app-content">
         <Outlet />
+        <AppFooter />
       </main>
     </div>
   );

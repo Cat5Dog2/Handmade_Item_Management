@@ -212,11 +212,7 @@ describe("App routing", () => {
         name: "ログアウト"
       })
     ).not.toBeInTheDocument();
-    expect(
-      within(screen.getByRole("contentinfo")).getByRole("button", {
-        name: "ログアウト"
-      })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "ログアウト" })).toBeInTheDocument();
   });
 
   it("keeps product detail routes inside the protected workspace shell", () => {
@@ -229,6 +225,9 @@ describe("App routing", () => {
 
     expect(screen.getByRole("heading", { name: "商品編集" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "戻る" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "ログアウト" })
+    ).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "商品一覧" })).toHaveAttribute(
       "aria-current",
       "page"
@@ -362,7 +361,7 @@ describe("App routing", () => {
     expect(authMock.sendPasswordReset).toHaveBeenCalledWith("owner@example.com");
   });
 
-  it("logs out from the page footer on protected screens", async () => {
+  it("logs out from the dashboard footer action", async () => {
     authMock.setUser({
       email: "owner@example.com",
       getIdToken: async () => "test-id-token",
@@ -370,11 +369,7 @@ describe("App routing", () => {
     });
     renderApp("/dashboard");
 
-    fireEvent.click(
-      within(screen.getByRole("contentinfo")).getByRole("button", {
-        name: "ログアウト"
-      })
-    );
+    fireEvent.click(screen.getByRole("button", { name: "ログアウト" }));
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "ログイン" })).toBeInTheDocument();

@@ -220,6 +220,12 @@ function AppNavigation() {
 }
 
 function AppFooter() {
+  const location = useLocation();
+
+  if (location.pathname !== "/dashboard") {
+    return null;
+  }
+
   return (
     <footer className="app-footer">
       <LogoutButton />

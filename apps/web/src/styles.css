@@ -310,20 +310,18 @@ input {
 
 .app-footer {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   margin-top: 32px;
-  padding-top: 20px;
-  border-top: 1px solid #d5e2d8;
 }
 
 .footer-logout-button {
-  padding: 8px 10px;
+  padding: 4px 2px;
   border: 0;
   background: transparent;
   color: #52606d;
   cursor: pointer;
   font: inherit;
-  font-size: 0.875rem;
+  font-size: 10px;
   text-decoration: underline;
   text-underline-offset: 3px;
 }

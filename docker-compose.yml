@@ -57,6 +57,38 @@ services:
       - .:/workspace
       - repo_node_modules:/workspace/node_modules
     depends_on:
+      demo-seed:
+        condition: service_completed_successfully
+
+  demo-seed:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: dev
+    container_name: handmade-demo-seed
+    working_dir: /workspace
+    command: >
+      sh -c "
+      if [ ! -d node_modules ]; then if [ -f package-lock.json ]; then npm ci; else npm install; fi; fi &&
+      npm run seed:demo --workspace apps/api
+      "
+    env_file:
+      - .env.docker
+    environment:
+      FIREBASE_AUTH_EMULATOR_HOST: "firebase-emulators:9099"
+      FIRESTORE_EMULATOR_HOST: "firebase-emulators:8081"
+      FIREBASE_STORAGE_EMULATOR_HOST: "firebase-emulators:9199"
+      FIREBASE_STORAGE_BUCKET: "${VITE_FIREBASE_STORAGE_BUCKET:-handmade-item-management.firebasestorage.app}"
+      GOOGLE_APPLICATION_CREDENTIALS: "/workspace/firebase/service-account.docker.json"
+      GOOGLE_CLOUD_PROJECT: "${FIREBASE_PROJECT_ID:-handmade-item-management}"
+      FIREBASE_PROJECT_ID: "${FIREBASE_PROJECT_ID:-handmade-item-management}"
+      DEMO_SEED_ENABLED: "${DEMO_SEED_ENABLED:-true}"
+      DEMO_SEED_COUNT: "${DEMO_SEED_COUNT:-25}"
+      DEMO_OWNER_PASSWORD: "${DEMO_OWNER_PASSWORD:-password123}"
+    volumes:
+      - .:/workspace
+      - repo_node_modules:/workspace/node_modules
+    depends_on:
       firebase-emulators:
         condition: service_started
 

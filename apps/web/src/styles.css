@@ -21,8 +21,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    linear-gradient(180deg, #f4f7f4 0%, #edf4ef 100%);
+  background: linear-gradient(180deg, #f4f7f4 0%, #edf4ef 100%);
 }
 
 button,
@@ -256,8 +255,7 @@ input {
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto 1fr auto;
-  background:
-    linear-gradient(180deg, #f7fbf8 0%, #edf4ef 100%);
+  background: linear-gradient(180deg, #f7fbf8 0%, #edf4ef 100%);
 }
 
 .app-header {
@@ -468,6 +466,35 @@ input {
   justify-content: space-between;
 }
 
+.product-list-page__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.product-list-filters-section {
+  gap: 12px;
+}
+
+.product-list-filters-section__header {
+  align-items: center;
+}
+
+.product-list-filters-section__header > div {
+  min-width: 0;
+}
+
+.product-list-filters-section__toggle {
+  width: 100%;
+}
+
+.product-list-filters-section__active {
+  margin: 8px 0 0;
+  color: #0f766e;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
 .product-list-filters__note {
   grid-column: 1 / -1;
   font-size: 10px;
@@ -514,6 +541,41 @@ input {
 }
 
 .product-list-card:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+
+.product-list-card--selectable {
+  position: relative;
+  grid-template-columns: 92px minmax(0, 1fr);
+  align-items: start;
+  cursor: pointer;
+}
+
+.product-list-card--selected {
+  border-width: 2px;
+  border-color: #0f766e;
+}
+
+.product-list-card__select {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  z-index: 1;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  transform: translateY(-50%);
+}
+
+.product-list-card__select-input {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: #0f766e;
+}
+
+.product-list-card__select-input:focus-visible {
   outline: 2px solid #0f766e;
   outline-offset: 2px;
 }
@@ -589,6 +651,52 @@ input {
   margin: 0;
   color: #1f2933;
   font-weight: 600;
+}
+
+.product-list-print-toolbar {
+  position: sticky;
+  z-index: 15;
+  display: grid;
+  gap: 12px;
+}
+
+.product-list-print-toolbar .management-form__hint {
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.product-list-print-toolbar .management-card__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.product-list-print-toolbar .primary-button,
+.product-list-print-toolbar .secondary-button {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.product-list-print-toolbar .primary-button {
+  padding-inline: 12px;
+}
+
+.product-list-print-toolbar .secondary-button {
+  min-height: 40px;
+  padding: 8px 10px;
+  font-size: 0.875rem;
+}
+
+.product-list-print-toolbar__title {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.product-list-print-toolbar__status {
+  margin: 8px 0 0;
+  color: #0f766e;
+  font-weight: 800;
 }
 
 .product-list-pagination,
@@ -846,7 +954,7 @@ input {
   overflow-wrap: anywhere;
 }
 
-.product-detail-page__qr-print {
+.qr-print-sheet {
   display: none;
 }
 
@@ -1210,8 +1318,11 @@ input {
   overflow: hidden;
   border: 1px solid #b9e3d8;
   border-radius: 12px;
-  background:
-    linear-gradient(180deg, rgba(237, 249, 243, 0.9), rgba(247, 251, 248, 0.98));
+  background: linear-gradient(
+    180deg,
+    rgba(237, 249, 243, 0.9),
+    rgba(247, 251, 248, 0.98)
+  );
 }
 
 .qr-page__scanner-toolbar {
@@ -1560,6 +1671,10 @@ input {
     grid-template-columns: 120px minmax(0, 1fr);
   }
 
+  .product-list-card--selectable {
+    grid-template-columns: 120px minmax(0, 1fr);
+  }
+
   .product-detail-page__overview {
     grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
     align-items: start;
@@ -1572,6 +1687,10 @@ input {
 
   .product-list-pagination {
     justify-content: flex-end;
+  }
+
+  .product-list-filters-section__toggle {
+    width: auto;
   }
 
   .customer-list-pagination {
@@ -1597,7 +1716,8 @@ input {
 
 @media print {
   @page {
-    margin: 12mm;
+    size: A4 portrait;
+    margin: 10mm;
   }
 
   html,
@@ -1608,6 +1728,7 @@ input {
 
   body {
     min-width: 0;
+    margin: 0;
     background: #ffffff;
   }
 
@@ -1625,54 +1746,69 @@ input {
 
   .app-header,
   .app-navigation,
-  .product-detail-page > :not(.product-detail-page__qr-print) {
+  .product-detail-page > :not(.qr-print-sheet),
+  .product-list-page > :not(.qr-print-sheet) {
     display: none !important;
   }
 
-  .product-detail-page__qr-print {
+  .qr-print-sheet {
     position: static;
     display: grid;
-    justify-items: center;
-    gap: 6px;
-    width: 72mm;
-    min-height: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+    width: 190mm;
+    height: 277mm;
     margin: 0 auto;
     padding: 0;
     background: #ffffff;
     color: #111827;
     text-align: center;
+  }
+
+  .qr-print-label {
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 2mm;
+    min-width: 0;
+    padding: 3mm 5mm;
+    border: 0.2mm solid #d1d5db;
+    background: #ffffff;
+    box-sizing: border-box;
+    overflow: hidden;
     break-inside: avoid;
     page-break-inside: avoid;
   }
 
-  .product-detail-page__qr-print-title,
-  .product-detail-page__qr-print-name,
-  .product-detail-page__qr-print-id,
-  .product-detail-page__qr-print-value {
+  .qr-print-name,
+  .qr-print-id {
     margin: 0;
   }
 
-  .product-detail-page__qr-print-title {
-    font-size: 12pt;
+  .qr-print-name {
+    display: -webkit-box;
+    max-width: 100%;
+    overflow: hidden;
+    color: #111827;
+    font-size: 9pt;
     font-weight: 700;
-  }
-
-  .product-detail-page__qr-print-name {
-    max-width: 72mm;
-    font-size: 14pt;
-    font-weight: 700;
+    line-height: 1.2;
     overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
-  .product-detail-page__qr-print-id,
-  .product-detail-page__qr-print-value {
-    font-size: 10pt;
+  .qr-print-id {
+    color: #374151;
+    font-size: 9pt;
+    font-weight: 700;
+    line-height: 1.2;
   }
 
-  .product-detail-page__qr-print-svg,
-  .product-detail-page__qr-print-svg svg {
+  .qr-print-svg,
+  .qr-print-svg svg {
     display: block;
-    width: 52mm;
-    height: 52mm;
+    width: 34mm;
+    height: 34mm;
   }
 }

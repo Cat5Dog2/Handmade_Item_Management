@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "seed:demo": "tsx src/seed/seed-demo-data.ts",
     "build": "npm --workspace @handmade/shared run build && tsc -p tsconfig.build.json",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",

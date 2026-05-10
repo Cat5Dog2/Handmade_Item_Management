@@ -62,6 +62,12 @@ const productStatusBadgeClassNames: Record<ProductStatus, string> = {
   sold: "product-status-badge is-sold"
 };
 
+const QR_PRINT_LABEL_COUNT = 10;
+const QR_PRINT_LABEL_INDICES = Array.from(
+  { length: QR_PRINT_LABEL_COUNT },
+  (_, index) => index
+);
+
 function formatDate(value: string | null) {
   if (!value) {
     return "期限未設定";
@@ -807,7 +813,7 @@ export function ProductDetailPage() {
                 type="button"
                 onClick={handleQrPrint}
               >
-                QRコードを印刷
+                QRコードを10面印刷
               </button>
             </div>
           </div>
@@ -816,19 +822,25 @@ export function ProductDetailPage() {
 
       {qrSvg ? (
         <aside
-          className="product-detail-page__qr-print"
+          className="qr-print-sheet product-detail-page__qr-print"
           aria-label={`${product.productId} の印刷用QRコード`}
+          role="list"
         >
-          <p className="product-detail-page__qr-print-title">QRコード</p>
-          <p className="product-detail-page__qr-print-name">{product.name}</p>
-          <p className="product-detail-page__qr-print-id">
-            {product.productId}
-          </p>
-          <div
-            className="product-detail-page__qr-print-svg"
-            dangerouslySetInnerHTML={{ __html: qrSvg }}
-          />
-          <p className="product-detail-page__qr-print-value">{qrCodeValue}</p>
+          {QR_PRINT_LABEL_INDICES.map((index) => (
+            <article
+              key={index}
+              className="qr-print-label"
+              aria-label={`${product.productId} の印刷用QRコード ${index + 1}`}
+              role="listitem"
+            >
+              <p className="qr-print-name">{product.name}</p>
+              <p className="qr-print-id">{product.productId}</p>
+              <div
+                className="qr-print-svg"
+                dangerouslySetInnerHTML={{ __html: qrSvg }}
+              />
+            </article>
+          ))}
         </aside>
       ) : null}
 

@@ -1,5 +1,11 @@
 ﻿import { QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within
+} from "@testing-library/react";
 import { useLocation, MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { API_PATHS } from "@handmade/shared";
@@ -121,71 +127,115 @@ function getLatestProductCall() {
   return productCalls[productCalls.length - 1];
 }
 
+async function ensureProductFiltersOpen() {
+  if (screen.queryByRole("button", { name: "検索条件を閉じる" })) {
+    return;
+  }
+
+  fireEvent.click(
+    await screen.findByRole(
+      "button",
+      { name: "検索条件を開く" },
+      {
+        timeout: 8000
+      }
+    )
+  );
+}
+
 describe("ProductListPage", () => {
   beforeEach(() => {
     productsMode = "success";
     apiClientMock.get.mockReset();
     qrCodeMock.toString.mockReset();
-    qrCodeMock.toString.mockResolvedValue("<svg viewBox=\"0 0 10 10\"></svg>");
+    qrCodeMock.toString.mockResolvedValue('<svg viewBox="0 0 10 10"></svg>');
     printMock = vi.fn();
     Object.defineProperty(window, "print", {
       configurable: true,
       value: printMock
     });
-    apiClientMock.get.mockImplementation(async (path: string, options?: { query?: Record<string, unknown> }) => {
-      if (path === API_PATHS.categories) {
-        return categoriesResponse;
-      }
-
-      if (path === API_PATHS.tags) {
-        return tagsResponse;
-      }
-
-      if (path === API_PATHS.products) {
-        if (productsMode === "error") {
-          throw new Error("boom");
+    apiClientMock.get.mockImplementation(
+      async (path: string, options?: { query?: Record<string, unknown> }) => {
+        if (path === API_PATHS.categories) {
+          return categoriesResponse;
         }
 
-        const page = Number(options?.query?.page ?? 1);
-        const pageSize = Number(options?.query?.pageSize ?? 50);
-        const keyword = String(options?.query?.keyword ?? "");
-        const status = String(options?.query?.status ?? "");
-
-        if (keyword === "no-match") {
-          return {
-            data: {
-              items: []
-            },
-            meta: {
-              hasNext: false,
-              page,
-              pageSize,
-              totalCount: 0
-            }
-          };
+        if (path === API_PATHS.tags) {
+          return tagsResponse;
         }
 
-        if (keyword === "bulk") {
-          return {
-            data: {
-              items: bulkPrintProducts
-            },
-            meta: {
-              hasNext: false,
-              page,
-              pageSize,
-              totalCount: bulkPrintProducts.length
-            }
-          };
-        }
+        if (path === API_PATHS.products) {
+          if (productsMode === "error") {
+            throw new Error("boom");
+          }
 
-        if (page === 2) {
+          const page = Number(options?.query?.page ?? 1);
+          const pageSize = Number(options?.query?.pageSize ?? 50);
+          const keyword = String(options?.query?.keyword ?? "");
+          const status = String(options?.query?.status ?? "");
+
+          if (keyword === "no-match") {
+            return {
+              data: {
+                items: []
+              },
+              meta: {
+                hasNext: false,
+                page,
+                pageSize,
+                totalCount: 0
+              }
+            };
+          }
+
+          if (keyword === "bulk") {
+            return {
+              data: {
+                items: bulkPrintProducts
+              },
+              meta: {
+                hasNext: false,
+                page,
+                pageSize,
+                totalCount: bulkPrintProducts.length
+              }
+            };
+          }
+
+          if (page === 2) {
+            return {
+              data: {
+                items: [soldProduct]
+              },
+              meta: {
+                hasNext: false,
+                page,
+                pageSize,
+                totalCount: 2
+              }
+            };
+          }
+
+          if (status === "sold") {
+            return {
+              data: {
+                items: [soldProduct]
+              },
+              meta: {
+                hasNext: false,
+                page,
+                pageSize,
+                totalCount: 1
+              }
+            };
+          }
+
           return {
             data: {
-              items: [soldProduct]
+              items: [displayProduct]
             },
             meta: {
-              hasNext: false,
+              hasNext: true,
               page,
               pageSize,
               totalCount: 2
@@ -193,35 +243,9 @@ describe("ProductListPage", () => {
           };
         }
 
-        if (status === "sold") {
-          return {
-            data: {
-              items: [soldProduct]
-            },
-            meta: {
-              hasNext: false,
-              page,
-              pageSize,
-              totalCount: 1
-            }
-          };
-        }
-
-        return {
-          data: {
-            items: [displayProduct]
-          },
-          meta: {
-            hasNext: true,
-            page,
-            pageSize,
-            totalCount: 2
-          }
-        };
+        throw new Error(`Unexpected path: ${path}`);
       }
-
-      throw new Error(`Unexpected path: ${path}`);
-    });
+    );
   }, 10000);
 
   it("renders the current query state and product cards", async () => {
@@ -256,6 +280,26 @@ describe("ProductListPage", () => {
     );
   }, 10000);
 
+  it("collapses product filters by default and expands them from the header control", async () => {
+    renderProductList("/products");
+
+    await screen.findByRole("listitem", undefined, { timeout: 8000 });
+
+    const toggleButton = screen.getByRole("button", {
+      name: "検索条件を開く"
+    });
+
+    expect(toggleButton).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByLabelText("キーワード")).not.toBeInTheDocument();
+
+    fireEvent.click(toggleButton);
+
+    expect(
+      screen.getByRole("button", { name: "検索条件を閉じる" })
+    ).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByLabelText("キーワード")).toBeInTheDocument();
+  }, 10000);
+
   it("shows a navigation notice from product detail", async () => {
     renderProductList({
       pathname: "/products",
@@ -268,13 +312,16 @@ describe("ProductListPage", () => {
     });
 
     expect(
-      await screen.findByText("商品を削除しました。", undefined, { timeout: 8000 })
+      await screen.findByText("商品を削除しました。", undefined, {
+        timeout: 8000
+      })
     ).toBeInTheDocument();
   }, 10000);
 
   it("applies filters through the URL and keeps sold results enabled", async () => {
     renderProductList("/products");
 
+    await ensureProductFiltersOpen();
     await screen.findByLabelText("キーワード", undefined, { timeout: 8000 });
 
     fireEvent.change(screen.getByLabelText("キーワード"), {
@@ -290,7 +337,8 @@ describe("ProductListPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "絞り込む" }));
 
     await waitFor(() => {
-      const locationSearch = screen.getByTestId("location-probe").textContent ?? "";
+      const locationSearch =
+        screen.getByTestId("location-probe").textContent ?? "";
       const searchParams = new URLSearchParams(locationSearch);
 
       expect(searchParams.get("keyword")).toBe("gold");
@@ -315,6 +363,7 @@ describe("ProductListPage", () => {
   it("shows a validation notice without applying invalid search keywords", async () => {
     renderProductList("/products");
 
+    await ensureProductFiltersOpen();
     await screen.findByLabelText("キーワード", undefined, { timeout: 8000 });
 
     fireEvent.change(screen.getByLabelText("キーワード"), {
@@ -362,7 +411,8 @@ describe("ProductListPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "次へ" }));
 
     await waitFor(() => {
-      const locationSearch = screen.getByTestId("location-probe").textContent ?? "";
+      const locationSearch =
+        screen.getByTestId("location-probe").textContent ?? "";
       const searchParams = new URLSearchParams(locationSearch);
 
       expect(searchParams.get("page")).toBe("2");
@@ -387,15 +437,20 @@ describe("ProductListPage", () => {
     renderProductList("/products?keyword=no-match");
 
     expect(
-    await screen.findByText("条件に合う商品が見つかりませんでした。", undefined, {
-      timeout: 8000
-    })
+      await screen.findByText(
+        "条件に合う商品が見つかりませんでした。",
+        undefined,
+        {
+          timeout: 8000
+        }
+      )
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByRole("button", { name: "条件をクリア" })[1]);
 
     await waitFor(() => {
-      const locationSearch = screen.getByTestId("location-probe").textContent ?? "";
+      const locationSearch =
+        screen.getByTestId("location-probe").textContent ?? "";
       const searchParams = new URLSearchParams(locationSearch);
 
       expect(searchParams.get("keyword")).toBeNull();
@@ -431,9 +486,7 @@ describe("ProductListPage", () => {
     ).toBeDisabled();
 
     for (const product of bulkPrintProducts.slice(0, 10)) {
-      fireEvent.click(
-        screen.getByLabelText(`${product.name}を印刷対象に選択`)
-      );
+      fireEvent.click(screen.getByLabelText(`${product.name}を印刷対象に選択`));
     }
 
     expect(screen.getByText("10 / 10件選択中")).toBeInTheDocument();

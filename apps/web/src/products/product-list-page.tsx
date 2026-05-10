@@ -230,6 +230,13 @@ function isDefaultFilterState(filters: ProductListFilterState) {
   );
 }
 
+function hasAppliedProductFilters(query: ProductListQuery) {
+  return (
+    !isDefaultFilterState(toFilterState(query)) ||
+    (query.page ?? DEFAULT_QUERY.page) !== DEFAULT_QUERY.page
+  );
+}
+
 function EmptyImagePlaceholder() {
   return <div className="product-list-card__image-placeholder">画像なし</div>;
 }
@@ -261,9 +268,7 @@ function ProductListCardContent({ product }: { product: ProductListItem }) {
       <div className="product-list-card__body">
         <div className="product-list-card__header">
           <div>
-            <p className="product-list-card__product-id">
-              {product.productId}
-            </p>
+            <p className="product-list-card__product-id">{product.productId}</p>
             <h3
               id={`product-name-${product.productId}`}
               className="product-list-card__title"
@@ -314,6 +319,11 @@ export function ProductListPage() {
     Record<string, string>
   >({});
   const [hasBulkPrintQrError, setHasBulkPrintQrError] = useState(false);
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(
+    () =>
+      hasAppliedProductFilters(currentQuery) ||
+      Boolean(currentQueryParseResult.errorMessage)
+  );
   const previousIncludeSoldRef = useRef(DEFAULT_FILTER_STATE.includeSold);
 
   useEffect(() => {
@@ -323,6 +333,15 @@ export function ProductListPage() {
       previousIncludeSoldRef.current = currentQuery.includeSold ?? true;
     }
   }, [currentQuery]);
+
+  useEffect(() => {
+    if (
+      currentQueryParseResult.errorMessage ||
+      hasAppliedProductFilters(currentQuery)
+    ) {
+      setIsFilterPanelOpen(true);
+    }
+  }, [currentQuery, currentQueryParseResult.errorMessage]);
 
   useNavigationNotice(location, navigate, setNotice);
 
@@ -405,9 +424,10 @@ export function ProductListPage() {
   const productItems = productsQuery.data?.data.items ?? [];
   const productMeta = productsQuery.data?.meta;
   const isInitialLoading = productsQuery.isPending;
+  const hasAppliedFilters = hasAppliedProductFilters(currentQuery);
   const hasActiveFilters =
     !isDefaultFilterState(draftFilters) ||
-    currentQuery.page !== DEFAULT_QUERY.page;
+    (currentQuery.page ?? DEFAULT_QUERY.page) !== DEFAULT_QUERY.page;
 
   const applyFilters = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -429,6 +449,7 @@ export function ProductListPage() {
     const parsedNextQuery = productListQuerySchema.safeParse(nextQueryInput);
 
     if (!parsedNextQuery.success) {
+      setIsFilterPanelOpen(true);
       setNotice({
         message: PRODUCT_LIST_QUERY_ERROR_MESSAGE,
         type: "error"
@@ -447,6 +468,7 @@ export function ProductListPage() {
     setNotice(null);
     previousIncludeSoldRef.current = DEFAULT_FILTER_STATE.includeSold;
     setDraftFilters(DEFAULT_FILTER_STATE);
+    setIsFilterPanelOpen(false);
     setSearchParams(
       buildSearchParams(
         DEFAULT_FILTER_STATE,
@@ -625,8 +647,8 @@ export function ProductListPage() {
   const canPrintSelectedProducts =
     selectedPrintCount === BULK_QR_PRINT_LIMIT &&
     !hasBulkPrintQrError &&
-    selectedPrintProducts.every(
-      (product) => Boolean(bulkPrintQrSvgs[product.productId])
+    selectedPrintProducts.every((product) =>
+      Boolean(bulkPrintQrSvgs[product.productId])
     );
 
   return (
@@ -682,10 +704,10 @@ export function ProductListPage() {
       </div>
 
       <section
-        className="management-page__section"
+        className="management-page__section product-list-filters-section"
         aria-labelledby="product-filters-title"
       >
-        <div className="management-page__section-header">
+        <div className="management-page__section-header product-list-filters-section__header">
           <div>
             <h2
               id="product-filters-title"
@@ -696,188 +718,209 @@ export function ProductListPage() {
             <p className="management-page__section-summary">
               商品名、商品ID、説明、カテゴリ名、タグ名を対象に絞り込めます。
             </p>
-          </div>
-        </div>
-        <form
-          className="management-form product-list-filters"
-          noValidate
-          onSubmit={applyFilters}
-        >
-          <div className="management-form__grid product-list-filters__grid">
-            <div className="auth-field product-list-filters__keyword">
-              <label className="auth-field__label" htmlFor="product-keyword">
-                キーワード
-              </label>
-              <input
-                id="product-keyword"
-                className="auth-field__input"
-                type="search"
-                value={draftFilters.keyword}
-                onChange={(event) =>
-                  setDraftFilters((current) => ({
-                    ...current,
-                    keyword: event.target.value
-                  }))
-                }
-              />
-            </div>
-
-            <div className="auth-field">
-              <label className="auth-field__label" htmlFor="product-category">
-                カテゴリ
-              </label>
-              <select
-                id="product-category"
-                className="auth-field__input"
-                value={draftFilters.categoryId}
-                onChange={(event) =>
-                  setDraftFilters((current) => ({
-                    ...current,
-                    categoryId: event.target.value
-                  }))
-                }
-              >
-                <option value="">すべて</option>
-                {categories.map((category) => (
-                  <option key={category.categoryId} value={category.categoryId}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="auth-field">
-              <label className="auth-field__label" htmlFor="product-tag">
-                タグ
-              </label>
-              <select
-                id="product-tag"
-                className="auth-field__input"
-                value={draftFilters.tagId}
-                onChange={(event) =>
-                  setDraftFilters((current) => ({
-                    ...current,
-                    tagId: event.target.value
-                  }))
-                }
-              >
-                <option value="">すべて</option>
-                {tags.map((tag) => (
-                  <option key={tag.tagId} value={tag.tagId}>
-                    {tag.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="auth-field">
-              <label className="auth-field__label" htmlFor="product-status">
-                ステータス
-              </label>
-              <select
-                id="product-status"
-                className="auth-field__input"
-                value={draftFilters.status}
-                onChange={handleStatusChange}
-              >
-                <option value="">すべて</option>
-                {PRODUCT_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {PRODUCT_STATUS_LABELS[status]}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="auth-field">
-              <label
-                className="auth-field__label"
-                htmlFor="product-include-sold"
-              >
-                販売済み
-              </label>
-              <select
-                id="product-include-sold"
-                className="auth-field__input"
-                value={
-                  draftFilters.status === "sold" || draftFilters.includeSold
-                    ? "true"
-                    : "false"
-                }
-                disabled={draftFilters.status === "sold"}
-                onChange={(event) =>
-                  setDraftFilters((current) => ({
-                    ...current,
-                    includeSold: event.target.value === "true"
-                  }))
-                }
-              >
-                <option value="true">含める</option>
-                <option value="false">含めない</option>
-              </select>
-            </div>
-
-            {draftFilters.status === "sold" ? (
-              <p className="management-form__hint product-list-filters__note">
-                ※ステータスで販売済みを選ぶと「含める」固定になります。
-              </p>
+            {hasAppliedFilters ? (
+              <p className="product-list-filters-section__active">条件適用中</p>
             ) : null}
+          </div>
+          <button
+            className="secondary-button product-list-filters-section__toggle"
+            type="button"
+            aria-controls="product-filters-panel"
+            aria-expanded={isFilterPanelOpen}
+            onClick={() => setIsFilterPanelOpen((current) => !current)}
+          >
+            {isFilterPanelOpen ? "検索条件を閉じる" : "検索条件を開く"}
+          </button>
+        </div>
+        {isFilterPanelOpen ? (
+          <form
+            id="product-filters-panel"
+            className="management-form product-list-filters"
+            noValidate
+            onSubmit={applyFilters}
+          >
+            <div className="management-form__grid product-list-filters__grid">
+              <div className="auth-field product-list-filters__keyword">
+                <label className="auth-field__label" htmlFor="product-keyword">
+                  キーワード
+                </label>
+                <input
+                  id="product-keyword"
+                  className="auth-field__input"
+                  type="search"
+                  value={draftFilters.keyword}
+                  onChange={(event) =>
+                    setDraftFilters((current) => ({
+                      ...current,
+                      keyword: event.target.value
+                    }))
+                  }
+                />
+              </div>
 
-            <div className="auth-field">
-              <label className="auth-field__label" htmlFor="product-sort-by">
-                並び順
-              </label>
-              <select
-                id="product-sort-by"
-                className="auth-field__input"
-                value={draftFilters.sortBy}
-                onChange={(event) =>
-                  setDraftFilters((current) => ({
-                    ...current,
-                    sortBy: event.target.value as ProductSortBy
-                  }))
-                }
-              >
-                <option value="updatedAt">更新日時</option>
-                <option value="name">商品名</option>
-              </select>
+              <div className="auth-field">
+                <label className="auth-field__label" htmlFor="product-category">
+                  カテゴリ
+                </label>
+                <select
+                  id="product-category"
+                  className="auth-field__input"
+                  value={draftFilters.categoryId}
+                  onChange={(event) =>
+                    setDraftFilters((current) => ({
+                      ...current,
+                      categoryId: event.target.value
+                    }))
+                  }
+                >
+                  <option value="">すべて</option>
+                  {categories.map((category) => (
+                    <option
+                      key={category.categoryId}
+                      value={category.categoryId}
+                    >
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="auth-field">
+                <label className="auth-field__label" htmlFor="product-tag">
+                  タグ
+                </label>
+                <select
+                  id="product-tag"
+                  className="auth-field__input"
+                  value={draftFilters.tagId}
+                  onChange={(event) =>
+                    setDraftFilters((current) => ({
+                      ...current,
+                      tagId: event.target.value
+                    }))
+                  }
+                >
+                  <option value="">すべて</option>
+                  {tags.map((tag) => (
+                    <option key={tag.tagId} value={tag.tagId}>
+                      {tag.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="auth-field">
+                <label className="auth-field__label" htmlFor="product-status">
+                  ステータス
+                </label>
+                <select
+                  id="product-status"
+                  className="auth-field__input"
+                  value={draftFilters.status}
+                  onChange={handleStatusChange}
+                >
+                  <option value="">すべて</option>
+                  {PRODUCT_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {PRODUCT_STATUS_LABELS[status]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="auth-field">
+                <label
+                  className="auth-field__label"
+                  htmlFor="product-include-sold"
+                >
+                  販売済み
+                </label>
+                <select
+                  id="product-include-sold"
+                  className="auth-field__input"
+                  value={
+                    draftFilters.status === "sold" || draftFilters.includeSold
+                      ? "true"
+                      : "false"
+                  }
+                  disabled={draftFilters.status === "sold"}
+                  onChange={(event) =>
+                    setDraftFilters((current) => ({
+                      ...current,
+                      includeSold: event.target.value === "true"
+                    }))
+                  }
+                >
+                  <option value="true">含める</option>
+                  <option value="false">含めない</option>
+                </select>
+              </div>
+
+              {draftFilters.status === "sold" ? (
+                <p className="management-form__hint product-list-filters__note">
+                  ※ステータスで販売済みを選ぶと「含める」固定になります。
+                </p>
+              ) : null}
+
+              <div className="auth-field">
+                <label className="auth-field__label" htmlFor="product-sort-by">
+                  並び順
+                </label>
+                <select
+                  id="product-sort-by"
+                  className="auth-field__input"
+                  value={draftFilters.sortBy}
+                  onChange={(event) =>
+                    setDraftFilters((current) => ({
+                      ...current,
+                      sortBy: event.target.value as ProductSortBy
+                    }))
+                  }
+                >
+                  <option value="updatedAt">更新日時</option>
+                  <option value="name">商品名</option>
+                </select>
+              </div>
+
+              <div className="auth-field">
+                <label
+                  className="auth-field__label"
+                  htmlFor="product-sort-order"
+                >
+                  並び順方向
+                </label>
+                <select
+                  id="product-sort-order"
+                  className="auth-field__input"
+                  value={draftFilters.sortOrder}
+                  onChange={(event) =>
+                    setDraftFilters((current) => ({
+                      ...current,
+                      sortOrder: event.target.value as SortOrder
+                    }))
+                  }
+                >
+                  <option value="desc">降順</option>
+                  <option value="asc">昇順</option>
+                </select>
+              </div>
             </div>
 
-            <div className="auth-field">
-              <label className="auth-field__label" htmlFor="product-sort-order">
-                並び順方向
-              </label>
-              <select
-                id="product-sort-order"
-                className="auth-field__input"
-                value={draftFilters.sortOrder}
-                onChange={(event) =>
-                  setDraftFilters((current) => ({
-                    ...current,
-                    sortOrder: event.target.value as SortOrder
-                  }))
-                }
+            <div className="management-form__actions">
+              <button className="primary-button" type="submit">
+                絞り込む
+              </button>
+              <button
+                className="secondary-button"
+                disabled={!hasActiveFilters}
+                type="button"
+                onClick={clearFilters}
               >
-                <option value="desc">降順</option>
-                <option value="asc">昇順</option>
-              </select>
+                条件をクリア
+              </button>
             </div>
-          </div>
-
-          <div className="management-form__actions">
-            <button className="primary-button" type="submit">
-              絞り込む
-            </button>
-            <button
-              className="secondary-button"
-              disabled={!hasActiveFilters}
-              type="button"
-              onClick={clearFilters}
-            >
-              条件をクリア
-            </button>
-          </div>
-        </form>
+          </form>
+        ) : null}
       </section>
 
       <section

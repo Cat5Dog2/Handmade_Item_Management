@@ -21,8 +21,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    linear-gradient(180deg, #f4f7f4 0%, #edf4ef 100%);
+  background: linear-gradient(180deg, #f4f7f4 0%, #edf4ef 100%);
 }
 
 button,
@@ -256,8 +255,7 @@ input {
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto 1fr auto;
-  background:
-    linear-gradient(180deg, #f7fbf8 0%, #edf4ef 100%);
+  background: linear-gradient(180deg, #f7fbf8 0%, #edf4ef 100%);
 }
 
 .app-header {
@@ -472,6 +470,29 @@ input {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+
+.product-list-filters-section {
+  gap: 12px;
+}
+
+.product-list-filters-section__header {
+  align-items: center;
+}
+
+.product-list-filters-section__header > div {
+  min-width: 0;
+}
+
+.product-list-filters-section__toggle {
+  width: 100%;
+}
+
+.product-list-filters-section__active {
+  margin: 8px 0 0;
+  color: #0f766e;
+  font-size: 0.875rem;
+  font-weight: 700;
 }
 
 .product-list-filters__note {
@@ -1251,8 +1272,11 @@ input {
   overflow: hidden;
   border: 1px solid #b9e3d8;
   border-radius: 12px;
-  background:
-    linear-gradient(180deg, rgba(237, 249, 243, 0.9), rgba(247, 251, 248, 0.98));
+  background: linear-gradient(
+    180deg,
+    rgba(237, 249, 243, 0.9),
+    rgba(247, 251, 248, 0.98)
+  );
 }
 
 .qr-page__scanner-toolbar {
@@ -1617,6 +1641,10 @@ input {
 
   .product-list-pagination {
     justify-content: flex-end;
+  }
+
+  .product-list-filters-section__toggle {
+    width: auto;
   }
 
   .customer-list-pagination {

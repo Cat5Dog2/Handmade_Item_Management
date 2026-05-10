@@ -638,6 +638,8 @@ input {
 }
 
 .product-list-print-toolbar {
+  position: sticky;
+  z-index: 15;
   display: grid;
   gap: 12px;
 }

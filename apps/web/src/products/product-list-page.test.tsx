@@ -566,6 +566,12 @@ describe("ProductListPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "まとめて印刷" }));
 
+    expect(
+      screen
+        .getByRole("heading", { name: "まとめて印刷" })
+        .closest(".product-list-print-toolbar")
+    ).toHaveStyle({ top: "92px" });
+
     await waitFor(() => {
       expect(scrollToMock).toHaveBeenCalledWith({
         behavior: "smooth",

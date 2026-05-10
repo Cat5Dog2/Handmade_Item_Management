@@ -297,6 +297,17 @@ function ProductListCardContent({ product }: { product: ProductListItem }) {
   );
 }
 
+function getAppHeaderHeight() {
+  return (
+    document.querySelector<HTMLElement>(".app-header")?.getBoundingClientRect()
+      .height ?? 0
+  );
+}
+
+function getBulkPrintToolbarStickyTop() {
+  return `${getAppHeaderHeight() + BULK_PRINT_SCROLL_GAP_PX}px`;
+}
+
 export function ProductListPage() {
   const apiClient = useApiClient();
   const location = useLocation();
@@ -326,6 +337,9 @@ export function ProductListPage() {
       Boolean(currentQueryParseResult.errorMessage)
   );
   const [bulkPrintScrollRequest, setBulkPrintScrollRequest] = useState(0);
+  const [bulkPrintToolbarStickyTop, setBulkPrintToolbarStickyTop] = useState(
+    `${BULK_PRINT_SCROLL_GAP_PX}px`
+  );
   const bulkPrintToolbarRef = useRef<HTMLDivElement | null>(null);
   const previousIncludeSoldRef = useRef(DEFAULT_FILTER_STATE.includeSold);
 
@@ -388,6 +402,23 @@ export function ProductListPage() {
   }, [selectedPrintProducts]);
 
   useEffect(() => {
+    if (!isBulkPrintMode) {
+      return;
+    }
+
+    const updateBulkPrintToolbarStickyTop = () => {
+      setBulkPrintToolbarStickyTop(getBulkPrintToolbarStickyTop());
+    };
+
+    updateBulkPrintToolbarStickyTop();
+    window.addEventListener("resize", updateBulkPrintToolbarStickyTop);
+
+    return () => {
+      window.removeEventListener("resize", updateBulkPrintToolbarStickyTop);
+    };
+  }, [isBulkPrintMode]);
+
+  useEffect(() => {
     if (!isBulkPrintMode || bulkPrintScrollRequest === 0) {
       return;
     }
@@ -399,8 +430,7 @@ export function ProductListPage() {
         return;
       }
 
-      const headerElement = document.querySelector<HTMLElement>(".app-header");
-      const headerHeight = headerElement?.getBoundingClientRect().height ?? 0;
+      const headerHeight = getAppHeaderHeight();
       const toolbarTop =
         toolbarElement.getBoundingClientRect().top + window.scrollY;
 
@@ -547,6 +577,7 @@ export function ProductListPage() {
 
   const startBulkPrintMode = () => {
     setNotice(null);
+    setBulkPrintToolbarStickyTop(getBulkPrintToolbarStickyTop());
     setIsBulkPrintMode(true);
     setBulkPrintScrollRequest((current) => current + 1);
   };
@@ -980,6 +1011,7 @@ export function ProductListPage() {
           <div
             ref={bulkPrintToolbarRef}
             className="management-card product-list-print-toolbar"
+            style={{ top: bulkPrintToolbarStickyTop }}
           >
             <div>
               <h3 className="product-list-print-toolbar__title">

@@ -12,6 +12,11 @@ import {
   resolveDemoSeedCount
 } from "./demo-data";
 import {
+  assertDemoSeedTargetSafety,
+  resolveDemoSeedTarget,
+  type DemoSeedTarget
+} from "./seed-target";
+import {
   getFirebaseAuthClient,
   getFirestoreDb
 } from "../firebase/firebase-admin";
@@ -43,15 +48,11 @@ function isDemoSeedEnabled() {
   return process.env.DEMO_SEED_ENABLED?.trim().toLowerCase() !== "false";
 }
 
-function assertFirestoreEmulator() {
-  if (!process.env.FIRESTORE_EMULATOR_HOST) {
-    throw new Error(
-      "DEMO seed is allowed only when FIRESTORE_EMULATOR_HOST is set."
-    );
-  }
+function seedTargetLabel(target: DemoSeedTarget) {
+  return target === "stg" ? "stg Firebase" : "Firebase Emulator";
 }
 
-async function waitForFirestore(db: Firestore) {
+async function waitForFirestore(db: Firestore, target: DemoSeedTarget) {
   for (let attempt = 1; attempt <= FIRESTORE_RETRY_ATTEMPTS; attempt += 1) {
     try {
       await db.collection("demoSeeds").limit(1).get();
@@ -62,14 +63,14 @@ async function waitForFirestore(db: Firestore) {
       }
 
       console.log(
-        `[demo-seed] Waiting for Firestore Emulator (${attempt}/${FIRESTORE_RETRY_ATTEMPTS})`
+        `[demo-seed] Waiting for ${seedTargetLabel(target)} Firestore (${attempt}/${FIRESTORE_RETRY_ATTEMPTS})`
       );
       await sleep(FIRESTORE_RETRY_DELAY_MS);
     }
   }
 }
 
-async function waitForAuth(auth: Auth) {
+async function waitForAuth(auth: Auth, target: DemoSeedTarget) {
   for (let attempt = 1; attempt <= AUTH_RETRY_ATTEMPTS; attempt += 1) {
     try {
       await auth.listUsers(1);
@@ -80,7 +81,7 @@ async function waitForAuth(auth: Auth) {
       }
 
       console.log(
-        `[demo-seed] Waiting for Auth Emulator (${attempt}/${AUTH_RETRY_ATTEMPTS})`
+        `[demo-seed] Waiting for ${seedTargetLabel(target)} Auth (${attempt}/${AUTH_RETRY_ATTEMPTS})`
       );
       await sleep(AUTH_RETRY_DELAY_MS);
     }
@@ -96,7 +97,7 @@ function hasErrorCode(error: unknown, code: string) {
   );
 }
 
-async function ensureDemoOwnerUser(auth: Auth) {
+async function ensureDemoOwnerUser(auth: Auth, target: DemoSeedTarget) {
   const email = process.env.APP_OWNER_EMAIL?.trim();
 
   if (!email) {
@@ -105,7 +106,12 @@ async function ensureDemoOwnerUser(auth: Auth) {
   }
 
   const password =
-    process.env.DEMO_OWNER_PASSWORD?.trim() || DEFAULT_DEMO_OWNER_PASSWORD;
+    process.env.DEMO_OWNER_PASSWORD?.trim() ||
+    (target === "emulator" ? DEFAULT_DEMO_OWNER_PASSWORD : undefined);
+
+  if (!password) {
+    throw new Error("DEMO_OWNER_PASSWORD is required for stg auth user seed.");
+  }
 
   try {
     await auth.getUserByEmail(email);
@@ -262,17 +268,22 @@ async function seedDemoData() {
     return;
   }
 
-  assertFirestoreEmulator();
+  const target = resolveDemoSeedTarget();
+  const runtime = assertDemoSeedTargetSafety(target);
 
   const db = getFirestoreDb();
 
-  await waitForFirestore(db);
+  console.log(
+    `[demo-seed] Target=${target}${runtime.projectId ? ` project=${runtime.projectId}` : ""}`
+  );
 
-  if (process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+  await waitForFirestore(db, target);
+
+  if (runtime.shouldSeedAuth) {
     const auth = getFirebaseAuthClient();
 
-    await waitForAuth(auth);
-    await ensureDemoOwnerUser(auth);
+    await waitForAuth(auth, target);
+    await ensureDemoOwnerUser(auth, target);
   } else {
     console.log(
       "[demo-seed] FIREBASE_AUTH_EMULATOR_HOST is empty; auth user seed skipped"

@@ -68,6 +68,7 @@ interface ProductQrPrintItem {
 
 const DEFAULT_PAGE_SIZE = 50;
 const BULK_QR_PRINT_LIMIT = 10;
+const BULK_PRINT_SCROLL_GAP_PX = 12;
 const DEFAULT_QUERY: Required<
   Pick<
     ProductListQuery,
@@ -324,6 +325,8 @@ export function ProductListPage() {
       hasAppliedProductFilters(currentQuery) ||
       Boolean(currentQueryParseResult.errorMessage)
   );
+  const [bulkPrintScrollRequest, setBulkPrintScrollRequest] = useState(0);
+  const bulkPrintToolbarRef = useRef<HTMLDivElement | null>(null);
   const previousIncludeSoldRef = useRef(DEFAULT_FILTER_STATE.includeSold);
 
   useEffect(() => {
@@ -383,6 +386,34 @@ export function ProductListPage() {
       isCurrent = false;
     };
   }, [selectedPrintProducts]);
+
+  useEffect(() => {
+    if (!isBulkPrintMode || bulkPrintScrollRequest === 0) {
+      return;
+    }
+
+    const animationFrameId = window.requestAnimationFrame(() => {
+      const toolbarElement = bulkPrintToolbarRef.current;
+
+      if (!toolbarElement) {
+        return;
+      }
+
+      const headerElement = document.querySelector<HTMLElement>(".app-header");
+      const headerHeight = headerElement?.getBoundingClientRect().height ?? 0;
+      const toolbarTop =
+        toolbarElement.getBoundingClientRect().top + window.scrollY;
+
+      window.scrollTo({
+        behavior: "smooth",
+        top: Math.max(toolbarTop - headerHeight - BULK_PRINT_SCROLL_GAP_PX, 0)
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(animationFrameId);
+    };
+  }, [bulkPrintScrollRequest, isBulkPrintMode]);
 
   const categoriesQuery = useQuery({
     queryKey: queryKeys.categories.list,
@@ -517,6 +548,7 @@ export function ProductListPage() {
   const startBulkPrintMode = () => {
     setNotice(null);
     setIsBulkPrintMode(true);
+    setBulkPrintScrollRequest((current) => current + 1);
   };
 
   const stopBulkPrintMode = () => {
@@ -945,7 +977,10 @@ export function ProductListPage() {
         </div>
 
         {isBulkPrintMode ? (
-          <div className="management-card product-list-print-toolbar">
+          <div
+            ref={bulkPrintToolbarRef}
+            className="management-card product-list-print-toolbar"
+          >
             <div>
               <h3 className="product-list-print-toolbar__title">
                 まとめて印刷

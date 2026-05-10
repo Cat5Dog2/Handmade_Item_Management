@@ -91,6 +91,21 @@ const bulkPrintProducts = Array.from({ length: 11 }, (_, index) => {
 
 let productsMode: "success" | "error" = "success";
 let printMock: ReturnType<typeof vi.fn>;
+let scrollToMock: ReturnType<typeof vi.fn>;
+
+function createDomRect(top: number, height: number) {
+  return {
+    bottom: top + height,
+    height,
+    left: 0,
+    right: 390,
+    top,
+    width: 390,
+    x: 0,
+    y: top,
+    toJSON: () => ({})
+  } as DOMRect;
+}
 
 function LocationProbe() {
   const location = useLocation();
@@ -150,10 +165,40 @@ describe("ProductListPage", () => {
     qrCodeMock.toString.mockReset();
     qrCodeMock.toString.mockResolvedValue('<svg viewBox="0 0 10 10"></svg>');
     printMock = vi.fn();
+    scrollToMock = vi.fn();
+    document
+      .querySelectorAll(".app-header")
+      .forEach((element) => element.remove());
     Object.defineProperty(window, "print", {
       configurable: true,
       value: printMock
     });
+    Object.defineProperty(window, "scrollTo", {
+      configurable: true,
+      value: scrollToMock
+    });
+    Object.defineProperty(window, "scrollY", {
+      configurable: true,
+      value: 240
+    });
+    Object.defineProperty(
+      window.HTMLElement.prototype,
+      "getBoundingClientRect",
+      {
+        configurable: true,
+        value(this: HTMLElement) {
+          if (this.classList.contains("app-header")) {
+            return createDomRect(0, 80);
+          }
+
+          if (this.classList.contains("product-list-print-toolbar")) {
+            return createDomRect(580, 120);
+          }
+
+          return createDomRect(0, 0);
+        }
+      }
+    );
     apiClientMock.get.mockImplementation(
       async (path: string, options?: { query?: Record<string, unknown> }) => {
         if (path === API_PATHS.categories) {
@@ -508,5 +553,24 @@ describe("ProductListPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "選択したQRを印刷" }));
 
     expect(printMock).toHaveBeenCalledTimes(1);
+  }, 10000);
+
+  it("scrolls to the bulk print selection toolbar when bulk print mode starts", async () => {
+    const headerElement = document.createElement("header");
+    headerElement.className = "app-header";
+    document.body.append(headerElement);
+
+    renderProductList("/products?keyword=bulk");
+
+    await screen.findByText("Bulk Product 01", undefined, { timeout: 8000 });
+
+    fireEvent.click(screen.getByRole("button", { name: "まとめて印刷" }));
+
+    await waitFor(() => {
+      expect(scrollToMock).toHaveBeenCalledWith({
+        behavior: "smooth",
+        top: 728
+      });
+    });
   }, 10000);
 });

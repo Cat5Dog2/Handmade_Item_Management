@@ -71,6 +71,18 @@ pnpm / yarn / 各 app 個別 package.json 運用の場合は、`Dockerfile` と 
 `.env.docker` の `APP_OWNER_EMAIL` に、利用者本人のログイン用メールアドレスを設定してください。  
 API は Firebase 認証に加えて、このメールアドレスの一致を確認する前提です。
 
+### 3-2. デモデータ
+
+`docker compose --env-file .env.docker up --build` の起動時に、`demo-seed` サービスが Auth / Firestore Emulator へデモデータを投入します。
+
+- 既定では `categories` / `tags` / `customers` / `products` / `tasks` を各25件作成します
+- `APP_OWNER_EMAIL` の Auth ユーザーが存在しない場合は作成します。初期パスワードは `.env.docker` の `DEMO_OWNER_PASSWORD`、未指定時は `password123` です
+- 同じIDのドキュメントが既に存在する場合は上書きせずスキップします
+- `counters/product` と `counters/customer` は、デモ件数以上になるように更新します
+- 停止時に `.firebase-emulator-data` へ export されるため、再起動時は重複投入されません
+
+件数を変える場合は `.env.docker` の `DEMO_SEED_COUNT` を変更してください。投入を止める場合は `DEMO_SEED_ENABLED=false` を設定してください。
+
 ### 4. フロントから Firestore / Storage を直接触らない前提
 
 設計どおり、業務データ更新は API 経由です。Web 側で必須なのは主に Auth Emulator 接続です。
@@ -78,7 +90,6 @@ API は Firebase 認証に加えて、このメールアドレスの一致を確
 ## この構成でやっていないこと
 
 - Firebase Hosting Emulator の Compose 化
-- seed データ投入スクリプト
 - Cloud Run 本番用の完全な CI/CD
 
 最初はここまでで十分です。Hosting Emulator は必要になってから追加で問題ありません。

@@ -526,11 +526,26 @@ describe("ProductListPage", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "まとめて印刷" }));
 
+    fireEvent.click(screen.getByRole("listitem", { name: "Bulk Product 01" }));
+    expect(screen.getByText("1 / 10件選択中")).toBeInTheDocument();
+    expect(
+      screen.getByRole("listitem", { name: "Bulk Product 01" })
+    ).toHaveClass("product-list-card--selected");
+
+    fireEvent.click(screen.getByRole("listitem", { name: "Bulk Product 01" }));
+    expect(screen.getByText("0 / 10件選択中")).toBeInTheDocument();
+    expect(
+      screen.getByRole("listitem", { name: "Bulk Product 01" })
+    ).not.toHaveClass("product-list-card--selected");
+
+    fireEvent.click(screen.getByRole("listitem", { name: "Bulk Product 01" }));
+    expect(screen.getByText("1 / 10件選択中")).toBeInTheDocument();
+
     expect(
       screen.getByRole("button", { name: "選択したQRを印刷" })
     ).toBeDisabled();
 
-    for (const product of bulkPrintProducts.slice(0, 10)) {
+    for (const product of bulkPrintProducts.slice(1, 10)) {
       fireEvent.click(screen.getByLabelText(`${product.name}を印刷対象に選択`));
     }
 

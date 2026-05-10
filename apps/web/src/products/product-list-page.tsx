@@ -1077,16 +1077,19 @@ export function ProductListPage() {
 
                 if (isBulkPrintMode) {
                   return (
-                    <article
+                    <label
                       key={product.productId}
                       aria-labelledby={`product-name-${product.productId}`}
-                      className="product-list-card product-list-card--selectable"
+                      className={`product-list-card product-list-card--selectable${
+                        isPrintSelected ? " product-list-card--selected" : ""
+                      }`}
                       role="listitem"
                     >
-                      <label className="product-list-card__select">
+                      <span className="product-list-card__select">
                         <input
                           aria-label={`${product.name}を印刷対象に選択`}
                           checked={isPrintSelected}
+                          className="product-list-card__select-input"
                           disabled={
                             !isPrintSelected && !canSelectMorePrintProducts
                           }
@@ -1098,10 +1101,9 @@ export function ProductListPage() {
                             )
                           }
                         />
-                        <span>選択</span>
-                      </label>
+                      </span>
                       <ProductListCardContent product={product} />
-                    </article>
+                    </label>
                   );
                 }
 

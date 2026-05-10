@@ -546,22 +546,38 @@ input {
 }
 
 .product-list-card--selectable {
-  grid-template-columns: auto 92px minmax(0, 1fr);
-  align-items: center;
+  position: relative;
+  grid-template-columns: 92px minmax(0, 1fr);
+  align-items: start;
+  cursor: pointer;
+}
+
+.product-list-card--selected {
+  border-width: 2px;
+  border-color: #0f766e;
 }
 
 .product-list-card__select {
-  display: inline-flex;
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  z-index: 1;
+  display: grid;
   align-items: center;
-  gap: 6px;
-  color: #1f2933;
-  font-weight: 700;
+  justify-items: center;
+  transform: translateY(-50%);
 }
 
-.product-list-card__select input {
-  width: 18px;
-  height: 18px;
+.product-list-card__select-input {
+  width: 22px;
+  height: 22px;
+  margin: 0;
   accent-color: #0f766e;
+}
+
+.product-list-card__select-input:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
 }
 
 .product-list-card__image {
@@ -642,6 +658,34 @@ input {
   z-index: 15;
   display: grid;
   gap: 12px;
+}
+
+.product-list-print-toolbar .management-form__hint {
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.product-list-print-toolbar .management-card__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.product-list-print-toolbar .primary-button,
+.product-list-print-toolbar .secondary-button {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.product-list-print-toolbar .primary-button {
+  padding-inline: 12px;
+}
+
+.product-list-print-toolbar .secondary-button {
+  min-height: 40px;
+  padding: 8px 10px;
+  font-size: 0.875rem;
 }
 
 .product-list-print-toolbar__title {
@@ -1628,7 +1672,7 @@ input {
   }
 
   .product-list-card--selectable {
-    grid-template-columns: auto 120px minmax(0, 1fr);
+    grid-template-columns: 120px minmax(0, 1fr);
   }
 
   .product-detail-page__overview {

@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {
@@ -89,6 +89,34 @@ describe("demo seed target", () => {
         process.env.INIT_CWD = previousInitialCwd;
       }
 
+      rmSync(tempDir, {
+        force: true,
+        recursive: true
+      });
+    }
+  });
+
+  it("uses application default credentials when configured service account file does not exist", () => {
+    const tempDir = mkdtempSync(path.join(os.tmpdir(), "demo-seed-adc-"));
+    const adcDir = path.join(tempDir, "gcloud");
+    const adcFile = path.join(adcDir, "application_default_credentials.json");
+    const env = {
+      APP_OWNER_EMAIL: "owner@example.com",
+      APPDATA: tempDir,
+      DEMO_OWNER_PASSWORD: "example-password",
+      DEMO_SEED_STG_CONFIRM: "stg-handmade-item-management",
+      FIREBASE_PROJECT_ID: "stg-handmade-item-management",
+      GOOGLE_APPLICATION_CREDENTIALS: "missing-service-account.json"
+    };
+
+    try {
+      mkdirSync(adcDir, { recursive: true });
+      writeFileSync(adcFile, "{}");
+
+      assertDemoSeedTargetSafety("stg", env);
+
+      expect(env.GOOGLE_APPLICATION_CREDENTIALS).toBe(adcFile);
+    } finally {
       rmSync(tempDir, {
         force: true,
         recursive: true

@@ -58,6 +58,37 @@ function resolveCredentialCandidates(credentialsPath: string) {
   ];
 }
 
+function resolveApplicationDefaultCredentials(env: DemoSeedEnv) {
+  const candidates = [
+    optionalEnvValue(env.APPDATA)
+      ? path.join(
+          optionalEnvValue(env.APPDATA) ?? "",
+          "gcloud",
+          "application_default_credentials.json"
+        )
+      : undefined,
+    optionalEnvValue(env.HOME)
+      ? path.join(
+          optionalEnvValue(env.HOME) ?? "",
+          ".config",
+          "gcloud",
+          "application_default_credentials.json"
+        )
+      : undefined,
+    optionalEnvValue(env.USERPROFILE)
+      ? path.join(
+          optionalEnvValue(env.USERPROFILE) ?? "",
+          "AppData",
+          "Roaming",
+          "gcloud",
+          "application_default_credentials.json"
+        )
+      : undefined
+  ].filter((candidate): candidate is string => Boolean(candidate));
+
+  return candidates.find(isFile);
+}
+
 function resolveGoogleApplicationCredentials(env: DemoSeedEnv) {
   const credentialsPath = optionalEnvValue(env.GOOGLE_APPLICATION_CREDENTIALS);
 
@@ -69,11 +100,20 @@ function resolveGoogleApplicationCredentials(env: DemoSeedEnv) {
   const resolvedPath = candidates.find(isFile);
 
   if (!resolvedPath) {
+    const applicationDefaultCredentials =
+      resolveApplicationDefaultCredentials(env);
+
+    if (applicationDefaultCredentials) {
+      env.GOOGLE_APPLICATION_CREDENTIALS = applicationDefaultCredentials;
+      return;
+    }
+
     throw new Error(
       [
         "GOOGLE_APPLICATION_CREDENTIALS points to a missing service account file.",
         `value=${credentialsPath}`,
-        `checked=${candidates.join(", ")}`
+        `checked=${candidates.join(", ")}`,
+        "Put the service account JSON there or run 'gcloud auth application-default login'."
       ].join(" ")
     );
   }

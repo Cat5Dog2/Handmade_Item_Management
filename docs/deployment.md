@@ -350,6 +350,30 @@ gcloud builds submit \
   --substitutions=_APP_OWNER_EMAIL=your-login-email@example.com,_CORS_ORIGIN=https://your-project-id.web.app,_FIREBASE_PROJECT_ID=your-project-id,_FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app,_VITE_FIREBASE_API_KEY=your_firebase_web_api_key,_VITE_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com,_VITE_FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app,_VITE_FIREBASE_MESSAGING_SENDER_ID=1234567890,_VITE_FIREBASE_APP_ID=1:1234567890:web:abcdef1234567890
 ```
 
+stg 環境では、リポジトリルートの `.env.stg` を正本として次のスクリプトを使う。
+スクリプトは Cloud Build に必要な substitutions を `.env.stg` から組み立て、Cloud Build 成功後に `npm run seed:demo:stg` を実行する。
+
+PowerShell:
+
+```powershell
+.\scripts\deploy\gcloud-builds-submit-stg.ps1
+```
+
+実行ポリシーで `.ps1` がブロックされる場合は、対象プロセスだけ一時的に回避して実行する。
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy\gcloud-builds-submit-stg.ps1
+```
+
+Bash:
+
+```bash
+./scripts/deploy/gcloud-builds-submit-stg.sh
+```
+
+`GOOGLE_APPLICATION_CREDENTIALS` に指定したサービスアカウント JSON が未配置の場合は、`gcloud auth application-default login` で作成される Application Default Credentials を使用できる。
+サービスアカウント JSON を使う場合は、`.env.stg` の `GOOGLE_APPLICATION_CREDENTIALS` が指すパスへ配置し、秘密鍵を Git に commit しない。
+
 補足:
 
 - `cloudbuild.yaml` の `build-api-image` は、必ずリポジトリルート `.` を build context にする
@@ -585,6 +609,20 @@ docker build -f apps/api/Dockerfile \
 
 ```bash
 gcloud builds submit --config cloudbuild.yaml --substitutions=_APP_OWNER_EMAIL=your-login-email@example.com,_CORS_ORIGIN=https://your-project-id.web.app,_FIREBASE_PROJECT_ID=your-project-id,_FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app,_VITE_FIREBASE_API_KEY=your_firebase_web_api_key,_VITE_FIREBASE_AUTH_DOMAIN=your-project-id.firebaseapp.com,_VITE_FIREBASE_STORAGE_BUCKET=your-project-id.firebasestorage.app,_VITE_FIREBASE_MESSAGING_SENDER_ID=1234567890,_VITE_FIREBASE_APP_ID=1:1234567890:web:abcdef1234567890
+```
+
+### stg Cloud Build / seed スクリプト
+
+```powershell
+.\scripts\deploy\gcloud-builds-submit-stg.ps1
+```
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy\gcloud-builds-submit-stg.ps1
+```
+
+```bash
+./scripts/deploy/gcloud-builds-submit-stg.sh
 ```
 
 ### Cloud Run デプロイ

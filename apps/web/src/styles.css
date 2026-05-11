@@ -1,5 +1,13 @@
 @import url("https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=Yusei+Magic&display=swap");
 
+@font-face {
+  font-family: "Jackey Font";
+  src: url("/fonts/jackeyfont.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --color-ink: #332744;
   --color-muted: #756981;
@@ -19,7 +27,7 @@
   --shadow-lifted: 0 14px 34px rgba(91, 33, 182, 0.12);
   --font-base: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Yu Gothic",
     "Segoe UI", sans-serif;
-  --font-display: "Yusei Magic", "M PLUS Rounded 1c",
+  --font-display: "Jackey Font", "Yusei Magic", "M PLUS Rounded 1c",
     "Hiragino Maru Gothic ProN", sans-serif;
 
   color: var(--color-ink);

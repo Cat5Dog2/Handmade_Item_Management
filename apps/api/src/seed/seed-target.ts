@@ -1,7 +1,7 @@
 import { existsSync, statSync } from "node:fs";
 import path from "node:path";
 
-export type DemoSeedTarget = "emulator" | "stg";
+export type DemoSeedTarget = "emulator" | "stg" | "demo";
 
 type DemoSeedEnv = Record<string, string | undefined>;
 
@@ -129,11 +129,13 @@ export function resolveDemoSeedTarget(
     optionalEnvValue(parseTargetArg(args)) ?? env.DEMO_SEED_TARGET;
   const target = optionalEnvValue(rawTarget)?.toLowerCase() ?? "emulator";
 
-  if (target === "emulator" || target === "stg") {
+  if (target === "emulator" || target === "stg" || target === "demo") {
     return target;
   }
 
-  throw new Error("DEMO_SEED_TARGET must be either 'emulator' or 'stg'.");
+  throw new Error(
+    "DEMO_SEED_TARGET must be either 'emulator', 'stg', or 'demo'."
+  );
 }
 
 export function assertDemoSeedTargetSafety(
@@ -161,32 +163,39 @@ export function assertDemoSeedTargetSafety(
 
   if (firestoreEmulatorHost || authEmulatorHost) {
     throw new Error(
-      "DEMO seed target 'stg' must not use Firebase emulator environment variables."
+      `DEMO seed target '${target}' must not use Firebase emulator environment variables.`
     );
   }
 
   if (!projectId) {
-    throw new Error("DEMO seed target 'stg' requires FIREBASE_PROJECT_ID.");
+    throw new Error(
+      `DEMO seed target '${target}' requires FIREBASE_PROJECT_ID.`
+    );
   }
 
-  if (!projectId.toLowerCase().includes("stg")) {
+  if (target === "stg" && !projectId.toLowerCase().includes("stg")) {
     throw new Error(
       "DEMO seed target 'stg' requires a FIREBASE_PROJECT_ID containing 'stg'."
     );
   }
 
-  if (optionalEnvValue(env.DEMO_SEED_STG_CONFIRM) !== projectId) {
+  const confirmEnvName =
+    target === "demo" ? "DEMO_SEED_DEMO_CONFIRM" : "DEMO_SEED_STG_CONFIRM";
+
+  if (optionalEnvValue(env[confirmEnvName]) !== projectId) {
     throw new Error(
-      "DEMO_SEED_STG_CONFIRM must exactly match FIREBASE_PROJECT_ID for stg seed."
+      `${confirmEnvName} must exactly match FIREBASE_PROJECT_ID for ${target} seed.`
     );
   }
 
   if (!optionalEnvValue(env.APP_OWNER_EMAIL)) {
-    throw new Error("DEMO seed target 'stg' requires APP_OWNER_EMAIL.");
+    throw new Error(`DEMO seed target '${target}' requires APP_OWNER_EMAIL.`);
   }
 
   if (!optionalEnvValue(env.DEMO_OWNER_PASSWORD)) {
-    throw new Error("DEMO seed target 'stg' requires DEMO_OWNER_PASSWORD.");
+    throw new Error(
+      `DEMO seed target '${target}' requires DEMO_OWNER_PASSWORD.`
+    );
   }
 
   resolveGoogleApplicationCredentials(env);

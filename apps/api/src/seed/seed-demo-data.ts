@@ -49,7 +49,7 @@ function isDemoSeedEnabled() {
 }
 
 function seedTargetLabel(target: DemoSeedTarget) {
-  return target === "stg" ? "stg Firebase" : "Firebase Emulator";
+  return target === "emulator" ? "Firebase Emulator" : `${target} Firebase`;
 }
 
 async function waitForFirestore(db: Firestore, target: DemoSeedTarget) {
@@ -110,7 +110,9 @@ async function ensureDemoOwnerUser(auth: Auth, target: DemoSeedTarget) {
     (target === "emulator" ? DEFAULT_DEMO_OWNER_PASSWORD : undefined);
 
   if (!password) {
-    throw new Error("DEMO_OWNER_PASSWORD is required for stg auth user seed.");
+    throw new Error(
+      `DEMO_OWNER_PASSWORD is required for ${target} auth user seed.`
+    );
   }
 
   try {

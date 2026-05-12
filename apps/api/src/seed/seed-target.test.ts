@@ -40,6 +40,22 @@ describe("demo seed target", () => {
     });
   });
 
+  it("allows demo only when explicit confirmation and required values are present", () => {
+    expect(resolveDemoSeedTarget(["--target=demo"], {})).toBe("demo");
+
+    expect(
+      assertDemoSeedTargetSafety("demo", {
+        APP_OWNER_EMAIL: "owner@example.com",
+        DEMO_OWNER_PASSWORD: "example-password",
+        DEMO_SEED_DEMO_CONFIRM: "fir-handmade-item-management",
+        FIREBASE_PROJECT_ID: "fir-handmade-item-management"
+      })
+    ).toEqual({
+      projectId: "fir-handmade-item-management",
+      shouldSeedAuth: true
+    });
+  });
+
   it("blocks stg seed when confirmation does not match the target project", () => {
     expect(() => {
       assertDemoSeedTargetSafety("stg", {
@@ -49,6 +65,17 @@ describe("demo seed target", () => {
         FIREBASE_PROJECT_ID: "stg-handmade-item-management"
       });
     }).toThrow("DEMO_SEED_STG_CONFIRM");
+  });
+
+  it("blocks demo seed when confirmation does not match the target project", () => {
+    expect(() => {
+      assertDemoSeedTargetSafety("demo", {
+        APP_OWNER_EMAIL: "owner@example.com",
+        DEMO_OWNER_PASSWORD: "example-password",
+        DEMO_SEED_DEMO_CONFIRM: "other-project",
+        FIREBASE_PROJECT_ID: "fir-handmade-item-management"
+      });
+    }).toThrow("DEMO_SEED_DEMO_CONFIRM");
   });
 
   it("blocks stg seed when emulator variables are still configured", () => {

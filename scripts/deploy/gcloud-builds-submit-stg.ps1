@@ -1,3 +1,8 @@
+param(
+  [ValidateSet("stg", "demo")]
+  [string] $DeployEnvironment = "stg"
+)
+
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
@@ -6,7 +11,8 @@ if ($PSVersionTable.PSVersion.Major -ge 7) {
 }
 
 $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")).Path
-$envFile = Join-Path $repoRoot ".env.stg"
+$envFileName = ".env.$DeployEnvironment"
+$envFile = Join-Path $repoRoot $envFileName
 
 function Import-EnvFile {
   param(
@@ -15,7 +21,7 @@ function Import-EnvFile {
   )
 
   if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
-    throw ".env.stg was not found: $Path"
+    throw "$envFileName was not found: $Path"
   }
 
   Get-Content -LiteralPath $Path | ForEach-Object {
@@ -56,7 +62,7 @@ function Assert-RequiredEnv {
   })
 
   if ($missingEnvNames.Count -gt 0) {
-    throw ".env.stg is missing required values: $($missingEnvNames -join ', ')"
+    throw "$envFileName is missing required values: $($missingEnvNames -join ', ')"
   }
 }
 
@@ -155,16 +161,18 @@ try {
   )
 
   $env:DEMO_SEED_ENABLED = if ($env:DEMO_SEED_ENABLED) { $env:DEMO_SEED_ENABLED } else { "true" }
-  $env:DEMO_SEED_TARGET = if ($env:DEMO_SEED_TARGET) { $env:DEMO_SEED_TARGET } else { "stg" }
+  $env:DEMO_SEED_TARGET = if ($env:DEMO_SEED_TARGET) { $env:DEMO_SEED_TARGET } else { $DeployEnvironment }
   $env:DEMO_SEED_COUNT = if ($env:DEMO_SEED_COUNT) { $env:DEMO_SEED_COUNT } else { "25" }
-  $env:DEMO_SEED_STG_CONFIRM = $env:FIREBASE_PROJECT_ID
+  $seedConfirmEnvName = if ($DeployEnvironment -eq "demo") { "DEMO_SEED_DEMO_CONFIRM" } else { "DEMO_SEED_STG_CONFIRM" }
+  [Environment]::SetEnvironmentVariable($seedConfirmEnvName, $env:FIREBASE_PROJECT_ID, "Process")
   $env:DEMO_OWNER_PASSWORD = if ($env:DEMO_OWNER_PASSWORD) { $env:DEMO_OWNER_PASSWORD } else { $env:APP_PASS }
   $env:FIRESTORE_EMULATOR_HOST = ""
   $env:FIREBASE_AUTH_EMULATOR_HOST = ""
 
   Resolve-GoogleApplicationCredentials
 
-  Invoke-CheckedCommand -Command "npm" -Arguments @("run", "seed:demo:stg")
+  $seedScript = if ($DeployEnvironment -eq "demo") { "seed:demo:demo" } else { "seed:demo:stg" }
+  Invoke-CheckedCommand -Command "npm" -Arguments @("run", $seedScript)
 } finally {
   Pop-Location
 }

@@ -371,8 +371,29 @@ Bash:
 ./scripts/deploy/gcloud-builds-submit-stg.sh
 ```
 
+demo 環境では、リポジトリルートの `.env.demo` を正本として次のスクリプトを使う。
+処理内容は stg と同じで、Cloud Build 成功後に demo 環境向けの seed を実行する。
+
+PowerShell:
+
+```powershell
+.\scripts\deploy\gcloud-builds-submit-demo.ps1
+```
+
+実行ポリシーで `.ps1` がブロックされる場合:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy\gcloud-builds-submit-demo.ps1
+```
+
+Bash:
+
+```bash
+bash ./scripts/deploy/gcloud-builds-submit-demo.sh
+```
+
 `GOOGLE_APPLICATION_CREDENTIALS` に指定したサービスアカウント JSON が未配置の場合は、`gcloud auth application-default login` で作成される Application Default Credentials を使用できる。
-サービスアカウント JSON を使う場合は、`.env.stg` の `GOOGLE_APPLICATION_CREDENTIALS` が指すパスへ配置し、秘密鍵を Git に commit しない。
+サービスアカウント JSON を使う場合は、対象 env ファイルの `GOOGLE_APPLICATION_CREDENTIALS` が指すパスへ配置し、秘密鍵を Git に commit しない。
 
 補足:
 
@@ -623,6 +644,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy\gcloud-buil
 
 ```bash
 ./scripts/deploy/gcloud-builds-submit-stg.sh
+```
+
+### demo Cloud Build / seed スクリプト
+
+```powershell
+.\scripts\deploy\gcloud-builds-submit-demo.ps1
+```
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy\gcloud-builds-submit-demo.ps1
+```
+
+```bash
+bash ./scripts/deploy/gcloud-builds-submit-demo.sh
 ```
 
 ### Cloud Run デプロイ

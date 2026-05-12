@@ -6,6 +6,7 @@
     "dev": "tsx watch src/index.ts",
     "seed:demo": "tsx src/seed/seed-demo-data.ts --target=emulator",
     "seed:demo:stg": "tsx src/seed/seed-demo-data.ts --target=stg",
+    "seed:demo:demo": "tsx src/seed/seed-demo-data.ts --target=demo",
     "build": "npm --workspace @handmade/shared run build && tsc -p tsconfig.build.json",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",

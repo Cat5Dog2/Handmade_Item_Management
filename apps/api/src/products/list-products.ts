@@ -6,6 +6,7 @@ import type {
   ProductStatus
 } from "@handmade/shared";
 import {
+  normalizeProductStatus,
   normalizeSearchKeyword,
   productListQuerySchema
 } from "@handmade/shared";
@@ -31,6 +32,8 @@ interface ProductDocument {
   categoryId: string;
   description: string;
   images?: ProductImageDocument[] | null;
+  isCustomOrder?: boolean;
+  isLimitedStock?: boolean;
   isDeleted: boolean;
   name: string;
   productId: string;
@@ -67,6 +70,8 @@ interface ProductRecord {
   categoryId: string;
   categoryName: string | null;
   images: ProductImageDocument[];
+  isCustomOrder: boolean;
+  isLimitedStock: boolean;
   name: string;
   productId: string;
   searchableText: string;
@@ -129,6 +134,8 @@ function toProductRecord(
     categoryId: data.categoryId,
     categoryName,
     images,
+    isCustomOrder: data.isCustomOrder ?? false,
+    isLimitedStock: data.isLimitedStock ?? false,
     name: data.name,
     productId: data.productId,
     searchableText: createSearchableText([
@@ -138,7 +145,7 @@ function toProductRecord(
       categoryName,
       tagNames.join(" ")
     ]),
-    status: data.status,
+    status: normalizeProductStatus(data.status) as ProductStatus,
     tagIds: data.tagIds,
     updatedAt: toDate(data.updatedAt),
     thumbnailPath: representativeImage?.thumbnailPath ?? null
@@ -169,6 +176,22 @@ function doesProductMatchQuery(
     return false;
   }
 
+  if (query.customOrder === "only" && !record.isCustomOrder) {
+    return false;
+  }
+
+  if (query.customOrder === "exclude" && record.isCustomOrder) {
+    return false;
+  }
+
+  if (query.limitedStock === "only" && !record.isLimitedStock) {
+    return false;
+  }
+
+  if (query.limitedStock === "exclude" && record.isLimitedStock) {
+    return false;
+  }
+
   if (normalizedKeyword && !record.searchableText.includes(normalizedKeyword)) {
     return false;
   }
@@ -194,6 +217,10 @@ function compareProducts(
   }
 
   return left.productId.localeCompare(right.productId);
+}
+
+function canApplyStatusFilterInFirestore(status: ProductStatus) {
+  return status !== "inProduction" && status !== "consignmentSale";
 }
 
 async function getThumbnailUrl(
@@ -260,7 +287,7 @@ export async function listProducts(
     productQuery = productQuery.where("categoryId", "==", query.categoryId);
   }
 
-  if (query.status) {
+  if (query.status && canApplyStatusFilterInFirestore(query.status)) {
     productQuery = productQuery.where("status", "==", query.status);
   }
 
@@ -311,6 +338,8 @@ export async function listProducts(
       productId: record.productId,
       name: record.name,
       status: record.status,
+      isCustomOrder: record.isCustomOrder,
+      isLimitedStock: record.isLimitedStock,
       categoryName: record.categoryName,
       updatedAt: record.updatedAt.toISOString(),
       thumbnailUrl: await getThumbnailUrl(

@@ -135,6 +135,8 @@ describe("ProductCreatePage", () => {
         body: {
           categoryId: "cat-1",
           description: "春向けの一点物",
+          isCustomOrder: false,
+          isLimitedStock: false,
           name: "ブローチ",
           price: 2800,
           status: "completed",

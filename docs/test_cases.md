@@ -17,7 +17,7 @@
 
 - 認証用アカウントが存在すること
 - 以下の状態の商品を用意すること
-  - 制作前 / 制作中 / 制作済 / 展示中 / 在庫中 / 販売済
+  - 制作中 / 制作済 / 委託販売 / マルシェ / 在庫中 / 販売済
   - 論理削除済み商品
 - 以下の画像状態の商品を用意すること
   - 画像0枚
@@ -171,9 +171,9 @@
 
 | テストケースID | テスト内容 | 前提条件 | 手順 | 期待結果 |
 |---|---|---|---|---|
-| QR-01 | QR読取成功 | 展示中または在庫中の商品QRがある | 1. QR読み取り画面を開く<br>2. QRを読み取る | 商品確認情報が表示される |
-| QR-02 | 更新可能判定 | 展示中商品と在庫中商品がある | 1. 各QRを読み取る | `onDisplay` / `inStock` のみ販売済更新可能と判定される |
-| QR-03 | 制作系ステータス読取 | 制作前 / 制作中 / 制作済商品のQRがある | 1. 各QRを読み取る | 更新不可メッセージが表示される |
+| QR-01 | QR読取成功 | 委託販売、マルシェまたは在庫中の商品QRがある | 1. QR読み取り画面を開く<br>2. QRを読み取る | 商品確認情報が表示される |
+| QR-02 | 更新可能判定 | 委託販売商品、マルシェ商品、在庫中商品がある | 1. 各QRを読み取る | `consignmentSale` / `marche` / `inStock` のみ販売済更新可能と判定される |
+| QR-03 | 制作系ステータス読取 | 制作中 / 制作済商品のQRがある | 1. 各QRを読み取る | 更新不可メッセージが表示される |
 | QR-04 | 既販売済商品読取 | 販売済商品のQRがある | 1. QRを読み取る | 「この商品はすでに販売済みです。」が表示され、販売済更新ボタンは表示または活性化されない |
 | QR-05 | 論理削除済み商品読取 | 論理削除済み商品のQRがある | 1. QRを読み取る | 「このQRコードの商品は利用できません。」が表示され、販売済更新ボタンは表示または活性化されない |
 | QR-06 | 未登録QR読取 | 未登録のQRがある | 1. QRを読み取る | エラー表示される |
@@ -351,9 +351,9 @@
 
 | テストケースID | テスト内容 | 前提条件 | 手順 | 期待結果 |
 |---|---|---|---|---|
-| QAP-01 | QR lookup 更新可能判定 | 展示中または在庫中の商品が存在する | 1. `POST /api/qr/lookup` を実行する | `200 OK` で `canSell=true` かつ `reasonCode=CAN_SELL` で返る |
+| QAP-01 | QR lookup 更新可能判定 | 委託販売、マルシェまたは在庫中の商品が存在する | 1. `POST /api/qr/lookup` を実行する | `200 OK` で `canSell=true` かつ `reasonCode=CAN_SELL` で返る |
 | QAP-02 | QR lookup 既販売済 | 販売済商品が存在する | 1. `POST /api/qr/lookup` を実行する | `200 OK` で `canSell=false` かつ `reasonCode=ALREADY_SOLD` で返る |
-| QAP-03 | QR lookup 制作系 | 制作前 / 制作中 / 制作済の商品が存在する | 1. `POST /api/qr/lookup` を実行する | `200 OK` で `canSell=false` かつ `reasonCode=INVALID_STATUS` で返る |
+| QAP-03 | QR lookup 制作系 | 制作中 / 制作済の商品が存在する | 1. `POST /api/qr/lookup` を実行する | `200 OK` で `canSell=false` かつ `reasonCode=INVALID_STATUS` で返る |
 | QAP-04 | QR lookup 論理削除商品 | 論理削除済み商品が存在する | 1. `POST /api/qr/lookup` を実行する | `200 OK` で `canSell=false` かつ `reasonCode=PRODUCT_DELETED` で返る |
 | QAP-04A | QR lookup 未登録商品 | 未登録の `qrCodeValue` を用意する | 1. `POST /api/qr/lookup` を実行する | `200 OK` で `canSell=false` かつ `reasonCode=PRODUCT_NOT_FOUND` で返る |
 | QAP-04B | QR lookup 入力必須バリデーション | なし | 1. `qrCodeValue` を未指定で `POST /api/qr/lookup` を実行する | `VALIDATION_ERROR` となる |
@@ -361,7 +361,7 @@
 | QAP-06 | QR sell 重複更新防止 | 既に販売済の商品が存在する | 1. `POST /api/qr/sell` を実行する | 更新されず、`ALREADY_SOLD` を返す |
 | QAP-07 | QR sell 排他 | 更新直前に別操作で状態変更される条件を作る | 1. `POST /api/qr/sell` を実行する | 更新直前に最新状態を再取得して再判定し、不整合なく `ALREADY_SOLD` または `INVALID_STATUS_FOR_QR_SELL` を返す |
 | QAP-08 | QR sell 入力必須バリデーション | なし | 1. `productId` と `qrCodeValue` の両方を未指定で `POST /api/qr/sell` を実行する | `VALIDATION_ERROR` となる |
-| QAP-09 | QR sell 更新不可ステータス直接呼び出し | 制作前 / 制作中 / 制作済のいずれかの商品が存在する | 1. 対象商品の `productId` または `qrCodeValue` を指定して `POST /api/qr/sell` を実行する | `INVALID_STATUS_FOR_QR_SELL` となる |
+| QAP-09 | QR sell 更新不可ステータス直接呼び出し | 制作中 / 制作済のいずれかの商品が存在する | 1. 対象商品の `productId` または `qrCodeValue` を指定して `POST /api/qr/sell` を実行する | `INVALID_STATUS_FOR_QR_SELL` となる |
 | QAP-10 | QR sell 論理削除済み商品直接呼び出し | 論理削除済み商品が存在する | 1. 対象商品の `productId` または `qrCodeValue` を指定して `POST /api/qr/sell` を実行する | `PRODUCT_DELETED` となる |
 | QAP-11 | QR sell 未登録商品直接呼び出し | 未登録の `productId` または `qrCodeValue` を用意する | 1. `POST /api/qr/sell` を実行する | `PRODUCT_NOT_FOUND` となる |
 

@@ -38,13 +38,15 @@ describe("updateProduct", () => {
               thumbnailPath: "products/HM-000001/thumb/img-002.webp"
             }
           ],
+          isCustomOrder: false,
+          isLimitedStock: false,
           isDeleted: false,
           name: "Old Pin",
           price: 2800,
           productId,
           qrCodeValue: productId,
           soldAt: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: ["tag-b"],
           updatedAt: createTimestamp("2026-04-18T09:00:00.000Z")
         });
@@ -126,6 +128,8 @@ describe("updateProduct", () => {
           primaryImageId: "img-002",
           soldCustomerId: null,
           status: "sold",
+          isCustomOrder: true,
+          isLimitedStock: true,
           tagIds: ["tag-b", "tag-a"]
         },
         {
@@ -139,6 +143,8 @@ describe("updateProduct", () => {
         "price",
         "categoryId",
         "status",
+        "isCustomOrder",
+        "isLimitedStock",
         "description",
         "tagIds"
       ],
@@ -170,6 +176,8 @@ describe("updateProduct", () => {
           thumbnailPath: "products/HM-000001/thumb/img-002.webp"
         }
       ],
+      isCustomOrder: true,
+      isLimitedStock: true,
       isDeleted: false,
       name: "Fancy Pin",
       price: 3000,
@@ -209,7 +217,7 @@ describe("updateProduct", () => {
             soldAt: null,
             soldCustomerId: null,
             soldCustomerNameSnapshot: null,
-            status: "onDisplay",
+            status: "consignmentSale",
             tagIds: [],
             updatedAt: createTimestamp("2026-04-18T09:00:00.000Z")
           });
@@ -322,7 +330,7 @@ describe("updateProduct", () => {
             productId,
             qrCodeValue: productId,
             soldAt: null,
-            status: "onDisplay",
+            status: "consignmentSale",
             tagIds: [],
             updatedAt: createTimestamp("2026-04-18T09:00:00.000Z")
           });
@@ -585,7 +593,7 @@ describe("updateProduct", () => {
           price: 3200,
           primaryImageId: null,
           soldCustomerId: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: []
         },
         {
@@ -614,7 +622,7 @@ describe("updateProduct", () => {
       qrCodeValue: productId,
       soldCustomerId: null,
       soldCustomerNameSnapshot: null,
-      status: "onDisplay",
+      status: "consignmentSale",
       tagIds: []
     });
     expectTimestampLike(payload.createdAt, "2026-04-18T08:00:00.000Z");
@@ -650,7 +658,7 @@ describe("updateProduct", () => {
             productId,
             qrCodeValue: productId,
             soldAt: null,
-            status: "onDisplay",
+            status: "consignmentSale",
             tagIds: [],
             updatedAt: createTimestamp("2026-04-18T10:00:00.000Z")
           });
@@ -699,7 +707,7 @@ describe("updateProduct", () => {
           price: 3200,
           primaryImageId: "missing",
           soldCustomerId: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: []
         },
         {
@@ -759,7 +767,7 @@ describe("updateProduct", () => {
           price: 3200,
           primaryImageId: null,
           soldCustomerId: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: []
         },
         {
@@ -802,7 +810,7 @@ describe("updateProduct", () => {
                 productId,
                 qrCodeValue: productId,
                 soldAt: null,
-                status: "onDisplay",
+                status: "consignmentSale",
                 tagIds: [],
                 updatedAt: createTimestamp("2026-04-18T10:00:00.000Z")
               });
@@ -825,7 +833,7 @@ describe("updateProduct", () => {
           price: 3200,
           primaryImageId: null,
           soldCustomerId: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: []
         },
         {

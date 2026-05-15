@@ -28,10 +28,10 @@ function createDb(productSnapshot: unknown) {
 
 describe("lookupQrCode", () => {
   it.each([
-    ["onDisplay", "CAN_SELL", true],
+    ["consignmentSale", "CAN_SELL", true],
+    ["marche", "CAN_SELL", true],
     ["inStock", "CAN_SELL", true],
     ["sold", "ALREADY_SOLD", false],
-    ["beforeProduction", "INVALID_STATUS", false],
     ["inProduction", "INVALID_STATUS", false],
     ["completed", "INVALID_STATUS", false]
   ] as const)(
@@ -67,6 +67,33 @@ describe("lookupQrCode", () => {
     }
   );
 
+  it("normalizes legacy status values in lookup results", async () => {
+    const { db } = createDb(
+      createDocumentSnapshot({
+        isDeleted: false,
+        name: "譏･濶ｲ繝斐い繧ｹ",
+        productId: "HM-000001",
+        qrCodeValue: "HM-000001",
+        status: "onDisplay"
+      })
+    );
+
+    await expect(
+      lookupQrCode(
+        {
+          qrCodeValue: "HM-000001"
+        },
+        {
+          db: db as never
+        }
+      )
+    ).resolves.toMatchObject({
+      status: "consignmentSale",
+      canSell: true,
+      reasonCode: "CAN_SELL"
+    });
+  });
+
   it("returns PRODUCT_DELETED as a lookup result for logically deleted products", async () => {
     const { db } = createDb(
       createDocumentSnapshot({
@@ -74,7 +101,7 @@ describe("lookupQrCode", () => {
         name: "削除済みピアス",
         productId: "HM-000002",
         qrCodeValue: "HM-000002",
-        status: "onDisplay"
+        status: "consignmentSale"
       })
     );
 
@@ -90,7 +117,7 @@ describe("lookupQrCode", () => {
     ).resolves.toEqual({
       productId: "HM-000002",
       name: "削除済みピアス",
-      status: "onDisplay",
+      status: "consignmentSale",
       canSell: false,
       reasonCode: "PRODUCT_DELETED",
       message: "このQRコードの商品は利用できません。"

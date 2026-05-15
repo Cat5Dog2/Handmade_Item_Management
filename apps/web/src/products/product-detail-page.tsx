@@ -54,11 +54,11 @@ const priceFormatter = new Intl.NumberFormat("ja-JP", {
 });
 
 const productStatusBadgeClassNames: Record<ProductStatus, string> = {
-  beforeProduction: "product-status-badge is-before-production",
   completed: "product-status-badge is-completed",
+  consignmentSale: "product-status-badge is-consignment-sale",
   inProduction: "product-status-badge is-in-production",
   inStock: "product-status-badge is-in-stock",
-  onDisplay: "product-status-badge is-on-display",
+  marche: "product-status-badge is-marche",
   sold: "product-status-badge is-sold"
 };
 
@@ -604,9 +604,17 @@ export function ProductDetailPage() {
               商品の状態、分類、価格、更新日時を確認します。
             </p>
           </div>
-          <span className={productStatusBadgeClassNames[product.status]}>
-            {PRODUCT_STATUS_LABELS[product.status]}
-          </span>
+          <div className="product-detail-page__badges">
+            {product.isCustomOrder ? (
+              <span className="management-badge is-custom-order">特注</span>
+            ) : null}
+            {product.isLimitedStock ? (
+              <span className="management-badge is-limited-stock">在庫限り</span>
+            ) : null}
+            <span className={productStatusBadgeClassNames[product.status]}>
+              {PRODUCT_STATUS_LABELS[product.status]}
+            </span>
+          </div>
         </div>
         <article className="management-card product-detail-page__overview">
           <ProductImagePreview image={primaryImage} name={product.name} />
@@ -627,6 +635,14 @@ export function ProductDetailPage() {
               <div>
                 <dt>タグ</dt>
                 <dd>{tagText}</dd>
+              </div>
+              <div>
+                <dt>特注</dt>
+                <dd>{product.isCustomOrder ? "はい" : "いいえ"}</dd>
+              </div>
+              <div>
+                <dt>在庫限り</dt>
+                <dd>{product.isLimitedStock ? "はい" : "いいえ"}</dd>
               </div>
               <div>
                 <dt>登録日時</dt>

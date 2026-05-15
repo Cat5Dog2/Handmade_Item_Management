@@ -4,6 +4,7 @@ import type {
   ProductListItem,
   ProductListMeta,
   ProductListQuery,
+  ProductFlagFilter,
   ProductSortBy,
   ProductStatus,
   SortOrder,
@@ -52,8 +53,10 @@ type ProductListQueryParseResult = ListQueryParseResult<ProductListQuery>;
 
 interface ProductListFilterState {
   categoryId: string;
+  customOrder: ProductFlagFilter;
   includeSold: boolean;
   keyword: string;
+  limitedStock: ProductFlagFilter;
   sortBy: ProductSortBy;
   sortOrder: SortOrder;
   status: ProductStatus | "";
@@ -72,10 +75,18 @@ const BULK_PRINT_SCROLL_GAP_PX = 12;
 const DEFAULT_QUERY: Required<
   Pick<
     ProductListQuery,
-    "includeSold" | "page" | "pageSize" | "sortBy" | "sortOrder"
+    | "customOrder"
+    | "includeSold"
+    | "limitedStock"
+    | "page"
+    | "pageSize"
+    | "sortBy"
+    | "sortOrder"
   >
 > = {
+  customOrder: "all",
   includeSold: true,
+  limitedStock: "all",
   page: 1,
   pageSize: DEFAULT_PAGE_SIZE,
   sortBy: "updatedAt",
@@ -84,8 +95,10 @@ const DEFAULT_QUERY: Required<
 
 const DEFAULT_FILTER_STATE: ProductListFilterState = {
   categoryId: "",
+  customOrder: DEFAULT_QUERY.customOrder,
   includeSold: true,
   keyword: "",
+  limitedStock: DEFAULT_QUERY.limitedStock,
   sortBy: DEFAULT_QUERY.sortBy,
   sortOrder: DEFAULT_QUERY.sortOrder,
   status: "",
@@ -95,11 +108,11 @@ const PRODUCT_LIST_QUERY_ERROR_MESSAGE =
   "\u691c\u7d22\u6761\u4ef6\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002";
 
 const productStatusBadgeClassNames: Record<ProductStatus, string> = {
-  beforeProduction: "product-status-badge is-before-production",
   completed: "product-status-badge is-completed",
+  consignmentSale: "product-status-badge is-consignment-sale",
   inProduction: "product-status-badge is-in-production",
   inStock: "product-status-badge is-in-stock",
-  onDisplay: "product-status-badge is-on-display",
+  marche: "product-status-badge is-marche",
   sold: "product-status-badge is-sold"
 };
 
@@ -110,8 +123,10 @@ function formatUpdatedAt(updatedAt: string) {
 function normalizeProductListQuery(query: ProductListQuery): ProductListQuery {
   const normalized: ProductListQuery = {
     categoryId: query.categoryId,
+    customOrder: query.customOrder ?? DEFAULT_QUERY.customOrder,
     includeSold: query.includeSold ?? DEFAULT_QUERY.includeSold,
     keyword: query.keyword,
+    limitedStock: query.limitedStock ?? DEFAULT_QUERY.limitedStock,
     page: query.page ?? DEFAULT_QUERY.page,
     pageSize: query.pageSize ?? DEFAULT_QUERY.pageSize,
     sortBy: query.sortBy ?? DEFAULT_QUERY.sortBy,
@@ -145,8 +160,10 @@ function parseProductListQuery(
 function toFilterState(query: ProductListQuery): ProductListFilterState {
   return {
     categoryId: query.categoryId ?? "",
+    customOrder: query.customOrder ?? DEFAULT_QUERY.customOrder,
     includeSold: query.includeSold ?? DEFAULT_QUERY.includeSold,
     keyword: query.keyword ?? "",
+    limitedStock: query.limitedStock ?? DEFAULT_QUERY.limitedStock,
     sortBy: query.sortBy ?? DEFAULT_QUERY.sortBy,
     sortOrder: query.sortOrder ?? DEFAULT_QUERY.sortOrder,
     status: query.status ?? "",
@@ -157,8 +174,10 @@ function toFilterState(query: ProductListQuery): ProductListFilterState {
 function buildProductListRequestQuery(query: ProductListQuery) {
   return {
     categoryId: query.categoryId,
+    customOrder: query.customOrder,
     includeSold: query.includeSold,
     keyword: query.keyword,
+    limitedStock: query.limitedStock,
     page: query.page,
     pageSize: query.pageSize,
     sortBy: query.sortBy,
@@ -188,6 +207,14 @@ function buildSearchParams(
 
   if (filters.tagId) {
     searchParams.set("tagId", filters.tagId);
+  }
+
+  if (filters.customOrder !== DEFAULT_QUERY.customOrder) {
+    searchParams.set("customOrder", filters.customOrder);
+  }
+
+  if (filters.limitedStock !== DEFAULT_QUERY.limitedStock) {
+    searchParams.set("limitedStock", filters.limitedStock);
   }
 
   if (status) {
@@ -222,8 +249,10 @@ function buildSearchParams(
 function isDefaultFilterState(filters: ProductListFilterState) {
   return (
     filters.categoryId === DEFAULT_FILTER_STATE.categoryId &&
+    filters.customOrder === DEFAULT_FILTER_STATE.customOrder &&
     filters.includeSold === DEFAULT_FILTER_STATE.includeSold &&
     filters.keyword === DEFAULT_FILTER_STATE.keyword &&
+    filters.limitedStock === DEFAULT_FILTER_STATE.limitedStock &&
     filters.sortBy === DEFAULT_FILTER_STATE.sortBy &&
     filters.sortOrder === DEFAULT_FILTER_STATE.sortOrder &&
     filters.status === DEFAULT_FILTER_STATE.status &&
@@ -277,9 +306,17 @@ function ProductListCardContent({ product }: { product: ProductListItem }) {
               {product.name}
             </h3>
           </div>
-          <span className={productStatusBadgeClassNames[product.status]}>
-            {PRODUCT_STATUS_LABELS[product.status]}
-          </span>
+          <div className="product-list-card__badges">
+            {product.isCustomOrder ? (
+              <span className="management-badge is-custom-order">特注</span>
+            ) : null}
+            {product.isLimitedStock ? (
+              <span className="management-badge is-limited-stock">在庫限り</span>
+            ) : null}
+            <span className={productStatusBadgeClassNames[product.status]}>
+              {PRODUCT_STATUS_LABELS[product.status]}
+            </span>
+          </div>
         </div>
 
         <dl className="product-list-card__details">
@@ -498,8 +535,10 @@ export function ProductListPage() {
       draftFilters.status === "sold" ? true : draftFilters.includeSold;
     const nextQueryInput: ProductListQuery = {
       categoryId: draftFilters.categoryId || undefined,
+      customOrder: draftFilters.customOrder,
       includeSold,
       keyword: draftFilters.keyword || undefined,
+      limitedStock: draftFilters.limitedStock,
       page: DEFAULT_QUERY.page,
       pageSize,
       sortBy: draftFilters.sortBy,
@@ -916,6 +955,54 @@ export function ProductListPage() {
                 >
                   <option value="true">含める</option>
                   <option value="false">含めない</option>
+                </select>
+              </div>
+
+              <div className="auth-field">
+                <label
+                  className="auth-field__label"
+                  htmlFor="product-custom-order-filter"
+                >
+                  特注
+                </label>
+                <select
+                  id="product-custom-order-filter"
+                  className="auth-field__input"
+                  value={draftFilters.customOrder}
+                  onChange={(event) =>
+                    setDraftFilters((current) => ({
+                      ...current,
+                      customOrder: event.target.value as ProductFlagFilter
+                    }))
+                  }
+                >
+                  <option value="all">すべて</option>
+                  <option value="only">特注のみ</option>
+                  <option value="exclude">特注を含めない</option>
+                </select>
+              </div>
+
+              <div className="auth-field">
+                <label
+                  className="auth-field__label"
+                  htmlFor="product-limited-stock-filter"
+                >
+                  在庫限り
+                </label>
+                <select
+                  id="product-limited-stock-filter"
+                  className="auth-field__input"
+                  value={draftFilters.limitedStock}
+                  onChange={(event) =>
+                    setDraftFilters((current) => ({
+                      ...current,
+                      limitedStock: event.target.value as ProductFlagFilter
+                    }))
+                  }
+                >
+                  <option value="all">すべて</option>
+                  <option value="only">在庫限りのみ</option>
+                  <option value="exclude">在庫限りを含めない</option>
                 </select>
               </div>
 

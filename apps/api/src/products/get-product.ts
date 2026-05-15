@@ -3,6 +3,7 @@ import type {
   ProductImageDetail,
   ProductStatus
 } from "@handmade/shared";
+import { normalizeProductStatus } from "@handmade/shared";
 import type { Firestore, Timestamp } from "firebase-admin/firestore";
 import { createApiError } from "../errors/api-errors";
 import { getFirestoreDb, getStorageBucket } from "../firebase/firebase-admin";
@@ -21,6 +22,8 @@ interface ProductDocument {
   createdAt: Timestamp;
   description: string;
   images?: ProductImageDocument[] | null;
+  isCustomOrder?: boolean;
+  isLimitedStock?: boolean;
   isDeleted: boolean;
   name: string;
   price: number;
@@ -176,7 +179,11 @@ export async function getProduct(
     });
   }
 
-  const product = productSnapshot.data();
+  const productData = productSnapshot.data();
+  const product = {
+    ...productData,
+    status: normalizeProductStatus(productData.status) as ProductStatus
+  };
 
   if (product.isDeleted) {
     throw createApiError({
@@ -209,6 +216,8 @@ export async function getProduct(
       productId: product.productId,
       name: product.name,
       description: product.description,
+      isCustomOrder: product.isCustomOrder ?? false,
+      isLimitedStock: product.isLimitedStock ?? false,
       price: product.price,
       categoryId: product.categoryId,
       categoryName: relatedNames.categoryName,

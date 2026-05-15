@@ -70,10 +70,10 @@ MVPでは、次の単位で機能を分けて実装する。
 - 商品ステータス内部値は以下で固定する
 
 ```text
-beforeProduction
 inProduction
 completed
-onDisplay
+consignmentSale
+marche
 inStock
 sold
 ```

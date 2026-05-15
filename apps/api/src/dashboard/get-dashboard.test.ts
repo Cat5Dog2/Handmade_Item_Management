@@ -16,15 +16,19 @@ function createProduct(overrides: {
   }>;
   name?: string;
   productId: string;
+  isCustomOrder?: boolean;
+  isLimitedStock?: boolean;
   status?: (typeof PRODUCT_STATUSES)[number];
   updatedAt: string;
 }) {
   return createDocumentSnapshot({
     images: overrides.images ?? [],
+    isCustomOrder: overrides.isCustomOrder ?? false,
+    isLimitedStock: overrides.isLimitedStock ?? false,
     isDeleted: false,
     name: overrides.name ?? `Product ${overrides.productId}`,
     productId: overrides.productId,
-    status: overrides.status ?? "onDisplay",
+    status: overrides.status ?? "consignmentSale",
     updatedAt: createTimestamp(overrides.updatedAt)
   });
 }
@@ -66,7 +70,9 @@ describe("getDashboard", () => {
         ],
         name: "Blue Brooch",
         productId: "HM-000001",
-        status: "onDisplay",
+        isCustomOrder: true,
+        isLimitedStock: true,
+        status: "consignmentSale",
         updatedAt: "2026-04-24T01:00:00.000Z"
       }),
       createProduct({
@@ -153,10 +159,10 @@ describe("getDashboard", () => {
       })
     ).resolves.toEqual({
       statusCounts: {
-        beforeProduction: 0,
         inProduction: 1,
         completed: 0,
-        onDisplay: 1,
+        consignmentSale: 1,
+        marche: 0,
         inStock: 0,
         sold: 1
       },
@@ -182,7 +188,9 @@ describe("getDashboard", () => {
         {
           productId: "HM-000001",
           name: "Blue Brooch",
-          status: "onDisplay",
+          status: "consignmentSale",
+          isCustomOrder: true,
+          isLimitedStock: true,
           updatedAt: "2026-04-24T01:00:00.000Z",
           thumbnailUrl: "https://example.com/products/HM-000001/thumb/img-primary.webp"
         },
@@ -190,6 +198,8 @@ describe("getDashboard", () => {
           productId: "HM-000002",
           name: "Sold Pin",
           status: "sold",
+          isCustomOrder: false,
+          isLimitedStock: false,
           updatedAt: "2026-04-23T01:00:00.000Z",
           thumbnailUrl: null
         },
@@ -197,8 +207,21 @@ describe("getDashboard", () => {
           productId: "HM-000003",
           name: "Production Charm",
           status: "inProduction",
+          isCustomOrder: false,
+          isLimitedStock: false,
           updatedAt: "2026-04-22T01:00:00.000Z",
           thumbnailUrl: null
+        }
+      ],
+      customOrderProducts: [
+        {
+          productId: "HM-000001",
+          name: "Blue Brooch",
+          status: "consignmentSale",
+          isCustomOrder: true,
+          isLimitedStock: true,
+          updatedAt: "2026-04-24T01:00:00.000Z",
+          thumbnailUrl: "https://example.com/products/HM-000001/thumb/img-primary.webp"
         }
       ]
     });
@@ -279,17 +302,18 @@ describe("getDashboard", () => {
       })
     ).resolves.toEqual({
       statusCounts: {
-        beforeProduction: 0,
         inProduction: 0,
         completed: 0,
-        onDisplay: 0,
+        consignmentSale: 0,
+        marche: 0,
         inStock: 0,
         sold: 0
       },
       soldCount: 0,
       openTaskCount: 0,
       dueSoonTasks: [],
-      recentProducts: []
+      recentProducts: [],
+      customOrderProducts: []
     });
   });
 });

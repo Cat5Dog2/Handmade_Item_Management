@@ -339,10 +339,10 @@ npm run build:web
 以下で固定する。
 
 ```text
-beforeProduction
 inProduction
 completed
-onDisplay
+consignmentSale
+marche
 inStock
 sold
 ```
@@ -355,9 +355,9 @@ sold
 - `sold` から他ステータスへ戻す場合は `null` に戻す
 
 ### 8.6 QR販売更新ルール
-- QRで販売済更新できるのは **`onDisplay` / `inStock` のみ**
+- QRで販売済更新できるのは **`consignmentSale` / `marche` / `inStock` のみ**
 - `sold` は重複更新しない
-- `beforeProduction` / `inProduction` / `completed` は QR販売更新不可
+- `inProduction` / `completed` は QR販売更新不可
 
 ### 8.7 顧客管理ルール
 - 顧客は `customers` コレクションで管理する

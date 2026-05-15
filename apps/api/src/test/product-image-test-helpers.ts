@@ -52,7 +52,7 @@ export function createProductDocument(options: ProductDocumentOptions = {}) {
     soldAt: null,
     soldCustomerId: null,
     soldCustomerNameSnapshot: null,
-    status: "onDisplay",
+    status: "consignmentSale",
     tagIds: [],
     updatedAt: createTimestamp("2026-04-18T09:00:00.000Z"),
     ...options.overrides

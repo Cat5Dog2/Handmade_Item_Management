@@ -29,6 +29,12 @@ describe("demo seed data", () => {
       deletedAt: null
     });
     expect(data.products.map(({ status }) => status)).toEqual(PRODUCT_STATUSES);
+    expect(data.products.map(({ status }) => status)).not.toContain(
+      "beforeProduction"
+    );
+    expect(data.products.map(({ status }) => status)).not.toContain(
+      "onDisplay"
+    );
     expect(soldProduct?.soldAt).toBeInstanceOf(Date);
     expect(soldProduct?.soldCustomerId).toMatch(/^cus_\d{6}$/);
     expect(soldProduct?.soldCustomerNameSnapshot).toMatch(/^Demo Customer/);

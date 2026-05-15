@@ -1,4 +1,4 @@
-﻿import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import {
   fireEvent,
   render,
@@ -59,15 +59,19 @@ const tagsResponse = {
 
 const displayProduct = {
   categoryName: "アクセサリー",
+  isCustomOrder: true,
+  isLimitedStock: true,
   name: "Blue Ribbon",
   productId: "HM-000001",
-  status: "onDisplay" as const,
+  status: "consignmentSale" as const,
   thumbnailUrl: "https://example.com/thumb-1.webp",
   updatedAt: "2026-04-18T00:00:00Z"
 };
 
 const soldProduct = {
   categoryName: "アクセサリー",
+  isCustomOrder: false,
+  isLimitedStock: false,
   name: "Sold Ribbon",
   productId: "HM-000002",
   status: "sold" as const,
@@ -81,6 +85,8 @@ const bulkPrintProducts = Array.from({ length: 11 }, (_, index) => {
 
   return {
     categoryName: "アクセサリー",
+    isCustomOrder: false,
+    isLimitedStock: false,
     name: `Bulk Product ${String(productNumber).padStart(2, "0")}`,
     productId,
     status: "inStock" as const,
@@ -295,14 +301,16 @@ describe("ProductListPage", () => {
 
   it("renders the current query state and product cards", async () => {
     renderProductList(
-      "/products?keyword=blue&status=onDisplay&sortBy=name&sortOrder=asc"
+      "/products?keyword=blue&status=consignmentSale&customOrder=only&limitedStock=exclude&sortBy=name&sortOrder=asc"
     );
 
     await screen.findByRole("listitem", undefined, { timeout: 8000 });
 
     expect(screen.getByLabelText("キーワード")).toHaveValue("blue");
-    expect(screen.getByLabelText("ステータス")).toHaveValue("onDisplay");
+    expect(screen.getByLabelText("ステータス")).toHaveValue("consignmentSale");
     expect(screen.getByLabelText("販売済み")).toHaveValue("true");
+    expect(screen.getByLabelText("特注")).toHaveValue("only");
+    expect(screen.getByLabelText("在庫限り")).toHaveValue("exclude");
 
     const productCard = screen.getByRole("listitem");
     expect(productCard).toHaveAttribute("href", "/products/HM-000001");
@@ -317,9 +325,11 @@ describe("ProductListPage", () => {
       expect.objectContaining({
         query: expect.objectContaining({
           keyword: "blue",
+          customOrder: "only",
+          limitedStock: "exclude",
           sortBy: "name",
           sortOrder: "asc",
-          status: "onDisplay"
+          status: "consignmentSale"
         })
       })
     );
@@ -375,6 +385,12 @@ describe("ProductListPage", () => {
     fireEvent.change(screen.getByLabelText("ステータス"), {
       target: { value: "sold" }
     });
+    fireEvent.change(screen.getByLabelText("特注"), {
+      target: { value: "only" }
+    });
+    fireEvent.change(screen.getByLabelText("在庫限り"), {
+      target: { value: "exclude" }
+    });
 
     expect(screen.getByLabelText("販売済み")).toHaveValue("true");
     expect(screen.getByLabelText("販売済み")).toBeDisabled();
@@ -389,6 +405,8 @@ describe("ProductListPage", () => {
       expect(searchParams.get("keyword")).toBe("gold");
       expect(searchParams.get("status")).toBe("sold");
       expect(searchParams.get("includeSold")).toBe("true");
+      expect(searchParams.get("customOrder")).toBe("only");
+      expect(searchParams.get("limitedStock")).toBe("exclude");
     });
 
     const productCall = getLatestProductCall();
@@ -398,6 +416,8 @@ describe("ProductListPage", () => {
         query: expect.objectContaining({
           includeSold: true,
           keyword: "gold",
+          customOrder: "only",
+          limitedStock: "exclude",
           page: 1,
           status: "sold"
         })

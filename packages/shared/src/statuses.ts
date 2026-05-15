@@ -1,19 +1,36 @@
 export const PRODUCT_STATUSES = [
-  "beforeProduction",
   "inProduction",
   "completed",
-  "onDisplay",
+  "consignmentSale",
+  "marche",
   "inStock",
   "sold"
 ] as const;
 
 export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
 
+const LEGACY_PRODUCT_STATUS_MIGRATIONS = {
+  beforeProduction: "inProduction",
+  onDisplay: "consignmentSale"
+} as const;
+
 export const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
-  beforeProduction: "制作前",
   inProduction: "制作中",
   completed: "制作済",
-  onDisplay: "展示中",
+  consignmentSale: "委託販売",
+  marche: "マルシェ",
   inStock: "在庫中",
   sold: "販売済"
 };
+
+export function normalizeProductStatus(value: unknown) {
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  return (
+    LEGACY_PRODUCT_STATUS_MIGRATIONS[
+      value as keyof typeof LEGACY_PRODUCT_STATUS_MIGRATIONS
+    ] ?? value
+  );
+}

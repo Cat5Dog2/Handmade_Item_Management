@@ -74,7 +74,7 @@ describe("qr routes", () => {
     lookupQrCodeMock.mockResolvedValue({
       productId: "HM-000001",
       name: "Sample Pin",
-      status: "onDisplay",
+      status: "consignmentSale",
       canSell: true,
       reasonCode: "CAN_SELL",
       message: "販売済更新が可能です。"
@@ -100,7 +100,7 @@ describe("qr routes", () => {
       data: {
         productId: "HM-000001",
         name: "Sample Pin",
-        status: "onDisplay",
+        status: "consignmentSale",
         canSell: true,
         reasonCode: "CAN_SELL",
         message: "販売済更新が可能です。"
@@ -112,7 +112,7 @@ describe("qr routes", () => {
 
   it("returns the QR sell envelope for authenticated requests", async () => {
     sellQrCodeMock.mockResolvedValue({
-      previousStatus: "onDisplay",
+      previousStatus: "consignmentSale",
       productId: "HM-000001",
       status: "sold",
       soldAt: "2026-04-18T10:00:00.000Z",
@@ -158,7 +158,7 @@ describe("qr routes", () => {
       summary: "商品を販売済に更新しました",
       actorUid: "uid-1",
       detail: {
-        previousStatus: "onDisplay"
+        previousStatus: "consignmentSale"
       }
     });
   });

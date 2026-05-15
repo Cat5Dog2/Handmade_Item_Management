@@ -46,10 +46,10 @@ describe("dashboard routes", () => {
   it("returns the dashboard envelope for authenticated requests", async () => {
     getDashboardMock.mockResolvedValue({
       statusCounts: {
-        beforeProduction: 1,
         inProduction: 2,
         completed: 3,
-        onDisplay: 4,
+        consignmentSale: 4,
+        marche: 1,
         inStock: 5,
         sold: 6
       },
@@ -68,7 +68,20 @@ describe("dashboard routes", () => {
         {
           productId: "HM-000010",
           name: "Recent Pin",
-          status: "onDisplay",
+          status: "consignmentSale",
+          isCustomOrder: true,
+          isLimitedStock: true,
+          thumbnailUrl: "https://example.com/thumb.webp",
+          updatedAt: "2026-04-24T01:00:00.000Z"
+        }
+      ],
+      customOrderProducts: [
+        {
+          productId: "HM-000010",
+          name: "Recent Pin",
+          status: "consignmentSale",
+          isCustomOrder: true,
+          isLimitedStock: true,
           thumbnailUrl: "https://example.com/thumb.webp",
           updatedAt: "2026-04-24T01:00:00.000Z"
         }
@@ -90,10 +103,10 @@ describe("dashboard routes", () => {
     expect(response.body).toEqual({
       data: {
         statusCounts: {
-          beforeProduction: 1,
           inProduction: 2,
           completed: 3,
-          onDisplay: 4,
+          consignmentSale: 4,
+          marche: 1,
           inStock: 5,
           sold: 6
         },
@@ -112,7 +125,20 @@ describe("dashboard routes", () => {
           {
             productId: "HM-000010",
             name: "Recent Pin",
-            status: "onDisplay",
+            status: "consignmentSale",
+            isCustomOrder: true,
+            isLimitedStock: true,
+            thumbnailUrl: "https://example.com/thumb.webp",
+            updatedAt: "2026-04-24T01:00:00.000Z"
+          }
+        ],
+        customOrderProducts: [
+          {
+            productId: "HM-000010",
+            name: "Recent Pin",
+            status: "consignmentSale",
+            isCustomOrder: true,
+            isLimitedStock: true,
             thumbnailUrl: "https://example.com/thumb.webp",
             updatedAt: "2026-04-24T01:00:00.000Z"
           }

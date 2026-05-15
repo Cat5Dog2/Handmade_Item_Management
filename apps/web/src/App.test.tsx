@@ -78,13 +78,14 @@ const fetchMock = vi.hoisted(() =>
           dueSoonTasks: [],
           openTaskCount: 0,
           recentProducts: [],
+          customOrderProducts: [],
           soldCount: 0,
           statusCounts: {
-            beforeProduction: 0,
             completed: 0,
             inProduction: 0,
             inStock: 0,
-            onDisplay: 0,
+            consignmentSale: 0,
+            marche: 0,
             sold: 0
           }
         }
@@ -100,13 +101,15 @@ const fetchMock = vi.hoisted(() =>
             categoryName: "アクセサリー",
             createdAt: "2026-04-20T08:00:00Z",
             description: "春色のリボンです。",
+            isCustomOrder: false,
+            isLimitedStock: false,
             name: "Blue Ribbon",
             price: 2800,
             productId: "HM-000001",
             soldAt: null,
             soldCustomerId: null,
             soldCustomerNameSnapshot: null,
-            status: "onDisplay",
+            status: "consignmentSale",
             tagIds: ["tag-1"],
             tagNames: ["春"],
             updatedAt: "2026-04-22T10:30:00Z"

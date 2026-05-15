@@ -21,11 +21,13 @@ describe("listProducts", () => {
               thumbnailPath: "products/HM-000001/thumb/img-001.webp"
             }
           ],
+          isCustomOrder: true,
+          isLimitedStock: true,
           isDeleted: false,
           name: "Plain Pin",
           productId: "HM-000001",
           soldAt: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: ["tag-a"],
           updatedAt: createTimestamp("2026-04-17T12:00:00.000Z")
         }),
@@ -57,7 +59,7 @@ describe("listProducts", () => {
           name: "Other",
           productId: "HM-000003",
           soldAt: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: ["tag-b"],
           updatedAt: createTimestamp("2026-04-16T12:00:00.000Z")
         })
@@ -135,7 +137,9 @@ describe("listProducts", () => {
           pageSize: "1",
           sortBy: "updatedAt",
           sortOrder: "desc",
-          status: "onDisplay",
+          status: "consignmentSale",
+          customOrder: "only",
+          limitedStock: "only",
           tagId: "tag-a"
         },
         {
@@ -151,7 +155,9 @@ describe("listProducts", () => {
           {
             productId: "HM-000001",
             name: "Plain Pin",
-            status: "onDisplay",
+            status: "consignmentSale",
+            isCustomOrder: true,
+            isLimitedStock: true,
             categoryName: "Accessories",
             updatedAt: "2026-04-17T12:00:00.000Z",
             thumbnailUrl:
@@ -169,7 +175,11 @@ describe("listProducts", () => {
 
     expect(productsWhere).toHaveBeenCalledWith("isDeleted", "==", false);
     expect(productQuery.where).toHaveBeenCalledWith("categoryId", "==", "cat-a");
-    expect(productQuery.where).toHaveBeenCalledWith("status", "==", "onDisplay");
+    expect(productQuery.where).not.toHaveBeenCalledWith(
+      "status",
+      "==",
+      "consignmentSale"
+    );
     expect(productQuery.where).toHaveBeenCalledWith(
       "tagIds",
       "array-contains",
@@ -277,6 +287,100 @@ describe("listProducts", () => {
     });
     expect(productsWhere).toHaveBeenCalledWith("isDeleted", "==", false);
     expect(productQuery.where).toHaveBeenCalledWith("status", "==", "sold");
+  });
+
+  it("filters custom order and limited stock flags after loading products", async () => {
+    const productsGet = vi.fn().mockResolvedValue({
+      docs: [
+        createDocumentSnapshot({
+          categoryId: "cat-a",
+          description: "Limited custom piece",
+          images: [],
+          isCustomOrder: true,
+          isLimitedStock: true,
+          isDeleted: false,
+          name: "Limited Custom Pin",
+          productId: "HM-000020",
+          soldAt: null,
+          status: "inStock",
+          tagIds: [],
+          updatedAt: createTimestamp("2026-04-19T12:00:00.000Z")
+        }),
+        createDocumentSnapshot({
+          categoryId: "cat-a",
+          description: "Regular piece",
+          images: [],
+          isCustomOrder: false,
+          isDeleted: false,
+          name: "Regular Pin",
+          productId: "HM-000021",
+          soldAt: null,
+          status: "inStock",
+          tagIds: [],
+          updatedAt: createTimestamp("2026-04-20T12:00:00.000Z")
+        })
+      ]
+    });
+    const productQuery = {
+      get: productsGet,
+      where: vi.fn()
+    };
+    productQuery.where.mockReturnValue(productQuery);
+    const db = {
+      collection: vi.fn((collectionName: string) => {
+        if (collectionName === "products") {
+          return {
+            where: vi.fn().mockReturnValue(productQuery)
+          };
+        }
+
+        if (collectionName === "categories" || collectionName === "tags") {
+          return {
+            get: vi.fn().mockResolvedValue({
+              docs:
+                collectionName === "categories"
+                  ? [
+                      createDocumentSnapshot({
+                        categoryId: "cat-a",
+                        name: "Accessories"
+                      })
+                    ]
+                  : []
+            })
+          };
+        }
+
+        throw new Error(`Unexpected collection ${collectionName}`);
+      })
+    };
+
+    await expect(
+      listProducts(
+        {
+          customOrder: "exclude",
+          limitedStock: "exclude"
+        },
+        {
+          db: db as never,
+          bucket: {
+            file: vi.fn()
+          } as never
+        }
+      )
+    ).resolves.toMatchObject({
+      data: {
+        items: [
+          {
+            productId: "HM-000021",
+            isCustomOrder: false,
+            isLimitedStock: false
+          }
+        ]
+      },
+      meta: {
+        totalCount: 1
+      }
+    });
   });
 
   it("rejects invalid list queries", async () => {

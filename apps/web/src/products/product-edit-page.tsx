@@ -54,6 +54,8 @@ type ProductUpdateFormInput = z.input<typeof productUpdateInputSchema>;
 type ProductUpdateFieldName =
   | "name"
   | "description"
+  | "isCustomOrder"
+  | "isLimitedStock"
   | "price"
   | "categoryId"
   | "tagIds"
@@ -88,6 +90,8 @@ type ProductImageUploadInput = ProductImageUploadAction & {
 const emptyProductUpdateFormValues: ProductUpdateFormInput = {
   categoryId: "",
   description: "",
+  isCustomOrder: false,
+  isLimitedStock: false,
   name: "",
   price: "",
   primaryImageId: null,
@@ -121,6 +125,8 @@ function toProductUpdateFormValues(data: ProductDetailData): ProductUpdateFormIn
   return {
     categoryId: product.categoryId,
     description: product.description,
+    isCustomOrder: product.isCustomOrder,
+    isLimitedStock: product.isLimitedStock,
     name: product.name,
     price: product.price,
     primaryImageId: primaryImage?.imageId ?? null,
@@ -350,6 +356,8 @@ export function ProductEditPage() {
           detail.field === "description" ||
           detail.field === "price" ||
           detail.field === "categoryId" ||
+          detail.field === "isCustomOrder" ||
+          detail.field === "isLimitedStock" ||
           detail.field === "tagIds" ||
           detail.field === "status" ||
           detail.field === "primaryImageId" ||
@@ -761,6 +769,32 @@ export function ProductEditPage() {
                 )}
               </div>
             ) : null}
+
+            <label
+              className="product-create-page__checkbox-option"
+              htmlFor="product-custom-order"
+            >
+              <input
+                {...form.register("isCustomOrder")}
+                id="product-custom-order"
+                disabled={isPageBusy}
+                type="checkbox"
+              />
+              <span>特注商品として扱う</span>
+            </label>
+
+            <label
+              className="product-create-page__checkbox-option"
+              htmlFor="product-limited-stock"
+            >
+              <input
+                {...form.register("isLimitedStock")}
+                id="product-limited-stock"
+                disabled={isPageBusy}
+                type="checkbox"
+              />
+              <span>在庫限りの商品として扱う</span>
+            </label>
 
             <div className="auth-field product-create-form__description">
               <label className="auth-field__label" htmlFor="product-description">

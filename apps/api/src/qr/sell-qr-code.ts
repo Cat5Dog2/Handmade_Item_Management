@@ -3,7 +3,7 @@ import type {
   QrSellData,
   QrSellInput
 } from "@handmade/shared";
-import { qrSellInputSchema } from "@handmade/shared";
+import { normalizeProductStatus, qrSellInputSchema } from "@handmade/shared";
 import type { Firestore, Timestamp } from "firebase-admin/firestore";
 import { Timestamp as FirestoreTimestamp } from "firebase-admin/firestore";
 import type { ZodError } from "zod";
@@ -66,7 +66,11 @@ function assertSellableProduct(product: ProductDocument) {
     });
   }
 
-  if (product.status !== "onDisplay" && product.status !== "inStock") {
+  if (
+    product.status !== "consignmentSale" &&
+    product.status !== "marche" &&
+    product.status !== "inStock"
+  ) {
     throw createApiError({
       statusCode: 400,
       code: "INVALID_STATUS_FOR_QR_SELL",
@@ -112,7 +116,11 @@ export async function sellQrCode(
       });
     }
 
-    const product = productSnapshot.data() as ProductDocument;
+    const productData = productSnapshot.data() as ProductDocument;
+    const product = {
+      ...productData,
+      status: normalizeProductStatus(productData.status) as ProductStatus
+    };
     const previousStatus = product.status;
 
     assertSellableProduct(product);

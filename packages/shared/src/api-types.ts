@@ -5,6 +5,7 @@ export type IsoDateString = string;
 export type IsoDateTimeString = string;
 export type SortOrder = "asc" | "desc";
 export type ProductSortBy = "updatedAt" | "name";
+export type ProductFlagFilter = "all" | "only" | "exclude";
 export type CustomerSortBy = "updatedAt" | "lastPurchaseAt" | "name";
 export type QrLookupReasonCode =
   | "CAN_SELL"
@@ -61,6 +62,8 @@ export interface ProductSummary {
   productId: string;
   name: string;
   status: ProductStatus;
+  isCustomOrder: boolean;
+  isLimitedStock: boolean;
   categoryId: string | null;
   categoryName: string | null;
   tagIds: string[];
@@ -80,12 +83,16 @@ export interface ProductListQuery {
   tagId?: string;
   status?: ProductStatus;
   includeSold?: boolean;
+  customOrder?: ProductFlagFilter;
+  limitedStock?: ProductFlagFilter;
 }
 
 export interface ProductListItem {
   productId: string;
   name: string;
   status: ProductStatus;
+  isCustomOrder: boolean;
+  isLimitedStock: boolean;
   categoryName: string | null;
   updatedAt: IsoDateTimeString;
   thumbnailUrl: string | null;
@@ -100,6 +107,8 @@ export interface ProductBaseInput {
   price: number;
   categoryId: string;
   status: ProductStatus;
+  isCustomOrder?: boolean;
+  isLimitedStock?: boolean;
 }
 
 export interface ProductCreateInput extends ProductBaseInput {
@@ -146,6 +155,8 @@ export interface ProductDetail {
   name: string;
   description: string;
   price: number;
+  isCustomOrder: boolean;
+  isLimitedStock: boolean;
   categoryId: string;
   categoryName: string;
   tagIds: string[];
@@ -391,9 +402,13 @@ export interface DashboardRecentProduct {
   productId: string;
   name: string;
   status: ProductStatus;
+  isCustomOrder: boolean;
+  isLimitedStock: boolean;
   updatedAt: IsoDateTimeString;
   thumbnailUrl: string | null;
 }
+
+export type DashboardCustomOrderProduct = DashboardRecentProduct;
 
 export interface DashboardResponseData {
   statusCounts: DashboardStatusCounts;
@@ -401,6 +416,7 @@ export interface DashboardResponseData {
   openTaskCount: number;
   dueSoonTasks: DashboardDueSoonTask[];
   recentProducts: DashboardRecentProduct[];
+  customOrderProducts: DashboardCustomOrderProduct[];
 }
 
 export interface QrLookupInput {

@@ -4,7 +4,7 @@ import {
   normalizeMultilineText,
   normalizeSingleLineText
 } from "./normalization";
-import { PRODUCT_STATUSES } from "./statuses";
+import { PRODUCT_STATUSES, normalizeProductStatus } from "./statuses";
 import {
   emptyBlankSearchKeywordToUndefined,
   emptyBlankSingleLineStringToNull,
@@ -16,12 +16,17 @@ import {
 } from "./string-schemas";
 
 const PRODUCT_SORT_FIELDS = ["updatedAt", "name"] as const;
+const PRODUCT_FLAG_FILTERS = ["all", "only", "exclude"] as const;
 const CUSTOMER_SORT_FIELDS = ["updatedAt", "lastPurchaseAt", "name"] as const;
 const SORT_ORDERS = ["asc", "desc"] as const;
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-export const productStatusSchema = z.enum(PRODUCT_STATUSES);
+export const productStatusSchema = z.preprocess(
+  normalizeProductStatus,
+  z.enum(PRODUCT_STATUSES)
+);
 export const productSortBySchema = z.enum(PRODUCT_SORT_FIELDS);
+export const productFlagFilterSchema = z.enum(PRODUCT_FLAG_FILTERS);
 export const customerSortBySchema = z.enum(CUSTOMER_SORT_FIELDS);
 export const sortOrderSchema = z.enum(SORT_ORDERS);
 
@@ -215,7 +220,15 @@ export const productListQuerySchema = z.object({
   categoryId: optionalIdentifierSchema,
   tagId: optionalIdentifierSchema,
   status: z.preprocess(emptyStringToUndefined, productStatusSchema.optional()),
-  includeSold: optionalBooleanSchema
+  includeSold: optionalBooleanSchema,
+  customOrder: z.preprocess(
+    emptyStringToUndefined,
+    productFlagFilterSchema.optional()
+  ),
+  limitedStock: z.preprocess(
+    emptyStringToUndefined,
+    productFlagFilterSchema.optional()
+  )
 });
 
 export const customerListQuerySchema = z.object({
@@ -235,7 +248,9 @@ export const productCreateInputSchema = z.object({
   price: nonNegativeIntegerSchema,
   categoryId: identifierSchema,
   tagIds: z.array(identifierSchema).optional(),
-  status: productStatusSchema
+  status: productStatusSchema,
+  isCustomOrder: optionalBooleanSchema,
+  isLimitedStock: optionalBooleanSchema
 });
 
 export const productUpdateInputSchema = z.object({
@@ -245,6 +260,8 @@ export const productUpdateInputSchema = z.object({
   categoryId: identifierSchema,
   tagIds: z.array(identifierSchema),
   status: productStatusSchema,
+  isCustomOrder: optionalBooleanSchema,
+  isLimitedStock: optionalBooleanSchema,
   primaryImageId: nullableIdentifierSchema,
   soldCustomerId: nullableIdentifierSchema
 });

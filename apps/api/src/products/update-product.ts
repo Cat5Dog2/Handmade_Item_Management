@@ -2,7 +2,7 @@ import type {
   ProductStatus,
   ProductUpdateInput
 } from "@handmade/shared";
-import { productUpdateInputSchema } from "@handmade/shared";
+import { normalizeProductStatus, productUpdateInputSchema } from "@handmade/shared";
 import type { Firestore, Timestamp } from "firebase-admin/firestore";
 import { Timestamp as FirestoreTimestamp } from "firebase-admin/firestore";
 import type { ZodError } from "zod";
@@ -28,6 +28,8 @@ interface ProductDocument {
   deletedAt: Timestamp | null;
   description: string;
   images?: ProductImageDocument[] | null;
+  isCustomOrder?: boolean;
+  isLimitedStock?: boolean;
   isDeleted: boolean;
   name: string;
   price: number;
@@ -133,6 +135,14 @@ function getChangedFields(
     changedFields.push("status");
   }
 
+  if ((product.isCustomOrder ?? false) !== (input.isCustomOrder ?? false)) {
+    changedFields.push("isCustomOrder");
+  }
+
+  if ((product.isLimitedStock ?? false) !== (input.isLimitedStock ?? false)) {
+    changedFields.push("isLimitedStock");
+  }
+
   if (product.description !== input.description) {
     changedFields.push("description");
   }
@@ -180,7 +190,11 @@ export async function updateProduct(
       });
     }
 
-    const product = productSnapshot.data() as ProductDocument;
+    const productData = productSnapshot.data() as ProductDocument;
+    const product = {
+      ...productData,
+      status: normalizeProductStatus(productData.status) as ProductStatus
+    };
 
     if (product.isDeleted) {
       throw createApiError({
@@ -256,6 +270,8 @@ export async function updateProduct(
       categoryId: parsedInput.data.categoryId,
       description: parsedInput.data.description,
       images: updatedImages,
+      isCustomOrder: parsedInput.data.isCustomOrder ?? false,
+      isLimitedStock: parsedInput.data.isLimitedStock ?? false,
       name: parsedInput.data.name,
       price: parsedInput.data.price,
       soldAt,

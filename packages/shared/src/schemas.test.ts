@@ -19,7 +19,9 @@ describe("shared schemas", () => {
         price: "2800",
         categoryId: " cat_001 ",
         tagIds: [" tag_001 ", "tag_002"],
-        status: "completed"
+        status: "completed",
+        isCustomOrder: "true",
+        isLimitedStock: "true"
       })
     ).toEqual({
       name: "Spring Accessory",
@@ -27,7 +29,9 @@ describe("shared schemas", () => {
       price: 2800,
       categoryId: "cat_001",
       tagIds: ["tag_001", "tag_002"],
-      status: "completed"
+      status: "completed",
+      isCustomOrder: true,
+      isLimitedStock: true
     });
   });
 
@@ -39,7 +43,9 @@ describe("shared schemas", () => {
         sortBy: "updatedAt",
         sortOrder: "desc",
         keyword: "  Handmade  Bag  ",
-        includeSold: "false"
+        includeSold: "false",
+        customOrder: "only",
+        limitedStock: "exclude"
       })
     ).toEqual({
       page: 2,
@@ -47,7 +53,9 @@ describe("shared schemas", () => {
       sortBy: "updatedAt",
       sortOrder: "desc",
       keyword: "handmade bag",
-      includeSold: false
+      includeSold: false,
+      customOrder: "only",
+      limitedStock: "exclude"
     });
   });
 
@@ -62,6 +70,12 @@ describe("shared schemas", () => {
       productListQuerySchema.parse({
         page: "0",
         pageSize: "101"
+      })
+    ).toThrow();
+
+    expect(() =>
+      productListQuerySchema.parse({
+        limitedStock: "invalid"
       })
     ).toThrow();
   });
@@ -138,6 +152,8 @@ describe("shared schemas", () => {
         categoryId: " cat_001 ",
         tagIds: [" tag_001 "],
         status: "sold",
+        isCustomOrder: "false",
+        isLimitedStock: "true",
         primaryImageId: "",
         soldCustomerId: ""
       })
@@ -148,6 +164,8 @@ describe("shared schemas", () => {
       categoryId: "cat_001",
       tagIds: ["tag_001"],
       status: "sold",
+      isCustomOrder: false,
+      isLimitedStock: true,
       primaryImageId: null,
       soldCustomerId: null
     });

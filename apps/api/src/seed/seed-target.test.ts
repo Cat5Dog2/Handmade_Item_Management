@@ -30,12 +30,11 @@ describe("demo seed target", () => {
     expect(
       assertDemoSeedTargetSafety("stg", {
         APP_OWNER_EMAIL: "owner@example.com",
-        DEMO_OWNER_PASSWORD: "example-password",
-        DEMO_SEED_STG_CONFIRM: "stg-handmade-item-management",
-        FIREBASE_PROJECT_ID: "stg-handmade-item-management"
+        DEMO_SEED_STG_CONFIRM: "example-stage-project",
+        FIREBASE_PROJECT_ID: "example-stage-project"
       })
     ).toEqual({
-      projectId: "stg-handmade-item-management",
+      projectId: "example-stage-project",
       shouldSeedAuth: true
     });
   });
@@ -46,12 +45,11 @@ describe("demo seed target", () => {
     expect(
       assertDemoSeedTargetSafety("demo", {
         APP_OWNER_EMAIL: "owner@example.com",
-        DEMO_OWNER_PASSWORD: "example-password",
-        DEMO_SEED_DEMO_CONFIRM: "fir-handmade-item-management",
-        FIREBASE_PROJECT_ID: "fir-handmade-item-management"
+        DEMO_SEED_DEMO_CONFIRM: "example-demo-project",
+        FIREBASE_PROJECT_ID: "example-demo-project"
       })
     ).toEqual({
-      projectId: "fir-handmade-item-management",
+      projectId: "example-demo-project",
       shouldSeedAuth: true
     });
   });
@@ -60,20 +58,31 @@ describe("demo seed target", () => {
     expect(() => {
       assertDemoSeedTargetSafety("stg", {
         APP_OWNER_EMAIL: "owner@example.com",
-        DEMO_OWNER_PASSWORD: "example-password",
         DEMO_SEED_STG_CONFIRM: "other-project",
-        FIREBASE_PROJECT_ID: "stg-handmade-item-management"
+        FIREBASE_PROJECT_ID: "example-stage-project"
       });
     }).toThrow("DEMO_SEED_STG_CONFIRM");
+  });
+
+  it("does not require target names to be embedded in Firebase project IDs", () => {
+    expect(
+      assertDemoSeedTargetSafety("stg", {
+        APP_OWNER_EMAIL: "owner@example.com",
+        DEMO_SEED_STG_CONFIRM: "handmade-item-management-stage",
+        FIREBASE_PROJECT_ID: "handmade-item-management-stage"
+      })
+    ).toEqual({
+      projectId: "handmade-item-management-stage",
+      shouldSeedAuth: true
+    });
   });
 
   it("blocks demo seed when confirmation does not match the target project", () => {
     expect(() => {
       assertDemoSeedTargetSafety("demo", {
         APP_OWNER_EMAIL: "owner@example.com",
-        DEMO_OWNER_PASSWORD: "example-password",
         DEMO_SEED_DEMO_CONFIRM: "other-project",
-        FIREBASE_PROJECT_ID: "fir-handmade-item-management"
+        FIREBASE_PROJECT_ID: "example-demo-project"
       });
     }).toThrow("DEMO_SEED_DEMO_CONFIRM");
   });
@@ -82,10 +91,9 @@ describe("demo seed target", () => {
     expect(() => {
       assertDemoSeedTargetSafety("stg", {
         APP_OWNER_EMAIL: "owner@example.com",
-        DEMO_OWNER_PASSWORD: "example-password",
-        DEMO_SEED_STG_CONFIRM: "stg-handmade-item-management",
+        DEMO_SEED_STG_CONFIRM: "example-stage-project",
         FIREBASE_AUTH_EMULATOR_HOST: "localhost:9099",
-        FIREBASE_PROJECT_ID: "stg-handmade-item-management"
+        FIREBASE_PROJECT_ID: "example-stage-project"
       });
     }).toThrow("must not use Firebase emulator");
   });
@@ -96,9 +104,8 @@ describe("demo seed target", () => {
     const credentialsFile = path.join(tempDir, "service-account.json");
     const env = {
       APP_OWNER_EMAIL: "owner@example.com",
-      DEMO_OWNER_PASSWORD: "example-password",
-      DEMO_SEED_STG_CONFIRM: "stg-handmade-item-management",
-      FIREBASE_PROJECT_ID: "stg-handmade-item-management",
+      DEMO_SEED_STG_CONFIRM: "example-stage-project",
+      FIREBASE_PROJECT_ID: "example-stage-project",
       GOOGLE_APPLICATION_CREDENTIALS: "service-account.json"
     };
 
@@ -130,9 +137,8 @@ describe("demo seed target", () => {
     const env = {
       APP_OWNER_EMAIL: "owner@example.com",
       APPDATA: tempDir,
-      DEMO_OWNER_PASSWORD: "example-password",
-      DEMO_SEED_STG_CONFIRM: "stg-handmade-item-management",
-      FIREBASE_PROJECT_ID: "stg-handmade-item-management",
+      DEMO_SEED_STG_CONFIRM: "example-stage-project",
+      FIREBASE_PROJECT_ID: "example-stage-project",
       GOOGLE_APPLICATION_CREDENTIALS: "missing-service-account.json"
     };
 
@@ -155,9 +161,8 @@ describe("demo seed target", () => {
     expect(() => {
       assertDemoSeedTargetSafety("stg", {
         APP_OWNER_EMAIL: "owner@example.com",
-        DEMO_OWNER_PASSWORD: "example-password",
-        DEMO_SEED_STG_CONFIRM: "stg-handmade-item-management",
-        FIREBASE_PROJECT_ID: "stg-handmade-item-management",
+        DEMO_SEED_STG_CONFIRM: "example-stage-project",
+        FIREBASE_PROJECT_ID: "example-stage-project",
         GOOGLE_APPLICATION_CREDENTIALS: "missing-service-account.json"
       });
     }).toThrow("GOOGLE_APPLICATION_CREDENTIALS");

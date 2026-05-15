@@ -30,6 +30,8 @@ describe("getProduct", () => {
               thumbnailPath: "products/HM-000001/thumb/img-001.webp"
             }
           ],
+          isCustomOrder: true,
+          isLimitedStock: true,
           isDeleted: false,
           name: "Fancy Pin",
           price: 2800,
@@ -38,7 +40,7 @@ describe("getProduct", () => {
           soldAt: createTimestamp("2026-04-18T08:30:00.000Z"),
           soldCustomerId: "cus_000001",
           soldCustomerNameSnapshot: "山田 花子",
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: ["tag-b", "tag-a"],
           updatedAt: createTimestamp("2026-04-18T09:30:00.000Z")
         })
@@ -150,13 +152,15 @@ describe("getProduct", () => {
         categoryName: "Accessories",
         createdAt: "2026-04-18T08:00:00.000Z",
         description: "Handmade pin",
+        isCustomOrder: true,
+        isLimitedStock: true,
         name: "Fancy Pin",
         price: 2800,
         productId,
         soldAt: "2026-04-18T08:30:00.000Z",
         soldCustomerId: "cus_000001",
         soldCustomerNameSnapshot: "山田 花子",
-        status: "onDisplay",
+        status: "consignmentSale",
         tagIds: ["tag-b", "tag-a"],
         tagNames: ["Featured", "Spring"],
         updatedAt: "2026-04-18T09:30:00.000Z"
@@ -258,7 +262,7 @@ describe("getProduct", () => {
           productId,
           qrCodeValue: productId,
           soldAt: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: [],
           updatedAt: createTimestamp("2026-04-18T09:00:00.000Z")
         })

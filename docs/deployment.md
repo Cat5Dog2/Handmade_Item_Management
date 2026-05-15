@@ -529,9 +529,9 @@ firebase deploy --only hosting
 
 ### 11.5 QR販売更新
 
-- 展示中 / 在庫中のみ販売済更新できる
+- 委託販売 / マルシェ / 在庫中のみ販売済更新できる
 - 販売済は重複更新されない
-- 制作前 / 制作中 / 制作済はQR販売更新不可になる
+- 制作中 / 制作済はQR販売更新不可になる
 - 購入者未選択でも販売済更新できる
 - 購入者指定時は `soldCustomerId` / `soldCustomerNameSnapshot` が更新される
 
@@ -658,6 +658,74 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy\gcloud-buil
 
 ```bash
 bash ./scripts/deploy/gcloud-builds-submit-demo.sh
+```
+
+### demo seed リセットコマンド
+
+既存 Firestore に投入済みの demo seed を削除してから再投入する場合に使う。
+削除対象は demo seed が生成する固定 ID と demo 名称を持つ Firestore ドキュメントのみとし、`counters` は採番保護のため削除しない。
+Storage 画像は demo seed では作成していないため、このコマンドでは扱わない。
+既定は dry-run で、実削除時のみ確認用環境変数を設定する。
+
+#### stg dry-run
+
+```powershell
+npm run reset:demo-seed:stg -- --dry-run
+```
+
+#### stg 実削除して seed 再投入
+
+```powershell
+$env:DEMO_SEED_RESET_STG_CONFIRM = (Select-String -Path .env.stg -Pattern '^FIREBASE_PROJECT_ID=(.+)$').Matches[0].Groups[1].Value
+$env:DEMO_SEED_STG_CONFIRM = $env:DEMO_SEED_RESET_STG_CONFIRM
+npm run reset:demo-seed:stg -- --execute
+npm run seed:demo:stg
+```
+
+#### demo dry-run
+
+```powershell
+npm run reset:demo-seed:demo -- --dry-run
+```
+
+#### demo 実削除して seed 再投入
+
+```powershell
+$env:DEMO_SEED_RESET_DEMO_CONFIRM = (Select-String -Path .env.demo -Pattern '^FIREBASE_PROJECT_ID=(.+)$').Matches[0].Groups[1].Value
+$env:DEMO_SEED_DEMO_CONFIRM = $env:DEMO_SEED_RESET_DEMO_CONFIRM
+npm run reset:demo-seed:demo -- --execute
+npm run seed:demo:demo
+```
+
+### 商品ステータス移行コマンド
+
+`beforeProduction` は `inProduction`、`onDisplay` は `consignmentSale` へ更新する。
+既定は dry-run で、実更新時のみ確認用環境変数を設定する。
+
+#### stg dry-run
+
+```powershell
+npm run migrate:product-statuses -- --target=stg --dry-run
+```
+
+#### stg 実更新
+
+```powershell
+$env:PRODUCT_STATUS_MIGRATION_STG_CONFIRM = (Select-String -Path .env.stg -Pattern '^FIREBASE_PROJECT_ID=(.+)$').Matches[0].Groups[1].Value
+npm run migrate:product-statuses -- --target=stg --execute
+```
+
+#### demo dry-run
+
+```powershell
+npm run migrate:product-statuses -- --target=demo --dry-run
+```
+
+#### demo 実更新
+
+```powershell
+$env:PRODUCT_STATUS_MIGRATION_DEMO_CONFIRM = (Select-String -Path .env.demo -Pattern '^FIREBASE_PROJECT_ID=(.+)$').Matches[0].Groups[1].Value
+npm run migrate:product-statuses -- --target=demo --execute
 ```
 
 ### Cloud Run デプロイ

@@ -31,6 +31,8 @@ const productDetailResponse = {
       categoryId: "cat-1",
       categoryName: "アクセサリー",
       createdAt: "2026-04-20T08:00:00Z",
+      isCustomOrder: false,
+      isLimitedStock: false,
       description: "春色のリボンです。",
       name: "Blue Ribbon",
       price: 2800,
@@ -38,7 +40,7 @@ const productDetailResponse = {
       soldAt: null,
       soldCustomerId: null,
       soldCustomerNameSnapshot: null,
-      status: "onDisplay" as const,
+      status: "consignmentSale" as const,
       tagIds: ["tag-1", "tag-2"],
       tagNames: ["春", "一点もの"],
       updatedAt: "2026-04-22T10:30:00Z"

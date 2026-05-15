@@ -49,6 +49,8 @@ export function getCustomerFormFieldErrorMessage(
 export type ProductFormFieldName =
   | "categoryId"
   | "description"
+  | "isCustomOrder"
+  | "isLimitedStock"
   | "name"
   | "price"
   | "primaryImageId"

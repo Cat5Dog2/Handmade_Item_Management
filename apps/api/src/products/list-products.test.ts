@@ -21,6 +21,7 @@ describe("listProducts", () => {
               thumbnailPath: "products/HM-000001/thumb/img-001.webp"
             }
           ],
+          isCustomOrder: true,
           isDeleted: false,
           name: "Plain Pin",
           productId: "HM-000001",
@@ -152,6 +153,7 @@ describe("listProducts", () => {
             productId: "HM-000001",
             name: "Plain Pin",
             status: "consignmentSale",
+            isCustomOrder: true,
             categoryName: "Accessories",
             updatedAt: "2026-04-17T12:00:00.000Z",
             thumbnailUrl:

@@ -58,6 +58,7 @@ export interface DemoProductDocument {
   deletedAt: Date | null;
   description: string;
   images: DemoProductImageDocument[];
+  isCustomOrder: boolean;
   isDeleted: boolean;
   name: string;
   price: number;
@@ -217,6 +218,7 @@ function buildProducts(count: number): DemoProductDocument[] {
         "Use it for list, search, dashboard, QR lookup, and customer purchase checks."
       ].join("\n"),
       images: [],
+      isCustomOrder: index % 5 === 0,
       isDeleted: false,
       name: `Demo Handmade Item ${pad(index, 3)}`,
       price: 1200 + index * 180,

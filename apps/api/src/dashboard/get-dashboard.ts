@@ -24,6 +24,7 @@ interface ProductImageDocument {
 
 interface ProductDocument {
   images?: ProductImageDocument[] | null;
+  isCustomOrder?: boolean;
   isDeleted: boolean;
   name: string;
   productId: string;
@@ -55,6 +56,7 @@ interface GetDashboardOptions {
 interface ProductRecord {
   name: string;
   productId: string;
+  isCustomOrder: boolean;
   status: ProductStatus;
   thumbnailPath: string | null;
   updatedAt: Date;
@@ -112,6 +114,7 @@ function toProductRecord(
   return {
     name: product.name,
     productId: product.productId,
+    isCustomOrder: product.isCustomOrder ?? false,
     status: normalizeProductStatus(product.status) as ProductStatus,
     thumbnailPath: representativeImage?.thumbnailPath ?? null,
     updatedAt: product.updatedAt.toDate()
@@ -214,6 +217,7 @@ async function toRecentProduct(
     productId: product.productId,
     name: product.name,
     status: product.status,
+    isCustomOrder: product.isCustomOrder,
     updatedAt: product.updatedAt.toISOString(),
     thumbnailUrl: await getThumbnailUrl(bucket, product.thumbnailPath, expiresAt)
   };
@@ -284,12 +288,21 @@ export async function getDashboard(
       toRecentProduct(bucket, product, expiresAt)
     )
   );
+  const customOrderProductRecords = products
+    .filter((product) => product.isCustomOrder)
+    .sort(compareProductsByUpdatedAtDescending);
+  const customOrderProducts = await Promise.all(
+    customOrderProductRecords.map((product) =>
+      toRecentProduct(bucket, product, expiresAt)
+    )
+  );
 
   return {
     statusCounts,
     soldCount: statusCounts.sold,
     openTaskCount: openTasks.length,
     dueSoonTasks,
-    recentProducts
+    recentProducts,
+    customOrderProducts
   };
 }

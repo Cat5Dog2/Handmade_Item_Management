@@ -40,6 +40,17 @@ const dashboardData: DashboardResponseData = {
       name: "青のブローチ",
       productId: "HM-000010",
       status: "consignmentSale",
+      isCustomOrder: true,
+      thumbnailUrl: "https://example.com/thumb.webp",
+      updatedAt: "2026-04-20T08:30:00Z"
+    }
+  ],
+  customOrderProducts: [
+    {
+      name: "青のブローチ",
+      productId: "HM-000010",
+      status: "consignmentSale",
+      isCustomOrder: true,
       thumbnailUrl: "https://example.com/thumb.webp",
       updatedAt: "2026-04-20T08:30:00Z"
     }
@@ -58,7 +69,8 @@ const emptyDashboardData: DashboardResponseData = {
   soldCount: 0,
   openTaskCount: 0,
   dueSoonTasks: [],
-  recentProducts: []
+  recentProducts: [],
+  customOrderProducts: []
 };
 
 let dashboardMode: "empty" | "error" | "success" = "success";
@@ -128,14 +140,18 @@ describe("DashboardPage", () => {
     expect(taskLink).toHaveAttribute("href", "/products/HM-000001/tasks");
     expect(screen.getByText("2026/04/25")).toBeInTheDocument();
 
-    const productLink = screen.getByRole("link", {
+    const productLink = screen.getAllByRole("link", {
       name: "青のブローチの商品詳細へ"
-    });
+    })[0];
     expect(productLink).toHaveAttribute("href", "/products/HM-000010");
-    expect(screen.getByRole("img", { name: "青のブローチ" })).toHaveAttribute(
+    expect(screen.getAllByRole("img", { name: "青のブローチ" })[0]).toHaveAttribute(
       "src",
       "https://example.com/thumb.webp"
     );
+    expect(
+      screen.getByRole("heading", { name: "特注一覧" })
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("特注").length).toBeGreaterThanOrEqual(1);
   });
 
   it("keeps zero count cards visible and shows empty list messages", async () => {
@@ -147,6 +163,7 @@ describe("DashboardPage", () => {
         timeout: 8000
       })
     ).toBeInTheDocument();
+    expect(screen.getByText("特注商品はありません。")).toBeInTheDocument();
     expect(screen.getByText("最近更新した商品はありません。")).toBeInTheDocument();
     expect(screen.getAllByText("0").length).toBeGreaterThanOrEqual(8);
   });

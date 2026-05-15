@@ -148,9 +148,14 @@ function RecentProductCard({ product }: { product: DashboardRecentProduct }) {
             <p className="dashboard-link-card__id">{product.productId}</p>
             <h3 className="management-card__title">{product.name}</h3>
           </div>
-          <span className={productStatusBadgeClassNames[product.status]}>
-            {PRODUCT_STATUS_LABELS[product.status]}
-          </span>
+          <div className="dashboard-recent-product__badges">
+            {product.isCustomOrder ? (
+              <span className="management-badge is-custom-order">特注</span>
+            ) : null}
+            <span className={productStatusBadgeClassNames[product.status]}>
+              {PRODUCT_STATUS_LABELS[product.status]}
+            </span>
+          </div>
         </div>
         <dl className="management-card__details">
           <div>
@@ -254,6 +259,36 @@ export function DashboardPage() {
             />
           </div>
         </div>
+      </section>
+
+      <section
+        className="management-page__section"
+        aria-labelledby="dashboard-custom-orders-title"
+      >
+        <div className="management-page__section-header">
+          <div>
+            <h2
+              id="dashboard-custom-orders-title"
+              className="management-page__section-title"
+            >
+              特注一覧
+            </h2>
+            <p className="management-page__section-summary">
+              特注フラグが付いた商品を更新日時が新しい順に表示します。
+            </p>
+          </div>
+        </div>
+        {dashboard.customOrderProducts.length === 0 ? (
+          <ScreenEmptyState message="特注商品はありません。" />
+        ) : (
+          <div className="management-list" role="list">
+            {dashboard.customOrderProducts.map((product) => (
+              <div key={product.productId} role="listitem">
+                <RecentProductCard product={product} />
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <div className="dashboard-page__columns">

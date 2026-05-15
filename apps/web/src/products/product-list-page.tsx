@@ -277,9 +277,14 @@ function ProductListCardContent({ product }: { product: ProductListItem }) {
               {product.name}
             </h3>
           </div>
-          <span className={productStatusBadgeClassNames[product.status]}>
-            {PRODUCT_STATUS_LABELS[product.status]}
-          </span>
+          <div className="product-list-card__badges">
+            {product.isCustomOrder ? (
+              <span className="management-badge is-custom-order">特注</span>
+            ) : null}
+            <span className={productStatusBadgeClassNames[product.status]}>
+              {PRODUCT_STATUS_LABELS[product.status]}
+            </span>
+          </div>
         </div>
 
         <dl className="product-list-card__details">

@@ -78,6 +78,7 @@ const fetchMock = vi.hoisted(() =>
           dueSoonTasks: [],
           openTaskCount: 0,
           recentProducts: [],
+          customOrderProducts: [],
           soldCount: 0,
           statusCounts: {
             completed: 0,
@@ -100,6 +101,7 @@ const fetchMock = vi.hoisted(() =>
             categoryName: "アクセサリー",
             createdAt: "2026-04-20T08:00:00Z",
             description: "春色のリボンです。",
+            isCustomOrder: false,
             name: "Blue Ribbon",
             price: 2800,
             productId: "HM-000001",

@@ -30,6 +30,7 @@ describe("getProduct", () => {
               thumbnailPath: "products/HM-000001/thumb/img-001.webp"
             }
           ],
+          isCustomOrder: true,
           isDeleted: false,
           name: "Fancy Pin",
           price: 2800,
@@ -150,6 +151,7 @@ describe("getProduct", () => {
         categoryName: "Accessories",
         createdAt: "2026-04-18T08:00:00.000Z",
         description: "Handmade pin",
+        isCustomOrder: true,
         name: "Fancy Pin",
         price: 2800,
         productId,

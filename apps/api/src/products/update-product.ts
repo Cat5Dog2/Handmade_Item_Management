@@ -28,6 +28,7 @@ interface ProductDocument {
   deletedAt: Timestamp | null;
   description: string;
   images?: ProductImageDocument[] | null;
+  isCustomOrder?: boolean;
   isDeleted: boolean;
   name: string;
   price: number;
@@ -131,6 +132,10 @@ function getChangedFields(
 
   if (product.status !== input.status) {
     changedFields.push("status");
+  }
+
+  if ((product.isCustomOrder ?? false) !== (input.isCustomOrder ?? false)) {
+    changedFields.push("isCustomOrder");
   }
 
   if (product.description !== input.description) {
@@ -260,6 +265,7 @@ export async function updateProduct(
       categoryId: parsedInput.data.categoryId,
       description: parsedInput.data.description,
       images: updatedImages,
+      isCustomOrder: parsedInput.data.isCustomOrder ?? false,
       name: parsedInput.data.name,
       price: parsedInput.data.price,
       soldAt,

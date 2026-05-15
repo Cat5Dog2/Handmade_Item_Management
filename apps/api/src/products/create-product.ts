@@ -25,6 +25,7 @@ interface ProductDocument {
   deletedAt: Timestamp | null;
   description: string;
   images: ProductImageDocument[];
+  isCustomOrder: boolean;
   isDeleted: boolean;
   name: string;
   price: number;
@@ -176,6 +177,7 @@ export async function createProduct(
       deletedAt: null,
       description: parsedInput.data.description ?? "",
       images: [],
+      isCustomOrder: parsedInput.data.isCustomOrder ?? false,
       isDeleted: false,
       name: parsedInput.data.name,
       price: parsedInput.data.price,

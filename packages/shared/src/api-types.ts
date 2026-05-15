@@ -61,6 +61,7 @@ export interface ProductSummary {
   productId: string;
   name: string;
   status: ProductStatus;
+  isCustomOrder: boolean;
   categoryId: string | null;
   categoryName: string | null;
   tagIds: string[];
@@ -86,6 +87,7 @@ export interface ProductListItem {
   productId: string;
   name: string;
   status: ProductStatus;
+  isCustomOrder: boolean;
   categoryName: string | null;
   updatedAt: IsoDateTimeString;
   thumbnailUrl: string | null;
@@ -100,6 +102,7 @@ export interface ProductBaseInput {
   price: number;
   categoryId: string;
   status: ProductStatus;
+  isCustomOrder?: boolean;
 }
 
 export interface ProductCreateInput extends ProductBaseInput {
@@ -146,6 +149,7 @@ export interface ProductDetail {
   name: string;
   description: string;
   price: number;
+  isCustomOrder: boolean;
   categoryId: string;
   categoryName: string;
   tagIds: string[];
@@ -391,9 +395,12 @@ export interface DashboardRecentProduct {
   productId: string;
   name: string;
   status: ProductStatus;
+  isCustomOrder: boolean;
   updatedAt: IsoDateTimeString;
   thumbnailUrl: string | null;
 }
+
+export type DashboardCustomOrderProduct = DashboardRecentProduct;
 
 export interface DashboardResponseData {
   statusCounts: DashboardStatusCounts;
@@ -401,6 +408,7 @@ export interface DashboardResponseData {
   openTaskCount: number;
   dueSoonTasks: DashboardDueSoonTask[];
   recentProducts: DashboardRecentProduct[];
+  customOrderProducts: DashboardCustomOrderProduct[];
 }
 
 export interface QrLookupInput {

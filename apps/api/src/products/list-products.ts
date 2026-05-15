@@ -32,6 +32,7 @@ interface ProductDocument {
   categoryId: string;
   description: string;
   images?: ProductImageDocument[] | null;
+  isCustomOrder?: boolean;
   isDeleted: boolean;
   name: string;
   productId: string;
@@ -68,6 +69,7 @@ interface ProductRecord {
   categoryId: string;
   categoryName: string | null;
   images: ProductImageDocument[];
+  isCustomOrder: boolean;
   name: string;
   productId: string;
   searchableText: string;
@@ -130,6 +132,7 @@ function toProductRecord(
     categoryId: data.categoryId,
     categoryName,
     images,
+    isCustomOrder: data.isCustomOrder ?? false,
     name: data.name,
     productId: data.productId,
     searchableText: createSearchableText([
@@ -316,6 +319,7 @@ export async function listProducts(
       productId: record.productId,
       name: record.name,
       status: record.status,
+      isCustomOrder: record.isCustomOrder,
       categoryName: record.categoryName,
       updatedAt: record.updatedAt.toISOString(),
       thumbnailUrl: await getThumbnailUrl(

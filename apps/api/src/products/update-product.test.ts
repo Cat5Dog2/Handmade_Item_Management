@@ -38,6 +38,7 @@ describe("updateProduct", () => {
               thumbnailPath: "products/HM-000001/thumb/img-002.webp"
             }
           ],
+          isCustomOrder: false,
           isDeleted: false,
           name: "Old Pin",
           price: 2800,
@@ -126,6 +127,7 @@ describe("updateProduct", () => {
           primaryImageId: "img-002",
           soldCustomerId: null,
           status: "sold",
+          isCustomOrder: true,
           tagIds: ["tag-b", "tag-a"]
         },
         {
@@ -139,6 +141,7 @@ describe("updateProduct", () => {
         "price",
         "categoryId",
         "status",
+        "isCustomOrder",
         "description",
         "tagIds"
       ],
@@ -170,6 +173,7 @@ describe("updateProduct", () => {
           thumbnailPath: "products/HM-000001/thumb/img-002.webp"
         }
       ],
+      isCustomOrder: true,
       isDeleted: false,
       name: "Fancy Pin",
       price: 3000,

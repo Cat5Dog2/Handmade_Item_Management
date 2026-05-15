@@ -42,7 +42,7 @@ const AUTH_RETRY_DELAY_MS = 1_000;
 const BATCH_WRITE_LIMIT = 400;
 const repoRoot = path.resolve(__dirname, "..", "..", "..", "..");
 
-function loadEnvFile(fileName: string) {
+function loadEnvFile(fileName: string, { overwrite = true } = {}) {
   const envPath = path.join(repoRoot, fileName);
 
   if (!existsSync(envPath)) {
@@ -52,12 +52,22 @@ function loadEnvFile(fileName: string) {
   const parsed = dotenv.parse(readFileSync(envPath));
 
   for (const [key, value] of Object.entries(parsed)) {
+    if (!overwrite && process.env[key] !== undefined) {
+      continue;
+    }
+
+    if (value.trim() === "" && process.env[key] !== undefined) {
+      continue;
+    }
+
     process.env[key] = value;
   }
 }
 
 function loadTargetEnv(target: DemoSeedTarget) {
-  loadEnvFile(".env");
+  loadEnvFile(".env", {
+    overwrite: target !== "emulator"
+  });
 
   if (target === "stg" || target === "demo") {
     loadEnvFile(`.env.${target}`);

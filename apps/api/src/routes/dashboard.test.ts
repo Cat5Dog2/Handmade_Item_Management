@@ -69,6 +69,17 @@ describe("dashboard routes", () => {
           productId: "HM-000010",
           name: "Recent Pin",
           status: "consignmentSale",
+          isCustomOrder: true,
+          thumbnailUrl: "https://example.com/thumb.webp",
+          updatedAt: "2026-04-24T01:00:00.000Z"
+        }
+      ],
+      customOrderProducts: [
+        {
+          productId: "HM-000010",
+          name: "Recent Pin",
+          status: "consignmentSale",
+          isCustomOrder: true,
           thumbnailUrl: "https://example.com/thumb.webp",
           updatedAt: "2026-04-24T01:00:00.000Z"
         }
@@ -113,6 +124,17 @@ describe("dashboard routes", () => {
             productId: "HM-000010",
             name: "Recent Pin",
             status: "consignmentSale",
+            isCustomOrder: true,
+            thumbnailUrl: "https://example.com/thumb.webp",
+            updatedAt: "2026-04-24T01:00:00.000Z"
+          }
+        ],
+        customOrderProducts: [
+          {
+            productId: "HM-000010",
+            name: "Recent Pin",
+            status: "consignmentSale",
+            isCustomOrder: true,
             thumbnailUrl: "https://example.com/thumb.webp",
             updatedAt: "2026-04-24T01:00:00.000Z"
           }

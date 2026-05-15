@@ -40,6 +40,7 @@ interface PageNotice {
 type ProductCreateFieldName =
   | "name"
   | "description"
+  | "isCustomOrder"
   | "price"
   | "categoryId"
   | "tagIds"
@@ -48,6 +49,7 @@ type ProductCreateFieldName =
 const defaultProductFormValues = {
   categoryId: "",
   description: "",
+  isCustomOrder: false,
   name: "",
   price: "",
   status: "" as unknown as ProductCreateInput["status"],
@@ -116,6 +118,7 @@ export function ProductCreatePage() {
           detail.field === "description" ||
           detail.field === "price" ||
           detail.field === "categoryId" ||
+          detail.field === "isCustomOrder" ||
           detail.field === "tagIds" ||
           detail.field === "status"
         ) {
@@ -318,6 +321,19 @@ export function ProductCreatePage() {
                 </p>
               ) : null}
             </div>
+
+            <label
+              className="product-create-page__checkbox-option"
+              htmlFor="product-custom-order"
+            >
+              <input
+                {...form.register("isCustomOrder")}
+                id="product-custom-order"
+                disabled={isPageBusy}
+                type="checkbox"
+              />
+              <span>特注商品として扱う</span>
+            </label>
 
             <div className="auth-field product-create-form__description">
               <label className="auth-field__label" htmlFor="product-description">

@@ -654,6 +654,16 @@ textarea {
   justify-content: space-between;
 }
 
+.product-list-card__badges,
+.product-detail-page__badges,
+.dashboard-recent-product__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
 .product-list-card__product-id {
   margin: 0 0 4px;
   color: #52606d;
@@ -1243,6 +1253,21 @@ textarea {
   accent-color: #0f766e;
 }
 
+.product-create-page__checkbox-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  grid-column: 1 / -1;
+  color: #1f2933;
+  font-weight: 600;
+}
+
+.product-create-page__checkbox-option input {
+  width: 18px;
+  height: 18px;
+  accent-color: #0f766e;
+}
+
 .product-create-page__note {
   grid-column: 1 / -1;
 }
@@ -1532,6 +1557,12 @@ textarea {
   border-color: #f1d17d;
   background: #fff8e1;
   color: #8a5a00;
+}
+
+.management-badge.is-custom-order {
+  border-color: #32b36b;
+  background: #e9fff3;
+  color: #146c3a;
 }
 
 .danger-button {

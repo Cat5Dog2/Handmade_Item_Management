@@ -24,6 +24,10 @@ function loadEnvFile(fileName: string) {
   const parsed = dotenv.parse(readFileSync(envPath));
 
   for (const [key, value] of Object.entries(parsed)) {
+    if (value.trim() === "" && process.env[key] !== undefined) {
+      continue;
+    }
+
     process.env[key] = value;
   }
 }

@@ -318,6 +318,7 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
 - 納期が近いタスクは、当日を含む7日以内の未完了タスクを対象とする
 - `dueSoonTasks[]` は `taskId`, `taskName`, `productId`, `productName`, `dueDate` を返す
 - 最近更新商品は更新日時降順で最大5件とする
+- `customOrderProducts[]` は特注フラグが有効な商品を更新日時降順で返す
 - `recentProducts[].thumbnailUrl` は取得時生成の期限付きURLとし、既定有効期限は60分とする
 - `thumbnailUrl` の期限切れ時は `GET /api/dashboard` を再取得して最新URLを受け取る
 
@@ -349,6 +350,17 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
         "productId": "HM-000010",
         "name": "青のブローチ",
         "status": "consignmentSale",
+        "isCustomOrder": true,
+        "updatedAt": "2026-03-20T08:30:00Z",
+        "thumbnailUrl": "https://example.com/thumbnail.jpg"
+      }
+    ],
+    "customOrderProducts": [
+      {
+        "productId": "HM-000010",
+        "name": "青のブローチ",
+        "status": "consignmentSale",
+        "isCustomOrder": true,
         "updatedAt": "2026-03-20T08:30:00Z",
         "thumbnailUrl": "https://example.com/thumbnail.jpg"
       }
@@ -406,6 +418,7 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
         "productId": "HM-000001",
         "name": "春色ピアス",
         "status": "consignmentSale",
+        "isCustomOrder": false,
         "categoryName": "ピアス",
         "updatedAt": "2026-03-20T08:30:00Z",
         "thumbnailUrl": "https://example.com/thumbnail.jpg"
@@ -448,6 +461,7 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
 | `categoryId` | string | 必須 | カテゴリID |
 | `tagIds` | string[] | 任意 | タグID配列 |
 | `status` | string | 必須 | ステータス内部コード |
+| `isCustomOrder` | boolean | 任意 | 特注フラグ。未指定時は `false` |
 
 ### リクエスト例
 ```json
@@ -457,7 +471,8 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
   "price": 2800,
   "categoryId": "cat_001",
   "tagIds": ["tag_001", "tag_002"],
-  "status": "completed"
+  "status": "completed",
+  "isCustomOrder": false
 }
 ```
 
@@ -519,6 +534,7 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
       "tagIds": ["tag_001", "tag_002"],
       "tagNames": ["春", "パステル"],
       "status": "sold",
+      "isCustomOrder": true,
       "soldAt": "2026-03-20T08:20:00Z",
       "soldCustomerId": "cus_000001",
       "soldCustomerNameSnapshot": "山田 花子",
@@ -573,6 +589,7 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
 | `categoryId` | string | 必須 | カテゴリID |
 | `tagIds` | string[] | 必須 | 未設定にする場合は `[]` |
 | `status` | string | 必須 | ステータス内部コード |
+| `isCustomOrder` | boolean | 任意 | 特注フラグ。未指定時は `false` |
 | `primaryImageId` | string \| null | 必須 | 対象商品の `images[].imageId` を指定。代表画像なしは `null` |
 | `soldCustomerId` | string \| null | 必須 | `status=sold` の場合に任意設定。未設定にしたい場合は `null` |
 
@@ -585,6 +602,7 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
   "categoryId": "cat_001",
   "tagIds": ["tag_001"],
   "status": "sold",
+  "isCustomOrder": true,
   "primaryImageId": "img_001",
   "soldCustomerId": "cus_000001"
 }
@@ -1640,6 +1658,7 @@ QRコード読取値から商品を特定し、販売済更新可否を返す。
 | `categoryId` | string | カテゴリID |
 | `tagIds` | string[] | タグID配列 |
 | `status` | string | ステータス内部コード |
+| `isCustomOrder` | boolean | 特注フラグ |
 | `images` | object[] | 画像メタ情報配列 |
 | `qrCodeValue` | string | MVPでは `productId` と同値 |
 | `soldAt` | string \| null | 販売日時 |

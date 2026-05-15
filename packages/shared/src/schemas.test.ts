@@ -19,7 +19,8 @@ describe("shared schemas", () => {
         price: "2800",
         categoryId: " cat_001 ",
         tagIds: [" tag_001 ", "tag_002"],
-        status: "completed"
+        status: "completed",
+        isCustomOrder: "true"
       })
     ).toEqual({
       name: "Spring Accessory",
@@ -27,7 +28,8 @@ describe("shared schemas", () => {
       price: 2800,
       categoryId: "cat_001",
       tagIds: ["tag_001", "tag_002"],
-      status: "completed"
+      status: "completed",
+      isCustomOrder: true
     });
   });
 
@@ -138,6 +140,7 @@ describe("shared schemas", () => {
         categoryId: " cat_001 ",
         tagIds: [" tag_001 "],
         status: "sold",
+        isCustomOrder: "false",
         primaryImageId: "",
         soldCustomerId: ""
       })
@@ -148,6 +151,7 @@ describe("shared schemas", () => {
       categoryId: "cat_001",
       tagIds: ["tag_001"],
       status: "sold",
+      isCustomOrder: false,
       primaryImageId: null,
       soldCustomerId: null
     });

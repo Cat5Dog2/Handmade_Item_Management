@@ -1,4 +1,4 @@
-﻿import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import {
   fireEvent,
   render,
@@ -61,7 +61,7 @@ const displayProduct = {
   categoryName: "アクセサリー",
   name: "Blue Ribbon",
   productId: "HM-000001",
-  status: "onDisplay" as const,
+  status: "consignmentSale" as const,
   thumbnailUrl: "https://example.com/thumb-1.webp",
   updatedAt: "2026-04-18T00:00:00Z"
 };
@@ -295,13 +295,13 @@ describe("ProductListPage", () => {
 
   it("renders the current query state and product cards", async () => {
     renderProductList(
-      "/products?keyword=blue&status=onDisplay&sortBy=name&sortOrder=asc"
+      "/products?keyword=blue&status=consignmentSale&sortBy=name&sortOrder=asc"
     );
 
     await screen.findByRole("listitem", undefined, { timeout: 8000 });
 
     expect(screen.getByLabelText("キーワード")).toHaveValue("blue");
-    expect(screen.getByLabelText("ステータス")).toHaveValue("onDisplay");
+    expect(screen.getByLabelText("ステータス")).toHaveValue("consignmentSale");
     expect(screen.getByLabelText("販売済み")).toHaveValue("true");
 
     const productCard = screen.getByRole("listitem");
@@ -319,7 +319,7 @@ describe("ProductListPage", () => {
           keyword: "blue",
           sortBy: "name",
           sortOrder: "asc",
-          status: "onDisplay"
+          status: "consignmentSale"
         })
       })
     );

@@ -6,6 +6,7 @@ import type {
   ProductStatus
 } from "@handmade/shared";
 import {
+  normalizeProductStatus,
   normalizeSearchKeyword,
   productListQuerySchema
 } from "@handmade/shared";
@@ -138,7 +139,7 @@ function toProductRecord(
       categoryName,
       tagNames.join(" ")
     ]),
-    status: data.status,
+    status: normalizeProductStatus(data.status) as ProductStatus,
     tagIds: data.tagIds,
     updatedAt: toDate(data.updatedAt),
     thumbnailPath: representativeImage?.thumbnailPath ?? null
@@ -194,6 +195,10 @@ function compareProducts(
   }
 
   return left.productId.localeCompare(right.productId);
+}
+
+function canApplyStatusFilterInFirestore(status: ProductStatus) {
+  return status !== "inProduction" && status !== "consignmentSale";
 }
 
 async function getThumbnailUrl(
@@ -260,7 +265,7 @@ export async function listProducts(
     productQuery = productQuery.where("categoryId", "==", query.categoryId);
   }
 
-  if (query.status) {
+  if (query.status && canApplyStatusFilterInFirestore(query.status)) {
     productQuery = productQuery.where("status", "==", query.status);
   }
 

@@ -80,11 +80,11 @@ const fetchMock = vi.hoisted(() =>
           recentProducts: [],
           soldCount: 0,
           statusCounts: {
-            beforeProduction: 0,
             completed: 0,
             inProduction: 0,
             inStock: 0,
-            onDisplay: 0,
+            consignmentSale: 0,
+            marche: 0,
             sold: 0
           }
         }
@@ -106,7 +106,7 @@ const fetchMock = vi.hoisted(() =>
             soldAt: null,
             soldCustomerId: null,
             soldCustomerNameSnapshot: null,
-            status: "onDisplay",
+            status: "consignmentSale",
             tagIds: ["tag-1"],
             tagNames: ["春"],
             updatedAt: "2026-04-22T10:30:00Z"

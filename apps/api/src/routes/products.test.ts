@@ -111,7 +111,7 @@ describe("products routes", () => {
             categoryName: "Accessories",
             name: "Plain Pin",
             productId: "HM-000001",
-            status: "onDisplay",
+            status: "consignmentSale",
             thumbnailUrl: "https://example.com/thumb.webp",
             updatedAt: "2026-04-17T12:00:00.000Z"
           }
@@ -144,7 +144,7 @@ describe("products routes", () => {
             categoryName: "Accessories",
             name: "Plain Pin",
             productId: "HM-000001",
-            status: "onDisplay",
+            status: "consignmentSale",
             thumbnailUrl: "https://example.com/thumb.webp",
             updatedAt: "2026-04-17T12:00:00.000Z"
           }
@@ -189,7 +189,7 @@ describe("products routes", () => {
         soldAt: null,
         soldCustomerId: null,
         soldCustomerNameSnapshot: null,
-        status: "onDisplay",
+        status: "consignmentSale",
         tagIds: ["tag-a"],
         tagNames: ["Spring"],
         updatedAt: "2026-04-18T09:00:00.000Z"
@@ -227,7 +227,7 @@ describe("products routes", () => {
           soldAt: null,
           soldCustomerId: null,
           soldCustomerNameSnapshot: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: ["tag-a"],
           tagNames: ["Spring"],
           updatedAt: "2026-04-18T09:00:00.000Z"
@@ -534,7 +534,7 @@ describe("products routes", () => {
         price: 3000,
         primaryImageId: null,
         soldCustomerId: null,
-        status: "onDisplay",
+        status: "consignmentSale",
         tagIds: ["tag-a"]
       });
 
@@ -552,7 +552,7 @@ describe("products routes", () => {
       price: 3000,
       primaryImageId: null,
       soldCustomerId: null,
-      status: "onDisplay",
+      status: "consignmentSale",
       tagIds: ["tag-a"]
     });
     expect(writeOperationLogMock).toHaveBeenCalledWith({
@@ -598,7 +598,7 @@ describe("products routes", () => {
         price: 3000,
         primaryImageId: null,
         soldCustomerId: null,
-        status: "onDisplay",
+        status: "consignmentSale",
         tagIds: ["tag-a"]
       });
 

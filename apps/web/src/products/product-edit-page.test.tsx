@@ -54,7 +54,7 @@ const productDetailResponse = {
       soldAt: null,
       soldCustomerId: null,
       soldCustomerNameSnapshot: null,
-      status: "onDisplay" as const,
+      status: "consignmentSale" as const,
       tagIds: ["tag-1", "tag-2"],
       tagNames: ["春", "一点もの"],
       updatedAt: "2026-04-22T10:30:00Z"
@@ -324,7 +324,7 @@ describe("ProductEditPage", () => {
     expect(screen.getByLabelText("商品ID")).toHaveValue("HM-000001");
     expect(screen.getByLabelText("価格")).toHaveValue(2800);
     expect(screen.getByLabelText("カテゴリ")).toHaveValue("cat-1");
-    expect(screen.getByLabelText("ステータス")).toHaveValue("onDisplay");
+    expect(screen.getByLabelText("ステータス")).toHaveValue("consignmentSale");
     expect(screen.getByLabelText("春")).toBeChecked();
     expect(screen.getByLabelText("一点もの")).toBeChecked();
 
@@ -382,7 +382,7 @@ describe("ProductEditPage", () => {
     expect(await screen.findByLabelText("購入者")).toHaveValue("cus_000001");
 
     fireEvent.change(screen.getByLabelText("ステータス"), {
-      target: { value: "onDisplay" }
+      target: { value: "consignmentSale" }
     });
     fireEvent.click(screen.getByRole("button", { name: "更新する" }));
 
@@ -406,7 +406,7 @@ describe("ProductEditPage", () => {
           body: expect.objectContaining({
             primaryImageId: "image-2",
             soldCustomerId: null,
-            status: "onDisplay"
+            status: "consignmentSale"
           })
         }
       );

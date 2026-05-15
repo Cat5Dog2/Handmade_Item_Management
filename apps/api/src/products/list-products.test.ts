@@ -25,7 +25,7 @@ describe("listProducts", () => {
           name: "Plain Pin",
           productId: "HM-000001",
           soldAt: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: ["tag-a"],
           updatedAt: createTimestamp("2026-04-17T12:00:00.000Z")
         }),
@@ -57,7 +57,7 @@ describe("listProducts", () => {
           name: "Other",
           productId: "HM-000003",
           soldAt: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: ["tag-b"],
           updatedAt: createTimestamp("2026-04-16T12:00:00.000Z")
         })
@@ -135,7 +135,7 @@ describe("listProducts", () => {
           pageSize: "1",
           sortBy: "updatedAt",
           sortOrder: "desc",
-          status: "onDisplay",
+          status: "consignmentSale",
           tagId: "tag-a"
         },
         {
@@ -151,7 +151,7 @@ describe("listProducts", () => {
           {
             productId: "HM-000001",
             name: "Plain Pin",
-            status: "onDisplay",
+            status: "consignmentSale",
             categoryName: "Accessories",
             updatedAt: "2026-04-17T12:00:00.000Z",
             thumbnailUrl:
@@ -169,7 +169,11 @@ describe("listProducts", () => {
 
     expect(productsWhere).toHaveBeenCalledWith("isDeleted", "==", false);
     expect(productQuery.where).toHaveBeenCalledWith("categoryId", "==", "cat-a");
-    expect(productQuery.where).toHaveBeenCalledWith("status", "==", "onDisplay");
+    expect(productQuery.where).not.toHaveBeenCalledWith(
+      "status",
+      "==",
+      "consignmentSale"
+    );
     expect(productQuery.where).toHaveBeenCalledWith(
       "tagIds",
       "array-contains",

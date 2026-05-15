@@ -4,7 +4,7 @@ import {
   normalizeMultilineText,
   normalizeSingleLineText
 } from "./normalization";
-import { PRODUCT_STATUSES } from "./statuses";
+import { PRODUCT_STATUSES, normalizeProductStatus } from "./statuses";
 import {
   emptyBlankSearchKeywordToUndefined,
   emptyBlankSingleLineStringToNull,
@@ -20,7 +20,10 @@ const CUSTOMER_SORT_FIELDS = ["updatedAt", "lastPurchaseAt", "name"] as const;
 const SORT_ORDERS = ["asc", "desc"] as const;
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-export const productStatusSchema = z.enum(PRODUCT_STATUSES);
+export const productStatusSchema = z.preprocess(
+  normalizeProductStatus,
+  z.enum(PRODUCT_STATUSES)
+);
 export const productSortBySchema = z.enum(PRODUCT_SORT_FIELDS);
 export const customerSortBySchema = z.enum(CUSTOMER_SORT_FIELDS);
 export const sortOrderSchema = z.enum(SORT_ORDERS);

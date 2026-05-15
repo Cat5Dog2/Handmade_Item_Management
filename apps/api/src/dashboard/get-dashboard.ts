@@ -5,7 +5,7 @@ import type {
   DashboardStatusCounts,
   ProductStatus
 } from "@handmade/shared";
-import { PRODUCT_STATUSES } from "@handmade/shared";
+import { PRODUCT_STATUSES, normalizeProductStatus } from "@handmade/shared";
 import type {
   Firestore,
   QueryDocumentSnapshot,
@@ -112,7 +112,7 @@ function toProductRecord(
   return {
     name: product.name,
     productId: product.productId,
-    status: product.status,
+    status: normalizeProductStatus(product.status) as ProductStatus,
     thumbnailPath: representativeImage?.thumbnailPath ?? null,
     updatedAt: product.updatedAt.toDate()
   };

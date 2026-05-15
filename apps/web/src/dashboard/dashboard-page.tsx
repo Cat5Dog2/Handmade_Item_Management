@@ -26,11 +26,11 @@ import {
 import { formatJstDateTime } from "../utils/date-formatters";
 
 const productStatusBadgeClassNames: Record<ProductStatus, string> = {
-  beforeProduction: "product-status-badge is-before-production",
   completed: "product-status-badge is-completed",
+  consignmentSale: "product-status-badge is-consignment-sale",
   inProduction: "product-status-badge is-in-production",
   inStock: "product-status-badge is-in-stock",
-  onDisplay: "product-status-badge is-on-display",
+  marche: "product-status-badge is-marche",
   sold: "product-status-badge is-sold"
 };
 

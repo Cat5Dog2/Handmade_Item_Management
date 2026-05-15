@@ -1,11 +1,14 @@
 import "../env";
 
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 import type { Auth } from "firebase-admin/auth";
 import type {
   DocumentData,
   Firestore,
   WriteBatch
 } from "firebase-admin/firestore";
+import dotenv from "dotenv";
 import {
   DEFAULT_DEMO_OWNER_PASSWORD,
   buildDemoSeedData,
@@ -37,6 +40,29 @@ const FIRESTORE_RETRY_DELAY_MS = 1_000;
 const AUTH_RETRY_ATTEMPTS = 30;
 const AUTH_RETRY_DELAY_MS = 1_000;
 const BATCH_WRITE_LIMIT = 400;
+const repoRoot = path.resolve(__dirname, "..", "..", "..", "..");
+
+function loadEnvFile(fileName: string) {
+  const envPath = path.join(repoRoot, fileName);
+
+  if (!existsSync(envPath)) {
+    return;
+  }
+
+  const parsed = dotenv.parse(readFileSync(envPath));
+
+  for (const [key, value] of Object.entries(parsed)) {
+    process.env[key] = value;
+  }
+}
+
+function loadTargetEnv(target: DemoSeedTarget) {
+  loadEnvFile(".env");
+
+  if (target === "stg" || target === "demo") {
+    loadEnvFile(`.env.${target}`);
+  }
+}
 
 function sleep(milliseconds: number) {
   return new Promise((resolve) => {
@@ -105,22 +131,22 @@ async function ensureDemoOwnerUser(auth: Auth, target: DemoSeedTarget) {
     return;
   }
 
-  const password =
-    process.env.DEMO_OWNER_PASSWORD?.trim() ||
-    (target === "emulator" ? DEFAULT_DEMO_OWNER_PASSWORD : undefined);
-
-  if (!password) {
-    throw new Error(
-      `DEMO_OWNER_PASSWORD is required for ${target} auth user seed.`
-    );
-  }
-
   try {
     await auth.getUserByEmail(email);
     console.log(`[demo-seed] Auth user already exists: ${email}`);
   } catch (error) {
     if (!hasErrorCode(error, "auth/user-not-found")) {
       throw error;
+    }
+
+    const password =
+      process.env.DEMO_OWNER_PASSWORD?.trim() ||
+      (target === "emulator" ? DEFAULT_DEMO_OWNER_PASSWORD : undefined);
+
+    if (!password) {
+      throw new Error(
+        `DEMO_OWNER_PASSWORD is required to create ${target} auth user.`
+      );
     }
 
     await auth.createUser({
@@ -271,6 +297,8 @@ async function seedDemoData() {
   }
 
   const target = resolveDemoSeedTarget();
+  loadTargetEnv(target);
+
   const runtime = assertDemoSeedTargetSafety(target);
 
   const db = getFirestoreDb();

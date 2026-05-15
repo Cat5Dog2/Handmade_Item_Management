@@ -60,7 +60,7 @@ const productDetailResponse = {
       soldAt: null,
       soldCustomerId: null,
       soldCustomerNameSnapshot: null,
-      status: "onDisplay" as const,
+      status: "consignmentSale" as const,
       tagIds: ["tag-1", "tag-2"],
       tagNames: ["春", "一点もの"],
       updatedAt: "2026-04-22T10:30:00Z"

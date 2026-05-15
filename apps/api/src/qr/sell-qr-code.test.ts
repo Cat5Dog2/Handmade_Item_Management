@@ -21,7 +21,7 @@ function createProduct(overrides: {
     soldAt: overrides.soldAt ?? null,
     soldCustomerId: overrides.soldCustomerId ?? null,
     soldCustomerNameSnapshot: overrides.soldCustomerNameSnapshot ?? null,
-    status: overrides.status ?? "onDisplay",
+    status: overrides.status ?? "consignmentSale",
     updatedAt:
       overrides.updatedAt ?? createTimestamp("2026-04-18T09:00:00.000Z")
   };
@@ -101,11 +101,11 @@ function createDb(options: {
 }
 
 describe("sellQrCode", () => {
-  it("marks an on-display product as sold without a customer", async () => {
+  it("marks a consignment sale product as sold without a customer", async () => {
     const now = createTimestamp("2026-04-18T10:00:00.000Z");
     const product = createProduct({
       productId: "HM-000001",
-      status: "onDisplay"
+      status: "consignmentSale"
     });
     const { db, transaction } = createDb({
       productSnapshot: createDocumentSnapshot(product)
@@ -122,7 +122,7 @@ describe("sellQrCode", () => {
         }
       )
     ).resolves.toEqual({
-      previousStatus: "onDisplay",
+      previousStatus: "consignmentSale",
       productId: "HM-000001",
       status: "sold",
       soldAt: "2026-04-18T10:00:00.000Z",
@@ -170,6 +170,34 @@ describe("sellQrCode", () => {
       status: "sold"
     });
     expect(productDoc).toHaveBeenCalledWith("HM-000002");
+  });
+
+  it("marks a marche product as sold", async () => {
+    const now = createTimestamp("2026-04-18T10:07:00.000Z");
+    const { db } = createDb({
+      productSnapshot: createDocumentSnapshot(
+        createProduct({
+          productId: "HM-000001",
+          status: "marche"
+        })
+      )
+    });
+
+    await expect(
+      sellQrCode(
+        {
+          productId: "HM-000001"
+        },
+        {
+          db: db as never,
+          now: () => now as never
+        }
+      )
+    ).resolves.toMatchObject({
+      previousStatus: "marche",
+      productId: "HM-000001",
+      status: "sold"
+    });
   });
 
   it("marks an in-stock product as sold with a customer snapshot", async () => {
@@ -223,7 +251,7 @@ describe("sellQrCode", () => {
       productSnapshot: createDocumentSnapshot(
         createProduct({
           soldAt,
-          status: "onDisplay"
+          status: "consignmentSale"
         })
       )
     });
@@ -269,7 +297,7 @@ describe("sellQrCode", () => {
     expect(transaction.set).not.toHaveBeenCalled();
   });
 
-  it.each(["beforeProduction", "inProduction", "completed"] as const)(
+  it.each(["inProduction", "completed"] as const)(
     "rejects %s products without updating",
     async (status) => {
       const { db, transaction } = createDb({
@@ -297,12 +325,39 @@ describe("sellQrCode", () => {
     }
   );
 
+  it("normalizes legacy statuses before selling", async () => {
+    const now = createTimestamp("2026-04-18T10:25:00.000Z");
+    const { db } = createDb({
+      productSnapshot: createDocumentSnapshot(
+        createProduct({
+          status: "onDisplay"
+        })
+      )
+    });
+
+    await expect(
+      sellQrCode(
+        {
+          productId: "HM-000001"
+        },
+        {
+          db: db as never,
+          now: () => now as never
+        }
+      )
+    ).resolves.toMatchObject({
+      previousStatus: "consignmentSale",
+      productId: "HM-000001",
+      status: "sold"
+    });
+  });
+
   it("rejects logically deleted products without updating", async () => {
     const { db, transaction } = createDb({
       productSnapshot: createDocumentSnapshot(
         createProduct({
           isDeleted: true,
-          status: "onDisplay"
+          status: "consignmentSale"
         })
       )
     });
@@ -361,7 +416,7 @@ describe("sellQrCode", () => {
       },
       productSnapshot: createDocumentSnapshot(
         createProduct({
-          status: "onDisplay"
+          status: "consignmentSale"
         })
       )
     });
@@ -393,7 +448,7 @@ describe("sellQrCode", () => {
       },
       productSnapshot: createDocumentSnapshot(
         createProduct({
-          status: "onDisplay"
+          status: "consignmentSale"
         })
       )
     });

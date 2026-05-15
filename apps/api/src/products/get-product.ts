@@ -3,6 +3,7 @@ import type {
   ProductImageDetail,
   ProductStatus
 } from "@handmade/shared";
+import { normalizeProductStatus } from "@handmade/shared";
 import type { Firestore, Timestamp } from "firebase-admin/firestore";
 import { createApiError } from "../errors/api-errors";
 import { getFirestoreDb, getStorageBucket } from "../firebase/firebase-admin";
@@ -176,7 +177,11 @@ export async function getProduct(
     });
   }
 
-  const product = productSnapshot.data();
+  const productData = productSnapshot.data();
+  const product = {
+    ...productData,
+    status: normalizeProductStatus(productData.status) as ProductStatus
+  };
 
   if (product.isDeleted) {
     throw createApiError({

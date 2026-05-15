@@ -44,7 +44,7 @@ describe("updateProduct", () => {
           productId,
           qrCodeValue: productId,
           soldAt: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: ["tag-b"],
           updatedAt: createTimestamp("2026-04-18T09:00:00.000Z")
         });
@@ -209,7 +209,7 @@ describe("updateProduct", () => {
             soldAt: null,
             soldCustomerId: null,
             soldCustomerNameSnapshot: null,
-            status: "onDisplay",
+            status: "consignmentSale",
             tagIds: [],
             updatedAt: createTimestamp("2026-04-18T09:00:00.000Z")
           });
@@ -322,7 +322,7 @@ describe("updateProduct", () => {
             productId,
             qrCodeValue: productId,
             soldAt: null,
-            status: "onDisplay",
+            status: "consignmentSale",
             tagIds: [],
             updatedAt: createTimestamp("2026-04-18T09:00:00.000Z")
           });
@@ -585,7 +585,7 @@ describe("updateProduct", () => {
           price: 3200,
           primaryImageId: null,
           soldCustomerId: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: []
         },
         {
@@ -614,7 +614,7 @@ describe("updateProduct", () => {
       qrCodeValue: productId,
       soldCustomerId: null,
       soldCustomerNameSnapshot: null,
-      status: "onDisplay",
+      status: "consignmentSale",
       tagIds: []
     });
     expectTimestampLike(payload.createdAt, "2026-04-18T08:00:00.000Z");
@@ -650,7 +650,7 @@ describe("updateProduct", () => {
             productId,
             qrCodeValue: productId,
             soldAt: null,
-            status: "onDisplay",
+            status: "consignmentSale",
             tagIds: [],
             updatedAt: createTimestamp("2026-04-18T10:00:00.000Z")
           });
@@ -699,7 +699,7 @@ describe("updateProduct", () => {
           price: 3200,
           primaryImageId: "missing",
           soldCustomerId: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: []
         },
         {
@@ -759,7 +759,7 @@ describe("updateProduct", () => {
           price: 3200,
           primaryImageId: null,
           soldCustomerId: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: []
         },
         {
@@ -802,7 +802,7 @@ describe("updateProduct", () => {
                 productId,
                 qrCodeValue: productId,
                 soldAt: null,
-                status: "onDisplay",
+                status: "consignmentSale",
                 tagIds: [],
                 updatedAt: createTimestamp("2026-04-18T10:00:00.000Z")
               });
@@ -825,7 +825,7 @@ describe("updateProduct", () => {
           price: 3200,
           primaryImageId: null,
           soldCustomerId: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: []
         },
         {

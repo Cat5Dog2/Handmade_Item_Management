@@ -27,7 +27,7 @@ describe("deleteProduct", () => {
             productId,
             qrCodeValue: productId,
             soldAt: null,
-            status: "onDisplay",
+            status: "consignmentSale",
             tagIds: [],
             updatedAt: createTimestamp("2026-04-18T12:00:00.000Z")
           });
@@ -75,7 +75,7 @@ describe("deleteProduct", () => {
       productId,
       qrCodeValue: productId,
       soldAt: null,
-      status: "onDisplay",
+      status: "consignmentSale",
       tagIds: []
     });
     expectTimestampLike(payload.createdAt, "2026-04-18T08:00:00.000Z");
@@ -144,7 +144,7 @@ describe("deleteProduct", () => {
                 productId,
                 qrCodeValue: productId,
                 soldAt: null,
-                status: "onDisplay",
+                status: "consignmentSale",
                 tagIds: [],
                 updatedAt: createTimestamp("2026-04-18T13:00:00.000Z")
               });

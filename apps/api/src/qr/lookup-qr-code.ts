@@ -4,7 +4,7 @@ import type {
   QrLookupInput,
   QrLookupReasonCode
 } from "@handmade/shared";
-import { qrLookupInputSchema } from "@handmade/shared";
+import { normalizeProductStatus, qrLookupInputSchema } from "@handmade/shared";
 import type { Firestore } from "firebase-admin/firestore";
 import type { ZodError } from "zod";
 import { createValidationError } from "../errors/api-errors";
@@ -50,7 +50,11 @@ function getLookupReason(product: ProductDocument): Exclude<
     return "PRODUCT_DELETED";
   }
 
-  if (product.status === "onDisplay" || product.status === "inStock") {
+  if (
+    product.status === "consignmentSale" ||
+    product.status === "marche" ||
+    product.status === "inStock"
+  ) {
     return "CAN_SELL";
   }
 
@@ -88,7 +92,10 @@ export async function lookupQrCode(
     };
   }
 
-  const product = productSnapshot.data();
+  const product = {
+    ...productSnapshot.data(),
+    status: normalizeProductStatus(productSnapshot.data().status) as ProductStatus
+  };
   const reasonCode = getLookupReason(product);
 
   return {

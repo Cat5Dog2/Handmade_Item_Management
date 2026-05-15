@@ -4,15 +4,20 @@
   "version": "0.1.0",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "seed:demo": "tsx src/seed/seed-demo-data.ts --target=emulator",
-    "seed:demo:stg": "tsx src/seed/seed-demo-data.ts --target=stg",
-    "seed:demo:demo": "tsx src/seed/seed-demo-data.ts --target=demo",
+    "seed:demo": "npm --workspace @handmade/shared run build && tsx src/seed/seed-demo-data.ts --target=emulator",
+    "seed:demo:stg": "npm --workspace @handmade/shared run build && tsx src/seed/seed-demo-data.ts --target=stg",
+    "seed:demo:demo": "npm --workspace @handmade/shared run build && tsx src/seed/seed-demo-data.ts --target=demo",
+    "reset:demo-seed": "npm --workspace @handmade/shared run build && tsx src/seed/reset-demo-seed.ts --target=emulator",
+    "reset:demo-seed:stg": "npm --workspace @handmade/shared run build && tsx src/seed/reset-demo-seed.ts --target=stg",
+    "reset:demo-seed:demo": "npm --workspace @handmade/shared run build && tsx src/seed/reset-demo-seed.ts --target=demo",
+    "migrate:product-statuses": "tsx src/maintenance/migrate-product-statuses.ts",
     "build": "npm --workspace @handmade/shared run build && tsc -p tsconfig.build.json",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run --globals --no-file-parallelism --pool=forks --poolOptions.forks.singleFork"
   },
   "dependencies": {
+    "@handmade/shared": "0.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",

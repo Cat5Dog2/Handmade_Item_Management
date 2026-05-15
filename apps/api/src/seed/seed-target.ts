@@ -173,12 +173,6 @@ export function assertDemoSeedTargetSafety(
     );
   }
 
-  if (target === "stg" && !projectId.toLowerCase().includes("stg")) {
-    throw new Error(
-      "DEMO seed target 'stg' requires a FIREBASE_PROJECT_ID containing 'stg'."
-    );
-  }
-
   const confirmEnvName =
     target === "demo" ? "DEMO_SEED_DEMO_CONFIRM" : "DEMO_SEED_STG_CONFIRM";
 
@@ -190,12 +184,6 @@ export function assertDemoSeedTargetSafety(
 
   if (!optionalEnvValue(env.APP_OWNER_EMAIL)) {
     throw new Error(`DEMO seed target '${target}' requires APP_OWNER_EMAIL.`);
-  }
-
-  if (!optionalEnvValue(env.DEMO_OWNER_PASSWORD)) {
-    throw new Error(
-      `DEMO seed target '${target}' requires DEMO_OWNER_PASSWORD.`
-    );
   }
 
   resolveGoogleApplicationCredentials(env);

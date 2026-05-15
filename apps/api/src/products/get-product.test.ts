@@ -38,7 +38,7 @@ describe("getProduct", () => {
           soldAt: createTimestamp("2026-04-18T08:30:00.000Z"),
           soldCustomerId: "cus_000001",
           soldCustomerNameSnapshot: "山田 花子",
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: ["tag-b", "tag-a"],
           updatedAt: createTimestamp("2026-04-18T09:30:00.000Z")
         })
@@ -156,7 +156,7 @@ describe("getProduct", () => {
         soldAt: "2026-04-18T08:30:00.000Z",
         soldCustomerId: "cus_000001",
         soldCustomerNameSnapshot: "山田 花子",
-        status: "onDisplay",
+        status: "consignmentSale",
         tagIds: ["tag-b", "tag-a"],
         tagNames: ["Featured", "Spring"],
         updatedAt: "2026-04-18T09:30:00.000Z"
@@ -258,7 +258,7 @@ describe("getProduct", () => {
           productId,
           qrCodeValue: productId,
           soldAt: null,
-          status: "onDisplay",
+          status: "consignmentSale",
           tagIds: [],
           updatedAt: createTimestamp("2026-04-18T09:00:00.000Z")
         })

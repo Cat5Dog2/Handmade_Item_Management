@@ -2,7 +2,7 @@ import type {
   ProductStatus,
   ProductUpdateInput
 } from "@handmade/shared";
-import { productUpdateInputSchema } from "@handmade/shared";
+import { normalizeProductStatus, productUpdateInputSchema } from "@handmade/shared";
 import type { Firestore, Timestamp } from "firebase-admin/firestore";
 import { Timestamp as FirestoreTimestamp } from "firebase-admin/firestore";
 import type { ZodError } from "zod";
@@ -180,7 +180,11 @@ export async function updateProduct(
       });
     }
 
-    const product = productSnapshot.data() as ProductDocument;
+    const productData = productSnapshot.data() as ProductDocument;
+    const product = {
+      ...productData,
+      status: normalizeProductStatus(productData.status) as ProductStatus
+    };
 
     if (product.isDeleted) {
       throw createApiError({

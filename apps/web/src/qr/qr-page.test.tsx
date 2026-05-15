@@ -66,7 +66,7 @@ const lookupResponse = {
     name: "Blue Ribbon",
     productId: "HM-000001",
     reasonCode: "CAN_SELL",
-    status: "onDisplay" as const
+    status: "consignmentSale" as const
   }
 };
 
@@ -222,7 +222,7 @@ describe("QrPage", () => {
     const dialog = screen.getByRole("dialog", { name: "販売済更新確認" });
     expect(within(dialog).getByText("Blue Ribbon")).toBeInTheDocument();
     expect(within(dialog).getByText("HM-000001")).toBeInTheDocument();
-    expect(within(dialog).getByText(PRODUCT_STATUS_LABELS.onDisplay)).toBeInTheDocument();
+    expect(within(dialog).getByText(PRODUCT_STATUS_LABELS.consignmentSale)).toBeInTheDocument();
     expect(within(dialog).getByText("未選択")).toBeInTheDocument();
 
     fireEvent.click(within(dialog).getByRole("button", { name: "キャンセル" }));

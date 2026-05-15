@@ -81,10 +81,10 @@ MVPで扱う永続化対象は以下とする。
 
 | 表示名 | 内部コード |
 |---|---|
-| 制作前 | `beforeProduction` |
 | 制作中 | `inProduction` |
 | 制作済 | `completed` |
-| 展示中 | `onDisplay` |
+| 委託販売 | `consignmentSale` |
+| マルシェ | `marche` |
 | 在庫中 | `inStock` |
 | 販売済 | `sold` |
 
@@ -286,7 +286,7 @@ erDiagram
   "price": 2800,
   "categoryId": "cat_001",
   "tagIds": ["tag_001", "tag_002"],
-  "status": "onDisplay",
+  "status": "consignmentSale",
   "images": [
     {
       "imageId": "img_001",

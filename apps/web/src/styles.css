@@ -1258,7 +1258,6 @@ textarea {
   font-weight: 700;
 }
 
-.product-status-badge.is-before-production,
 .product-status-badge.is-in-stock {
   border-color: #cbd8cf;
   background: #f7fbf8;
@@ -1266,13 +1265,14 @@ textarea {
 }
 
 .product-status-badge.is-in-production,
-.product-status-badge.is-on-display {
+.product-status-badge.is-consignment-sale {
   border-color: #b9e3d8;
   background: #edf9f3;
   color: #0f5c4e;
 }
 
-.product-status-badge.is-completed {
+.product-status-badge.is-completed,
+.product-status-badge.is-marche {
   border-color: #f1d17d;
   background: #fff8e1;
   color: #8a5a00;
@@ -2019,14 +2019,13 @@ textarea {
   font-weight: 800;
 }
 
-.product-status-badge.is-before-production,
 .management-badge.is-idle {
   border-color: var(--color-border);
   background: #faf6ff;
 }
 
 .product-status-badge.is-in-production,
-.product-status-badge.is-on-display {
+.product-status-badge.is-consignment-sale {
   border-color: var(--color-border-strong);
   background: var(--color-primary-soft);
   color: var(--color-primary-deep);
@@ -2034,6 +2033,7 @@ textarea {
 
 .product-status-badge.is-in-stock,
 .product-status-badge.is-completed,
+.product-status-badge.is-marche,
 .management-badge.is-in-use {
   border-color: rgba(250, 204, 21, 0.82);
   background: var(--color-accent-soft);

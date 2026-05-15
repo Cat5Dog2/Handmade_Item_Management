@@ -1,5 +1,5 @@
 import type { DashboardResponseData } from "@handmade/shared";
-import { API_PATHS } from "@handmade/shared";
+import { API_PATHS, PRODUCT_STATUS_LABELS } from "@handmade/shared";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -17,11 +17,11 @@ vi.mock("../api/api-client-context", () => ({
 
 const dashboardData: DashboardResponseData = {
   statusCounts: {
-    beforeProduction: 1,
     completed: 3,
     inProduction: 2,
     inStock: 5,
-    onDisplay: 4,
+    consignmentSale: 4,
+    marche: 1,
     sold: 6
   },
   soldCount: 6,
@@ -39,7 +39,7 @@ const dashboardData: DashboardResponseData = {
     {
       name: "青のブローチ",
       productId: "HM-000010",
-      status: "onDisplay",
+      status: "consignmentSale",
       thumbnailUrl: "https://example.com/thumb.webp",
       updatedAt: "2026-04-20T08:30:00Z"
     }
@@ -48,11 +48,11 @@ const dashboardData: DashboardResponseData = {
 
 const emptyDashboardData: DashboardResponseData = {
   statusCounts: {
-    beforeProduction: 0,
     completed: 0,
     inProduction: 0,
     inStock: 0,
-    onDisplay: 0,
+    consignmentSale: 0,
+    marche: 0,
     sold: 0
   },
   soldCount: 0,
@@ -112,7 +112,11 @@ describe("DashboardPage", () => {
         signal: expect.any(AbortSignal)
       })
     );
-    expect(screen.getByText("制作前")).toBeInTheDocument();
+    expect(screen.getByText("制作中")).toBeInTheDocument();
+    expect(
+      screen.getAllByText(PRODUCT_STATUS_LABELS.consignmentSale).length
+    ).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(PRODUCT_STATUS_LABELS.marche)).toBeInTheDocument();
     expect(screen.getByText("商品合計")).toBeInTheDocument();
     expect(screen.getByText("21")).toBeInTheDocument();
     expect(screen.getByText("残タスク")).toBeInTheDocument();

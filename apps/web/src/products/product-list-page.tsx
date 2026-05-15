@@ -95,11 +95,11 @@ const PRODUCT_LIST_QUERY_ERROR_MESSAGE =
   "\u691c\u7d22\u6761\u4ef6\u3092\u78ba\u8a8d\u3057\u3066\u304f\u3060\u3055\u3044\u3002";
 
 const productStatusBadgeClassNames: Record<ProductStatus, string> = {
-  beforeProduction: "product-status-badge is-before-production",
   completed: "product-status-badge is-completed",
+  consignmentSale: "product-status-badge is-consignment-sale",
   inProduction: "product-status-badge is-in-production",
   inStock: "product-status-badge is-in-stock",
-  onDisplay: "product-status-badge is-on-display",
+  marche: "product-status-badge is-marche",
   sold: "product-status-badge is-sold"
 };
 

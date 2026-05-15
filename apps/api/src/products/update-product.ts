@@ -29,6 +29,7 @@ interface ProductDocument {
   description: string;
   images?: ProductImageDocument[] | null;
   isCustomOrder?: boolean;
+  isLimitedStock?: boolean;
   isDeleted: boolean;
   name: string;
   price: number;
@@ -136,6 +137,10 @@ function getChangedFields(
 
   if ((product.isCustomOrder ?? false) !== (input.isCustomOrder ?? false)) {
     changedFields.push("isCustomOrder");
+  }
+
+  if ((product.isLimitedStock ?? false) !== (input.isLimitedStock ?? false)) {
+    changedFields.push("isLimitedStock");
   }
 
   if (product.description !== input.description) {
@@ -266,6 +271,7 @@ export async function updateProduct(
       description: parsedInput.data.description,
       images: updatedImages,
       isCustomOrder: parsedInput.data.isCustomOrder ?? false,
+      isLimitedStock: parsedInput.data.isLimitedStock ?? false,
       name: parsedInput.data.name,
       price: parsedInput.data.price,
       soldAt,

@@ -23,6 +23,7 @@ interface ProductDocument {
   description: string;
   images?: ProductImageDocument[] | null;
   isCustomOrder?: boolean;
+  isLimitedStock?: boolean;
   isDeleted: boolean;
   name: string;
   price: number;
@@ -216,6 +217,7 @@ export async function getProduct(
       name: product.name,
       description: product.description,
       isCustomOrder: product.isCustomOrder ?? false,
+      isLimitedStock: product.isLimitedStock ?? false,
       price: product.price,
       categoryId: product.categoryId,
       categoryName: relatedNames.categoryName,

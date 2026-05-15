@@ -39,6 +39,7 @@ describe("updateProduct", () => {
             }
           ],
           isCustomOrder: false,
+          isLimitedStock: false,
           isDeleted: false,
           name: "Old Pin",
           price: 2800,
@@ -128,6 +129,7 @@ describe("updateProduct", () => {
           soldCustomerId: null,
           status: "sold",
           isCustomOrder: true,
+          isLimitedStock: true,
           tagIds: ["tag-b", "tag-a"]
         },
         {
@@ -142,6 +144,7 @@ describe("updateProduct", () => {
         "categoryId",
         "status",
         "isCustomOrder",
+        "isLimitedStock",
         "description",
         "tagIds"
       ],
@@ -174,6 +177,7 @@ describe("updateProduct", () => {
         }
       ],
       isCustomOrder: true,
+      isLimitedStock: true,
       isDeleted: false,
       name: "Fancy Pin",
       price: 3000,

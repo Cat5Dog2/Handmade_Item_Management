@@ -152,6 +152,9 @@ function RecentProductCard({ product }: { product: DashboardRecentProduct }) {
             {product.isCustomOrder ? (
               <span className="management-badge is-custom-order">特注</span>
             ) : null}
+            {product.isLimitedStock ? (
+              <span className="management-badge is-limited-stock">在庫限り</span>
+            ) : null}
             <span className={productStatusBadgeClassNames[product.status]}>
               {PRODUCT_STATUS_LABELS[product.status]}
             </span>

@@ -1565,6 +1565,12 @@ textarea {
   color: #146c3a;
 }
 
+.management-badge.is-limited-stock {
+  border-color: #f59e0b;
+  background: #fff7ed;
+  color: #92400e;
+}
+
 .danger-button {
   min-height: 44px;
   padding: 10px 14px;

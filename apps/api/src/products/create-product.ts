@@ -26,6 +26,7 @@ interface ProductDocument {
   description: string;
   images: ProductImageDocument[];
   isCustomOrder: boolean;
+  isLimitedStock: boolean;
   isDeleted: boolean;
   name: string;
   price: number;
@@ -178,6 +179,7 @@ export async function createProduct(
       description: parsedInput.data.description ?? "",
       images: [],
       isCustomOrder: parsedInput.data.isCustomOrder ?? false,
+      isLimitedStock: parsedInput.data.isLimitedStock ?? false,
       isDeleted: false,
       name: parsedInput.data.name,
       price: parsedInput.data.price,

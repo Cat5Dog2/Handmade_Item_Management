@@ -54,6 +54,7 @@ const productDetailResponse = {
       categoryName: "アクセサリー",
       createdAt: "2026-04-20T08:00:00Z",
       isCustomOrder: true,
+      isLimitedStock: true,
       description: "春色のリボンです。",
       name: "Blue Ribbon",
       price: 2800,

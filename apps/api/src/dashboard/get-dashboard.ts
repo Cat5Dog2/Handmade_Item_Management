@@ -25,6 +25,7 @@ interface ProductImageDocument {
 interface ProductDocument {
   images?: ProductImageDocument[] | null;
   isCustomOrder?: boolean;
+  isLimitedStock?: boolean;
   isDeleted: boolean;
   name: string;
   productId: string;
@@ -57,6 +58,7 @@ interface ProductRecord {
   name: string;
   productId: string;
   isCustomOrder: boolean;
+  isLimitedStock: boolean;
   status: ProductStatus;
   thumbnailPath: string | null;
   updatedAt: Date;
@@ -115,6 +117,7 @@ function toProductRecord(
     name: product.name,
     productId: product.productId,
     isCustomOrder: product.isCustomOrder ?? false,
+    isLimitedStock: product.isLimitedStock ?? false,
     status: normalizeProductStatus(product.status) as ProductStatus,
     thumbnailPath: representativeImage?.thumbnailPath ?? null,
     updatedAt: product.updatedAt.toDate()
@@ -218,6 +221,7 @@ async function toRecentProduct(
     name: product.name,
     status: product.status,
     isCustomOrder: product.isCustomOrder,
+    isLimitedStock: product.isLimitedStock,
     updatedAt: product.updatedAt.toISOString(),
     thumbnailUrl: await getThumbnailUrl(bucket, product.thumbnailPath, expiresAt)
   };

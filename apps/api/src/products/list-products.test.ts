@@ -22,6 +22,7 @@ describe("listProducts", () => {
             }
           ],
           isCustomOrder: true,
+          isLimitedStock: true,
           isDeleted: false,
           name: "Plain Pin",
           productId: "HM-000001",
@@ -154,6 +155,7 @@ describe("listProducts", () => {
             name: "Plain Pin",
             status: "consignmentSale",
             isCustomOrder: true,
+            isLimitedStock: true,
             categoryName: "Accessories",
             updatedAt: "2026-04-17T12:00:00.000Z",
             thumbnailUrl:

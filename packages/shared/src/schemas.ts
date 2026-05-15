@@ -239,7 +239,8 @@ export const productCreateInputSchema = z.object({
   categoryId: identifierSchema,
   tagIds: z.array(identifierSchema).optional(),
   status: productStatusSchema,
-  isCustomOrder: optionalBooleanSchema
+  isCustomOrder: optionalBooleanSchema,
+  isLimitedStock: optionalBooleanSchema
 });
 
 export const productUpdateInputSchema = z.object({
@@ -250,6 +251,7 @@ export const productUpdateInputSchema = z.object({
   tagIds: z.array(identifierSchema),
   status: productStatusSchema,
   isCustomOrder: optionalBooleanSchema,
+  isLimitedStock: optionalBooleanSchema,
   primaryImageId: nullableIdentifierSchema,
   soldCustomerId: nullableIdentifierSchema
 });

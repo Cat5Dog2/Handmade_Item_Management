@@ -41,6 +41,7 @@ type ProductCreateFieldName =
   | "name"
   | "description"
   | "isCustomOrder"
+  | "isLimitedStock"
   | "price"
   | "categoryId"
   | "tagIds"
@@ -50,6 +51,7 @@ const defaultProductFormValues = {
   categoryId: "",
   description: "",
   isCustomOrder: false,
+  isLimitedStock: false,
   name: "",
   price: "",
   status: "" as unknown as ProductCreateInput["status"],
@@ -119,6 +121,7 @@ export function ProductCreatePage() {
           detail.field === "price" ||
           detail.field === "categoryId" ||
           detail.field === "isCustomOrder" ||
+          detail.field === "isLimitedStock" ||
           detail.field === "tagIds" ||
           detail.field === "status"
         ) {
@@ -333,6 +336,19 @@ export function ProductCreatePage() {
                 type="checkbox"
               />
               <span>特注商品として扱う</span>
+            </label>
+
+            <label
+              className="product-create-page__checkbox-option"
+              htmlFor="product-limited-stock"
+            >
+              <input
+                {...form.register("isLimitedStock")}
+                id="product-limited-stock"
+                disabled={isPageBusy}
+                type="checkbox"
+              />
+              <span>在庫限りの商品として扱う</span>
             </label>
 
             <div className="auth-field product-create-form__description">

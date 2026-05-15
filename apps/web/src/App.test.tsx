@@ -102,6 +102,7 @@ const fetchMock = vi.hoisted(() =>
             createdAt: "2026-04-20T08:00:00Z",
             description: "春色のリボンです。",
             isCustomOrder: false,
+            isLimitedStock: false,
             name: "Blue Ribbon",
             price: 2800,
             productId: "HM-000001",

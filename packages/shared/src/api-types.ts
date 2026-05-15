@@ -62,6 +62,7 @@ export interface ProductSummary {
   name: string;
   status: ProductStatus;
   isCustomOrder: boolean;
+  isLimitedStock: boolean;
   categoryId: string | null;
   categoryName: string | null;
   tagIds: string[];
@@ -88,6 +89,7 @@ export interface ProductListItem {
   name: string;
   status: ProductStatus;
   isCustomOrder: boolean;
+  isLimitedStock: boolean;
   categoryName: string | null;
   updatedAt: IsoDateTimeString;
   thumbnailUrl: string | null;
@@ -103,6 +105,7 @@ export interface ProductBaseInput {
   categoryId: string;
   status: ProductStatus;
   isCustomOrder?: boolean;
+  isLimitedStock?: boolean;
 }
 
 export interface ProductCreateInput extends ProductBaseInput {
@@ -150,6 +153,7 @@ export interface ProductDetail {
   description: string;
   price: number;
   isCustomOrder: boolean;
+  isLimitedStock: boolean;
   categoryId: string;
   categoryName: string;
   tagIds: string[];
@@ -396,6 +400,7 @@ export interface DashboardRecentProduct {
   name: string;
   status: ProductStatus;
   isCustomOrder: boolean;
+  isLimitedStock: boolean;
   updatedAt: IsoDateTimeString;
   thumbnailUrl: string | null;
 }

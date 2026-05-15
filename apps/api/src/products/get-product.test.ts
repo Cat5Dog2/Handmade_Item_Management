@@ -31,6 +31,7 @@ describe("getProduct", () => {
             }
           ],
           isCustomOrder: true,
+          isLimitedStock: true,
           isDeleted: false,
           name: "Fancy Pin",
           price: 2800,
@@ -152,6 +153,7 @@ describe("getProduct", () => {
         createdAt: "2026-04-18T08:00:00.000Z",
         description: "Handmade pin",
         isCustomOrder: true,
+        isLimitedStock: true,
         name: "Fancy Pin",
         price: 2800,
         productId,

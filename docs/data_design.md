@@ -147,6 +147,7 @@ erDiagram
         string[] tagIds
         string status
         boolean isCustomOrder
+        boolean isLimitedStock
         json[] images
         string qrCodeValue
         datetime soldAt
@@ -253,6 +254,7 @@ erDiagram
 | `tagIds` | array<string> |  | タグ参照一覧 | `tags.tagId` の配列 |
 | `status` | string | ○ | 商品ステータス | 内部コードを保持 |
 | `isCustomOrder` | boolean | ○ | 特注フラグ | 未設定の既存データは `false` として扱う |
+| `isLimitedStock` | boolean | ○ | 在庫限りフラグ | 未設定の既存データは `false` として扱う |
 | `images` | array<object> |  | 画像メタ情報配列 | 最大10件 |
 | `qrCodeValue` | string | ○ | QR識別値 | MVPでは `productId` と同値 |
 | `soldAt` | timestamp\|null |  | 販売日時 | `status=sold` の場合のみ設定 |
@@ -290,6 +292,7 @@ erDiagram
   "tagIds": ["tag_001", "tag_002"],
   "status": "consignmentSale",
   "isCustomOrder": false,
+  "isLimitedStock": false,
   "images": [
     {
       "imageId": "img_001",

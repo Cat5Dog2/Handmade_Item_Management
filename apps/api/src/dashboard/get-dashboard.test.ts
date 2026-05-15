@@ -17,12 +17,14 @@ function createProduct(overrides: {
   name?: string;
   productId: string;
   isCustomOrder?: boolean;
+  isLimitedStock?: boolean;
   status?: (typeof PRODUCT_STATUSES)[number];
   updatedAt: string;
 }) {
   return createDocumentSnapshot({
     images: overrides.images ?? [],
     isCustomOrder: overrides.isCustomOrder ?? false,
+    isLimitedStock: overrides.isLimitedStock ?? false,
     isDeleted: false,
     name: overrides.name ?? `Product ${overrides.productId}`,
     productId: overrides.productId,
@@ -69,6 +71,7 @@ describe("getDashboard", () => {
         name: "Blue Brooch",
         productId: "HM-000001",
         isCustomOrder: true,
+        isLimitedStock: true,
         status: "consignmentSale",
         updatedAt: "2026-04-24T01:00:00.000Z"
       }),
@@ -187,6 +190,7 @@ describe("getDashboard", () => {
           name: "Blue Brooch",
           status: "consignmentSale",
           isCustomOrder: true,
+          isLimitedStock: true,
           updatedAt: "2026-04-24T01:00:00.000Z",
           thumbnailUrl: "https://example.com/products/HM-000001/thumb/img-primary.webp"
         },
@@ -195,6 +199,7 @@ describe("getDashboard", () => {
           name: "Sold Pin",
           status: "sold",
           isCustomOrder: false,
+          isLimitedStock: false,
           updatedAt: "2026-04-23T01:00:00.000Z",
           thumbnailUrl: null
         },
@@ -203,6 +208,7 @@ describe("getDashboard", () => {
           name: "Production Charm",
           status: "inProduction",
           isCustomOrder: false,
+          isLimitedStock: false,
           updatedAt: "2026-04-22T01:00:00.000Z",
           thumbnailUrl: null
         }
@@ -213,6 +219,7 @@ describe("getDashboard", () => {
           name: "Blue Brooch",
           status: "consignmentSale",
           isCustomOrder: true,
+          isLimitedStock: true,
           updatedAt: "2026-04-24T01:00:00.000Z",
           thumbnailUrl: "https://example.com/products/HM-000001/thumb/img-primary.webp"
         }

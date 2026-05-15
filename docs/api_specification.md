@@ -351,6 +351,7 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
         "name": "青のブローチ",
         "status": "consignmentSale",
         "isCustomOrder": true,
+        "isLimitedStock": true,
         "updatedAt": "2026-03-20T08:30:00Z",
         "thumbnailUrl": "https://example.com/thumbnail.jpg"
       }
@@ -361,6 +362,7 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
         "name": "青のブローチ",
         "status": "consignmentSale",
         "isCustomOrder": true,
+        "isLimitedStock": true,
         "updatedAt": "2026-03-20T08:30:00Z",
         "thumbnailUrl": "https://example.com/thumbnail.jpg"
       }
@@ -419,6 +421,7 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
         "name": "春色ピアス",
         "status": "consignmentSale",
         "isCustomOrder": false,
+        "isLimitedStock": false,
         "categoryName": "ピアス",
         "updatedAt": "2026-03-20T08:30:00Z",
         "thumbnailUrl": "https://example.com/thumbnail.jpg"
@@ -462,6 +465,7 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
 | `tagIds` | string[] | 任意 | タグID配列 |
 | `status` | string | 必須 | ステータス内部コード |
 | `isCustomOrder` | boolean | 任意 | 特注フラグ。未指定時は `false` |
+| `isLimitedStock` | boolean | 任意 | 在庫限りフラグ。未指定時は `false` |
 
 ### リクエスト例
 ```json
@@ -472,7 +476,8 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
   "categoryId": "cat_001",
   "tagIds": ["tag_001", "tag_002"],
   "status": "completed",
-  "isCustomOrder": false
+  "isCustomOrder": false,
+  "isLimitedStock": false
 }
 ```
 
@@ -535,6 +540,7 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
       "tagNames": ["春", "パステル"],
       "status": "sold",
       "isCustomOrder": true,
+      "isLimitedStock": false,
       "soldAt": "2026-03-20T08:20:00Z",
       "soldCustomerId": "cus_000001",
       "soldCustomerNameSnapshot": "山田 花子",
@@ -590,6 +596,7 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
 | `tagIds` | string[] | 必須 | 未設定にする場合は `[]` |
 | `status` | string | 必須 | ステータス内部コード |
 | `isCustomOrder` | boolean | 任意 | 特注フラグ。未指定時は `false` |
+| `isLimitedStock` | boolean | 任意 | 在庫限りフラグ。未指定時は `false` |
 | `primaryImageId` | string \| null | 必須 | 対象商品の `images[].imageId` を指定。代表画像なしは `null` |
 | `soldCustomerId` | string \| null | 必須 | `status=sold` の場合に任意設定。未設定にしたい場合は `null` |
 
@@ -603,6 +610,7 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
   "tagIds": ["tag_001"],
   "status": "sold",
   "isCustomOrder": true,
+  "isLimitedStock": false,
   "primaryImageId": "img_001",
   "soldCustomerId": "cus_000001"
 }
@@ -1659,6 +1667,7 @@ QRコード読取値から商品を特定し、販売済更新可否を返す。
 | `tagIds` | string[] | タグID配列 |
 | `status` | string | ステータス内部コード |
 | `isCustomOrder` | boolean | 特注フラグ |
+| `isLimitedStock` | boolean | 在庫限りフラグ |
 | `images` | object[] | 画像メタ情報配列 |
 | `qrCodeValue` | string | MVPでは `productId` と同値 |
 | `soldAt` | string \| null | 販売日時 |

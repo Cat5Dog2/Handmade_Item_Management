@@ -33,6 +33,7 @@ interface ProductDocument {
   description: string;
   images?: ProductImageDocument[] | null;
   isCustomOrder?: boolean;
+  isLimitedStock?: boolean;
   isDeleted: boolean;
   name: string;
   productId: string;
@@ -70,6 +71,7 @@ interface ProductRecord {
   categoryName: string | null;
   images: ProductImageDocument[];
   isCustomOrder: boolean;
+  isLimitedStock: boolean;
   name: string;
   productId: string;
   searchableText: string;
@@ -133,6 +135,7 @@ function toProductRecord(
     categoryName,
     images,
     isCustomOrder: data.isCustomOrder ?? false,
+    isLimitedStock: data.isLimitedStock ?? false,
     name: data.name,
     productId: data.productId,
     searchableText: createSearchableText([
@@ -320,6 +323,7 @@ export async function listProducts(
       name: record.name,
       status: record.status,
       isCustomOrder: record.isCustomOrder,
+      isLimitedStock: record.isLimitedStock,
       categoryName: record.categoryName,
       updatedAt: record.updatedAt.toISOString(),
       thumbnailUrl: await getThumbnailUrl(

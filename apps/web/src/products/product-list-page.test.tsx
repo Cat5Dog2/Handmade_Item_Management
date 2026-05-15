@@ -60,6 +60,7 @@ const tagsResponse = {
 const displayProduct = {
   categoryName: "アクセサリー",
   isCustomOrder: true,
+  isLimitedStock: true,
   name: "Blue Ribbon",
   productId: "HM-000001",
   status: "consignmentSale" as const,
@@ -70,6 +71,7 @@ const displayProduct = {
 const soldProduct = {
   categoryName: "アクセサリー",
   isCustomOrder: false,
+  isLimitedStock: false,
   name: "Sold Ribbon",
   productId: "HM-000002",
   status: "sold" as const,
@@ -84,6 +86,7 @@ const bulkPrintProducts = Array.from({ length: 11 }, (_, index) => {
   return {
     categoryName: "アクセサリー",
     isCustomOrder: false,
+    isLimitedStock: false,
     name: `Bulk Product ${String(productNumber).padStart(2, "0")}`,
     productId,
     status: "inStock" as const,

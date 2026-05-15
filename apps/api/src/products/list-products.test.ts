@@ -138,6 +138,8 @@ describe("listProducts", () => {
           sortBy: "updatedAt",
           sortOrder: "desc",
           status: "consignmentSale",
+          customOrder: "only",
+          limitedStock: "only",
           tagId: "tag-a"
         },
         {
@@ -285,6 +287,100 @@ describe("listProducts", () => {
     });
     expect(productsWhere).toHaveBeenCalledWith("isDeleted", "==", false);
     expect(productQuery.where).toHaveBeenCalledWith("status", "==", "sold");
+  });
+
+  it("filters custom order and limited stock flags after loading products", async () => {
+    const productsGet = vi.fn().mockResolvedValue({
+      docs: [
+        createDocumentSnapshot({
+          categoryId: "cat-a",
+          description: "Limited custom piece",
+          images: [],
+          isCustomOrder: true,
+          isLimitedStock: true,
+          isDeleted: false,
+          name: "Limited Custom Pin",
+          productId: "HM-000020",
+          soldAt: null,
+          status: "inStock",
+          tagIds: [],
+          updatedAt: createTimestamp("2026-04-19T12:00:00.000Z")
+        }),
+        createDocumentSnapshot({
+          categoryId: "cat-a",
+          description: "Regular piece",
+          images: [],
+          isCustomOrder: false,
+          isDeleted: false,
+          name: "Regular Pin",
+          productId: "HM-000021",
+          soldAt: null,
+          status: "inStock",
+          tagIds: [],
+          updatedAt: createTimestamp("2026-04-20T12:00:00.000Z")
+        })
+      ]
+    });
+    const productQuery = {
+      get: productsGet,
+      where: vi.fn()
+    };
+    productQuery.where.mockReturnValue(productQuery);
+    const db = {
+      collection: vi.fn((collectionName: string) => {
+        if (collectionName === "products") {
+          return {
+            where: vi.fn().mockReturnValue(productQuery)
+          };
+        }
+
+        if (collectionName === "categories" || collectionName === "tags") {
+          return {
+            get: vi.fn().mockResolvedValue({
+              docs:
+                collectionName === "categories"
+                  ? [
+                      createDocumentSnapshot({
+                        categoryId: "cat-a",
+                        name: "Accessories"
+                      })
+                    ]
+                  : []
+            })
+          };
+        }
+
+        throw new Error(`Unexpected collection ${collectionName}`);
+      })
+    };
+
+    await expect(
+      listProducts(
+        {
+          customOrder: "exclude",
+          limitedStock: "exclude"
+        },
+        {
+          db: db as never,
+          bucket: {
+            file: vi.fn()
+          } as never
+        }
+      )
+    ).resolves.toMatchObject({
+      data: {
+        items: [
+          {
+            productId: "HM-000021",
+            isCustomOrder: false,
+            isLimitedStock: false
+          }
+        ]
+      },
+      meta: {
+        totalCount: 1
+      }
+    });
   });
 
   it("rejects invalid list queries", async () => {

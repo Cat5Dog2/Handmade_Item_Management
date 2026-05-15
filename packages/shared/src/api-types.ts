@@ -5,6 +5,7 @@ export type IsoDateString = string;
 export type IsoDateTimeString = string;
 export type SortOrder = "asc" | "desc";
 export type ProductSortBy = "updatedAt" | "name";
+export type ProductFlagFilter = "all" | "only" | "exclude";
 export type CustomerSortBy = "updatedAt" | "lastPurchaseAt" | "name";
 export type QrLookupReasonCode =
   | "CAN_SELL"
@@ -82,6 +83,8 @@ export interface ProductListQuery {
   tagId?: string;
   status?: ProductStatus;
   includeSold?: boolean;
+  customOrder?: ProductFlagFilter;
+  limitedStock?: ProductFlagFilter;
 }
 
 export interface ProductListItem {

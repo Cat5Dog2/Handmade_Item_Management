@@ -16,6 +16,7 @@ import {
 } from "./string-schemas";
 
 const PRODUCT_SORT_FIELDS = ["updatedAt", "name"] as const;
+const PRODUCT_FLAG_FILTERS = ["all", "only", "exclude"] as const;
 const CUSTOMER_SORT_FIELDS = ["updatedAt", "lastPurchaseAt", "name"] as const;
 const SORT_ORDERS = ["asc", "desc"] as const;
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -25,6 +26,7 @@ export const productStatusSchema = z.preprocess(
   z.enum(PRODUCT_STATUSES)
 );
 export const productSortBySchema = z.enum(PRODUCT_SORT_FIELDS);
+export const productFlagFilterSchema = z.enum(PRODUCT_FLAG_FILTERS);
 export const customerSortBySchema = z.enum(CUSTOMER_SORT_FIELDS);
 export const sortOrderSchema = z.enum(SORT_ORDERS);
 
@@ -218,7 +220,15 @@ export const productListQuerySchema = z.object({
   categoryId: optionalIdentifierSchema,
   tagId: optionalIdentifierSchema,
   status: z.preprocess(emptyStringToUndefined, productStatusSchema.optional()),
-  includeSold: optionalBooleanSchema
+  includeSold: optionalBooleanSchema,
+  customOrder: z.preprocess(
+    emptyStringToUndefined,
+    productFlagFilterSchema.optional()
+  ),
+  limitedStock: z.preprocess(
+    emptyStringToUndefined,
+    productFlagFilterSchema.optional()
+  )
 });
 
 export const customerListQuerySchema = z.object({

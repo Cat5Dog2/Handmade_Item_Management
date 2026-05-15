@@ -43,7 +43,9 @@ describe("shared schemas", () => {
         sortBy: "updatedAt",
         sortOrder: "desc",
         keyword: "  Handmade  Bag  ",
-        includeSold: "false"
+        includeSold: "false",
+        customOrder: "only",
+        limitedStock: "exclude"
       })
     ).toEqual({
       page: 2,
@@ -51,7 +53,9 @@ describe("shared schemas", () => {
       sortBy: "updatedAt",
       sortOrder: "desc",
       keyword: "handmade bag",
-      includeSold: false
+      includeSold: false,
+      customOrder: "only",
+      limitedStock: "exclude"
     });
   });
 
@@ -66,6 +70,12 @@ describe("shared schemas", () => {
       productListQuerySchema.parse({
         page: "0",
         pageSize: "101"
+      })
+    ).toThrow();
+
+    expect(() =>
+      productListQuerySchema.parse({
+        limitedStock: "invalid"
       })
     ).toThrow();
   });

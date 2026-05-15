@@ -400,6 +400,8 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
 | `tagId` | string | 任意 | - | タグID |
 | `status` | string | 任意 | - | 商品ステータス内部コード |
 | `includeSold` | boolean | 任意 | `true` | `false` の場合は販売済を除外 |
+| `customOrder` | string | 任意 | `all` | `all` / `only` / `exclude`。特注商品の絞り込み |
+| `limitedStock` | string | 任意 | `all` | `all` / `only` / `exclude`。在庫限り商品の絞り込み |
 
 ### 業務ルール
 - 検索対象: `name`, `description`, `productId`, `categoryName`, `tagNames`
@@ -408,7 +410,7 @@ Firebase Authentication による本人認証成功後、`operationLogs` に `LO
 - `data.items[].thumbnailUrl` は取得時生成の期限付きURLとし、既定有効期限は60分とする
 - `thumbnailUrl` の期限切れ時は `GET /api/products` を再取得して最新URLを受け取る
 - `status=sold` 指定時は `includeSold` の値に関わらず販売済を検索対象に含める
-- カテゴリ・タグ・ステータスの絞り込みは AND 条件で判定する
+- カテゴリ・タグ・ステータス・特注・在庫限りの絞り込みは AND 条件で判定する
 - 並び替えは全条件適用後に実施する
 
 ### レスポンス

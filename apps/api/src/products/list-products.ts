@@ -176,6 +176,22 @@ function doesProductMatchQuery(
     return false;
   }
 
+  if (query.customOrder === "only" && !record.isCustomOrder) {
+    return false;
+  }
+
+  if (query.customOrder === "exclude" && record.isCustomOrder) {
+    return false;
+  }
+
+  if (query.limitedStock === "only" && !record.isLimitedStock) {
+    return false;
+  }
+
+  if (query.limitedStock === "exclude" && record.isLimitedStock) {
+    return false;
+  }
+
   if (normalizedKeyword && !record.searchableText.includes(normalizedKeyword)) {
     return false;
   }

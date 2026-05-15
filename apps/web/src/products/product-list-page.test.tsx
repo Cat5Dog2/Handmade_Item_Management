@@ -301,7 +301,7 @@ describe("ProductListPage", () => {
 
   it("renders the current query state and product cards", async () => {
     renderProductList(
-      "/products?keyword=blue&status=consignmentSale&sortBy=name&sortOrder=asc"
+      "/products?keyword=blue&status=consignmentSale&customOrder=only&limitedStock=exclude&sortBy=name&sortOrder=asc"
     );
 
     await screen.findByRole("listitem", undefined, { timeout: 8000 });
@@ -309,6 +309,8 @@ describe("ProductListPage", () => {
     expect(screen.getByLabelText("キーワード")).toHaveValue("blue");
     expect(screen.getByLabelText("ステータス")).toHaveValue("consignmentSale");
     expect(screen.getByLabelText("販売済み")).toHaveValue("true");
+    expect(screen.getByLabelText("特注")).toHaveValue("only");
+    expect(screen.getByLabelText("在庫限り")).toHaveValue("exclude");
 
     const productCard = screen.getByRole("listitem");
     expect(productCard).toHaveAttribute("href", "/products/HM-000001");
@@ -323,6 +325,8 @@ describe("ProductListPage", () => {
       expect.objectContaining({
         query: expect.objectContaining({
           keyword: "blue",
+          customOrder: "only",
+          limitedStock: "exclude",
           sortBy: "name",
           sortOrder: "asc",
           status: "consignmentSale"
@@ -381,6 +385,12 @@ describe("ProductListPage", () => {
     fireEvent.change(screen.getByLabelText("ステータス"), {
       target: { value: "sold" }
     });
+    fireEvent.change(screen.getByLabelText("特注"), {
+      target: { value: "only" }
+    });
+    fireEvent.change(screen.getByLabelText("在庫限り"), {
+      target: { value: "exclude" }
+    });
 
     expect(screen.getByLabelText("販売済み")).toHaveValue("true");
     expect(screen.getByLabelText("販売済み")).toBeDisabled();
@@ -395,6 +405,8 @@ describe("ProductListPage", () => {
       expect(searchParams.get("keyword")).toBe("gold");
       expect(searchParams.get("status")).toBe("sold");
       expect(searchParams.get("includeSold")).toBe("true");
+      expect(searchParams.get("customOrder")).toBe("only");
+      expect(searchParams.get("limitedStock")).toBe("exclude");
     });
 
     const productCall = getLatestProductCall();
@@ -404,6 +416,8 @@ describe("ProductListPage", () => {
         query: expect.objectContaining({
           includeSold: true,
           keyword: "gold",
+          customOrder: "only",
+          limitedStock: "exclude",
           page: 1,
           status: "sold"
         })

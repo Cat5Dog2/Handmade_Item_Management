@@ -6,7 +6,7 @@ import type {
   SortOrder
 } from "@handmade/shared";
 import { API_PATHS, customerListQuerySchema } from "@handmade/shared";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   useEffect,
   useMemo,
@@ -179,6 +179,7 @@ export function CustomerListPage() {
 
   const customersQuery = useQuery({
     queryKey: queryKeys.customers.list(currentQuery),
+    placeholderData: keepPreviousData,
     queryFn: async ({ signal }) => {
       const response = await apiClient.get<CustomerListData, CustomerListMeta>(
         API_PATHS.customers,

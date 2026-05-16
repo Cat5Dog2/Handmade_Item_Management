@@ -97,6 +97,7 @@ const bulkPrintProducts = Array.from({ length: 11 }, (_, index) => {
 
 let productsMode: "success" | "error" = "success";
 let printMock: ReturnType<typeof vi.fn>;
+let resolveDelayedProducts: ((value: unknown) => void) | null;
 let scrollToMock: ReturnType<typeof vi.fn>;
 
 function createDomRect(top: number, height: number) {
@@ -171,6 +172,7 @@ describe("ProductListPage", () => {
     qrCodeMock.toString.mockReset();
     qrCodeMock.toString.mockResolvedValue('<svg viewBox="0 0 10 10"></svg>');
     printMock = vi.fn();
+    resolveDelayedProducts = null;
     scrollToMock = vi.fn();
     document
       .querySelectorAll(".app-header")
@@ -224,6 +226,12 @@ describe("ProductListPage", () => {
           const pageSize = Number(options?.query?.pageSize ?? 50);
           const keyword = String(options?.query?.keyword ?? "");
           const status = String(options?.query?.status ?? "");
+
+          if (keyword === "delayed") {
+            return new Promise((resolve) => {
+              resolveDelayedProducts = resolve;
+            });
+          }
 
           if (keyword === "no-match") {
             return {
@@ -423,6 +431,45 @@ describe("ProductListPage", () => {
         })
       })
     );
+  }, 10000);
+
+  it("keeps the previous product list visible while filter results are refetching", async () => {
+    renderProductList("/products");
+
+    await screen.findByText("Blue Ribbon", undefined, { timeout: 8000 });
+    await ensureProductFiltersOpen();
+
+    const keywordInput = screen.getByRole("searchbox");
+
+    fireEvent.change(keywordInput, {
+      target: { value: "delayed" }
+    });
+    fireEvent.submit(keywordInput.closest("form") as HTMLFormElement);
+
+    await waitFor(() => {
+      const locationSearch =
+        screen.getByTestId("location-probe").textContent ?? "";
+      expect(new URLSearchParams(locationSearch).get("keyword")).toBe(
+        "delayed"
+      );
+      expect(resolveDelayedProducts).not.toBeNull();
+    });
+
+    expect(screen.getByText("Blue Ribbon")).toBeInTheDocument();
+
+    resolveDelayedProducts?.({
+      data: {
+        items: [soldProduct]
+      },
+      meta: {
+        hasNext: false,
+        page: 1,
+        pageSize: 50,
+        totalCount: 1
+      }
+    });
+
+    expect(await screen.findByText("Sold Ribbon")).toBeInTheDocument();
   }, 10000);
 
   it("shows a validation notice without applying invalid search keywords", async () => {

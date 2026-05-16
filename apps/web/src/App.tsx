@@ -1,4 +1,5 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { useLayoutEffect } from "react";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { LoginRoute } from "./auth/login-page";
 import { CategoryManagementPage } from "./categories/category-management-page";
 import { CustomerDetailPage } from "./customers/customer-detail-page";
@@ -51,9 +52,23 @@ function getProtectedRouteElement(route: ProtectedRouteDefinition) {
   }
 }
 
+function ScrollToTopOnPathChange() {
+  const { pathname } = useLocation();
+
+  useLayoutEffect(() => {
+    window.scrollTo({
+      left: 0,
+      top: 0
+    });
+  }, [pathname]);
+
+  return null;
+}
+
 export default function App() {
   return (
     <AppProviders>
+      <ScrollToTopOnPathChange />
       <Routes>
         <Route path="/" element={<Navigate replace to="/login" />} />
         <Route path="/login" element={<LoginRoute />} />

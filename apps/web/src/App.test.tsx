@@ -5,7 +5,7 @@ import {
   waitFor,
   within
 } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation, useNavigate } from "react-router-dom";
 import { vi } from "vitest";
 import App from "./App";
 
@@ -131,6 +131,20 @@ const fetchMock = vi.hoisted(() =>
       };
     }
 
+    if (pathname === "/api/customers") {
+      payload = {
+        data: {
+          items: []
+        },
+        meta: {
+          hasNext: false,
+          page: 1,
+          pageSize: 50,
+          totalCount: 0
+        }
+      };
+    }
+
     return new Response(JSON.stringify(payload), {
       headers: {
         "Content-Type": "application/json"
@@ -148,6 +162,8 @@ const qrScannerMock = vi.hoisted(() => ({
   stop: vi.fn(async () => undefined)
 }));
 
+let scrollToMock: ReturnType<typeof vi.fn>;
+
 vi.mock("./auth/firebase-auth-client", () => ({
   sendPasswordReset: authMock.sendPasswordReset,
   signInWithEmail: authMock.signInWithEmail,
@@ -159,7 +175,27 @@ vi.mock("./qr/qr-scanner-adapter", () => ({
   createQrScannerController: () => qrScannerMock
 }));
 
-function renderApp(initialEntry: string) {
+function SearchNavigationProbe() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => navigate({ search: "?keyword=ribbon" })}
+      >
+        search-only navigation
+      </button>
+      <span data-testid="search-navigation-probe">{location.search}</span>
+    </>
+  );
+}
+
+function renderApp(
+  initialEntry: string,
+  options: { includeSearchNavigationProbe?: boolean } = {}
+) {
   render(
     <MemoryRouter
       future={{
@@ -168,6 +204,7 @@ function renderApp(initialEntry: string) {
       }}
       initialEntries={[initialEntry]}
     >
+      {options.includeSearchNavigationProbe ? <SearchNavigationProbe /> : null}
       <App />
     </MemoryRouter>
   );
@@ -182,7 +219,12 @@ describe("App routing", () => {
     qrScannerMock.start.mockClear();
     qrScannerMock.stop.mockClear();
     fetchMock.mockClear();
+    scrollToMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
+    Object.defineProperty(window, "scrollTo", {
+      configurable: true,
+      value: scrollToMock
+    });
   });
 
   it("renders the login route and protects unauthenticated routes", async () => {
@@ -285,6 +327,55 @@ describe("App routing", () => {
       "aria-current",
       "page"
     );
+  });
+
+  it("scrolls to the page top when the URL changes", async () => {
+    authMock.setUser({
+      email: "owner@example.com",
+      getIdToken: async () => "test-id-token",
+      uid: "owner-user"
+    });
+    renderApp("/dashboard");
+
+    await screen.findByRole("navigation");
+    scrollToMock.mockClear();
+
+    const customerLink = screen
+      .getAllByRole("link")
+      .find((link) => link.getAttribute("href") === "/customers");
+    expect(customerLink).toBeDefined();
+
+    fireEvent.click(customerLink!);
+
+    await waitFor(() => {
+      expect(scrollToMock).toHaveBeenCalledWith({
+        left: 0,
+        top: 0
+      });
+    });
+  });
+
+  it("keeps the current scroll position when only the query string changes", async () => {
+    authMock.setUser({
+      email: "owner@example.com",
+      getIdToken: async () => "test-id-token",
+      uid: "owner-user"
+    });
+    renderApp("/customers", { includeSearchNavigationProbe: true });
+
+    const queryNavigationButton = await screen.findByRole("button", {
+      name: "search-only navigation"
+    });
+    scrollToMock.mockClear();
+
+    fireEvent.click(queryNavigationButton);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("search-navigation-probe")).toHaveTextContent(
+        "?keyword=ribbon"
+      );
+    });
+    expect(scrollToMock).not.toHaveBeenCalled();
   });
 
   it("logs in and navigates to the dashboard", async () => {

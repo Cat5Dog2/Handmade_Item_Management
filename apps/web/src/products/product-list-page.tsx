@@ -16,7 +16,7 @@ import {
   PRODUCT_STATUSES,
   productListQuerySchema
 } from "@handmade/shared";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { toString as generateQRCodeSvg } from "qrcode";
 import {
   useEffect,
@@ -504,6 +504,7 @@ export function ProductListPage() {
 
   const productsQuery = useQuery({
     queryKey: queryKeys.products.list(currentQuery),
+    placeholderData: keepPreviousData,
     queryFn: async ({ signal }) => {
       const response = await apiClient.get<ProductListData, ProductListMeta>(
         API_PATHS.products,

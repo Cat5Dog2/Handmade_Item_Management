@@ -41,6 +41,7 @@ const newCustomer = {
 };
 
 let customersMode: "success" | "error" = "success";
+let resolveDelayedCustomers: ((value: unknown) => void) | null;
 
 function LocationProbe() {
   const location = useLocation();
@@ -78,6 +79,7 @@ function getLatestCustomerCall() {
 describe("CustomerListPage", () => {
   beforeEach(() => {
     customersMode = "success";
+    resolveDelayedCustomers = null;
     apiClientMock.get.mockReset();
     apiClientMock.get.mockImplementation(async (path: string, options?: { query?: Record<string, unknown> }) => {
       if (path !== API_PATHS.customers) {
@@ -91,6 +93,12 @@ describe("CustomerListPage", () => {
       const page = Number(options?.query?.page ?? 1);
       const pageSize = Number(options?.query?.pageSize ?? 50);
       const keyword = String(options?.query?.keyword ?? "");
+
+      if (keyword === "delayed") {
+        return new Promise((resolve) => {
+          resolveDelayedCustomers = resolve;
+        });
+      }
 
       if (keyword === "no-match") {
         return {
@@ -200,6 +208,44 @@ describe("CustomerListPage", () => {
         })
       })
     );
+  }, 10000);
+
+  it("keeps the previous customer list visible while filter results are refetching", async () => {
+    renderCustomerList("/customers");
+
+    await screen.findByText("Hanako Aoki", undefined, { timeout: 8000 });
+
+    const keywordInput = screen.getByRole("searchbox");
+
+    fireEvent.change(keywordInput, {
+      target: { value: "delayed" }
+    });
+    fireEvent.submit(keywordInput.closest("form") as HTMLFormElement);
+
+    await waitFor(() => {
+      const locationSearch =
+        screen.getByTestId("location-probe").textContent ?? "";
+      expect(new URLSearchParams(locationSearch).get("keyword")).toBe(
+        "delayed"
+      );
+      expect(resolveDelayedCustomers).not.toBeNull();
+    });
+
+    expect(screen.getByText("Hanako Aoki")).toBeInTheDocument();
+
+    resolveDelayedCustomers?.({
+      data: {
+        items: [newCustomer]
+      },
+      meta: {
+        hasNext: false,
+        page: 1,
+        pageSize: 50,
+        totalCount: 1
+      }
+    });
+
+    expect(await screen.findByText("Sora Sato")).toBeInTheDocument();
   }, 10000);
 
   it("shows a validation notice without applying invalid search keywords", async () => {

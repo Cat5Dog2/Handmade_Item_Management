@@ -292,7 +292,7 @@ describe("ProductDetailPage", () => {
     });
     expect(await screen.findByTestId("product-qr-svg")).toContainHTML("<svg");
     expect(
-      screen.getByRole("button", { name: "QRコードを10面印刷" })
+      screen.getByRole("button", { name: "QRコードを30面印刷" })
     ).toBeEnabled();
     expect(screen.getByRole("link", { name: "編集する" })).toHaveAttribute(
       "href",
@@ -312,16 +312,16 @@ describe("ProductDetailPage", () => {
     );
   });
 
-  it("prints ten generated QR labels from product detail", async () => {
+  it("prints thirty generated QR labels from product detail", async () => {
     renderProductDetail();
 
     expect(await screen.findByTestId("product-qr-svg")).toBeInTheDocument();
     const printArea = screen.getByLabelText("HM-000001 の印刷用QRコード");
-    expect(within(printArea).getAllByRole("listitem")).toHaveLength(10);
-    expect(within(printArea).getAllByText("Blue Ribbon")).toHaveLength(10);
-    expect(within(printArea).getAllByText("HM-000001")).toHaveLength(10);
+    expect(within(printArea).getAllByRole("listitem")).toHaveLength(30);
+    expect(within(printArea).getAllByText("Blue Ribbon")).toHaveLength(30);
+    expect(within(printArea).getAllByText("HM-000001")).toHaveLength(30);
 
-    fireEvent.click(screen.getByRole("button", { name: "QRコードを10面印刷" }));
+    fireEvent.click(screen.getByRole("button", { name: "QRコードを30面印刷" }));
 
     expect(printMock).toHaveBeenCalledTimes(1);
   });

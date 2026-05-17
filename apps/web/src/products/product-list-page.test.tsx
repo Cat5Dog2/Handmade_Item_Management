@@ -79,7 +79,7 @@ const soldProduct = {
   updatedAt: "2026-04-17T00:00:00Z"
 };
 
-const bulkPrintProducts = Array.from({ length: 11 }, (_, index) => {
+const bulkPrintProducts = Array.from({ length: 31 }, (_, index) => {
   const productNumber = index + 1;
   const productId = `HM-${String(productNumber).padStart(6, "0")}`;
 
@@ -586,7 +586,7 @@ describe("ProductListPage", () => {
     await screen.findByRole("listitem", undefined, { timeout: 8000 });
   }, 10000);
 
-  it("selects ten products and prints their QR codes in bulk", async () => {
+  it("selects thirty products and prints their QR codes in bulk", async () => {
     renderProductList("/products?keyword=bulk");
 
     await screen.findByText("Bulk Product 01", undefined, { timeout: 8000 });
@@ -594,37 +594,37 @@ describe("ProductListPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "まとめて印刷" }));
 
     fireEvent.click(screen.getByRole("listitem", { name: "Bulk Product 01" }));
-    expect(screen.getByText("1 / 10件選択中")).toBeInTheDocument();
+    expect(screen.getByText("1 / 30件選択中")).toBeInTheDocument();
     expect(
       screen.getByRole("listitem", { name: "Bulk Product 01" })
     ).toHaveClass("product-list-card--selected");
 
     fireEvent.click(screen.getByRole("listitem", { name: "Bulk Product 01" }));
-    expect(screen.getByText("0 / 10件選択中")).toBeInTheDocument();
+    expect(screen.getByText("0 / 30件選択中")).toBeInTheDocument();
     expect(
       screen.getByRole("listitem", { name: "Bulk Product 01" })
     ).not.toHaveClass("product-list-card--selected");
 
     fireEvent.click(screen.getByRole("listitem", { name: "Bulk Product 01" }));
-    expect(screen.getByText("1 / 10件選択中")).toBeInTheDocument();
+    expect(screen.getByText("1 / 30件選択中")).toBeInTheDocument();
 
     expect(
       screen.getByRole("button", { name: "選択したQRを印刷" })
     ).toBeDisabled();
 
-    for (const product of bulkPrintProducts.slice(1, 10)) {
+    for (const product of bulkPrintProducts.slice(1, 30)) {
       fireEvent.click(screen.getByLabelText(`${product.name}を印刷対象に選択`));
     }
 
-    expect(screen.getByText("10 / 10件選択中")).toBeInTheDocument();
+    expect(screen.getByText("30 / 30件選択中")).toBeInTheDocument();
     expect(
-      screen.getByLabelText("Bulk Product 11を印刷対象に選択")
+      screen.getByLabelText("Bulk Product 31を印刷対象に選択")
     ).toBeDisabled();
 
     const printArea = screen.getByLabelText("まとめて印刷用QRコード");
-    expect(within(printArea).getAllByRole("listitem")).toHaveLength(10);
+    expect(within(printArea).getAllByRole("listitem")).toHaveLength(30);
     expect(within(printArea).getByText("Bulk Product 01")).toBeInTheDocument();
-    expect(within(printArea).getByText("HM-000010")).toBeInTheDocument();
+    expect(within(printArea).getByText("HM-000030")).toBeInTheDocument();
 
     await waitFor(() => {
       expect(

@@ -70,7 +70,7 @@ interface ProductQrPrintItem {
 }
 
 const DEFAULT_PAGE_SIZE = 50;
-const BULK_QR_PRINT_LIMIT = 10;
+const BULK_QR_PRINT_LIMIT = 30;
 const BULK_PRINT_SCROLL_GAP_PX = 12;
 const DEFAULT_QUERY: Required<
   Pick<
@@ -658,7 +658,7 @@ export function ProductListPage() {
   const handleBulkPrint = () => {
     if (selectedPrintProducts.length !== BULK_QR_PRINT_LIMIT) {
       setNotice({
-        message: "まとめて印刷する商品を10件選択してください。",
+        message: "まとめて印刷する商品を30件選択してください。",
         type: "error"
       });
       return;
@@ -1106,7 +1106,7 @@ export function ProductListPage() {
                 まとめて印刷
               </h3>
               <p className="management-form__hint">
-                A4縦向きに2列×5行で印刷する商品を10件選択してください。
+                A4縦向きに3列×10行（1面 横6.5cm×縦2.5cm）で印刷する商品を30件選択してください。
               </p>
               <p className="product-list-print-toolbar__status" role="status">
                 {selectedPrintCount} / {BULK_QR_PRINT_LIMIT}件選択中

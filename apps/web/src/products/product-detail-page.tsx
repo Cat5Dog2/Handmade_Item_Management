@@ -62,7 +62,7 @@ const productStatusBadgeClassNames: Record<ProductStatus, string> = {
   sold: "product-status-badge is-sold"
 };
 
-const QR_PRINT_LABEL_COUNT = 10;
+const QR_PRINT_LABEL_COUNT = 30;
 const QR_PRINT_LABEL_INDICES = Array.from(
   { length: QR_PRINT_LABEL_COUNT },
   (_, index) => index
@@ -829,7 +829,7 @@ export function ProductDetailPage() {
                 type="button"
                 onClick={handleQrPrint}
               >
-                QRコードを10面印刷
+                QRコードを30面印刷
               </button>
             </div>
           </div>

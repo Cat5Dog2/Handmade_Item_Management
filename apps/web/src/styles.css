@@ -995,6 +995,55 @@ textarea {
   min-width: 0;
 }
 
+.management-card__actions.product-detail-page__qr-actions {
+  --product-detail-qr-action-gap: 8px;
+  --product-detail-qr-action-width: 220px;
+
+  display: grid;
+  gap: 12px;
+  justify-items: end;
+  width: min(
+    100%,
+    calc(
+      var(--product-detail-qr-action-width) +
+        var(--product-detail-qr-action-width) +
+        var(--product-detail-qr-action-gap)
+    )
+  );
+}
+
+.product-detail-page__qr-print-action {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: var(--product-detail-qr-action-gap);
+  width: 100%;
+  min-width: 0;
+}
+
+.product-detail-page__qr-read-link,
+.product-detail-page__qr-print-count .auth-field__input,
+.product-detail-page__qr-print-action .secondary-button {
+  width: 100%;
+  min-height: 56px;
+  padding-right: 8px;
+  padding-left: 8px;
+  white-space: nowrap;
+}
+
+.product-detail-page__qr-read-link {
+  width: calc((100% - var(--product-detail-qr-action-gap)) / 2);
+}
+
+.product-detail-page__qr-read-link,
+.product-detail-page__qr-print-action .secondary-button {
+  text-align: center;
+}
+
+.product-detail-page__qr-print-count .auth-field__input {
+  text-align: left;
+}
+
 .product-detail-page__qr-value {
   overflow-wrap: anywhere;
 }
@@ -1641,6 +1690,12 @@ textarea {
   background: #dff7f2;
   color: #0f766e;
   font-weight: 700;
+}
+
+@media (min-width: 768px) {
+  .management-card__actions.product-detail-page__qr-actions {
+    justify-self: end;
+  }
 }
 
 @media (min-width: 900px) {

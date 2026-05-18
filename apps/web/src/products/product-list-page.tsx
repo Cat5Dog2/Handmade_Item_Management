@@ -656,9 +656,9 @@ export function ProductListPage() {
   };
 
   const handleBulkPrint = () => {
-    if (selectedPrintProducts.length !== BULK_QR_PRINT_LIMIT) {
+    if (selectedPrintProducts.length === 0) {
       setNotice({
-        message: "まとめて印刷する商品を30件選択してください。",
+        message: "まとめて印刷する商品を1件以上選択してください。",
         type: "error"
       });
       return;
@@ -748,7 +748,7 @@ export function ProductListPage() {
   const selectedPrintCount = selectedPrintProducts.length;
   const canSelectMorePrintProducts = selectedPrintCount < BULK_QR_PRINT_LIMIT;
   const canPrintSelectedProducts =
-    selectedPrintCount === BULK_QR_PRINT_LIMIT &&
+    selectedPrintCount > 0 &&
     !hasBulkPrintQrError &&
     selectedPrintProducts.every((product) =>
       Boolean(bulkPrintQrSvgs[product.productId])
@@ -1106,7 +1106,7 @@ export function ProductListPage() {
                 まとめて印刷
               </h3>
               <p className="management-form__hint">
-                A4縦向きに3列×10行（1面 横6.5cm×縦2.5cm）で印刷する商品を30件選択してください。
+                A4縦向きに3列×10行（1面 横6.5cm×縦2.5cm）で印刷する商品を1〜30件選択してください。
               </p>
               <p className="product-list-print-toolbar__status" role="status">
                 {selectedPrintCount} / {BULK_QR_PRINT_LIMIT}件選択中

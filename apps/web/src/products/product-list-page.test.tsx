@@ -586,7 +586,7 @@ describe("ProductListPage", () => {
     await screen.findByRole("listitem", undefined, { timeout: 8000 });
   }, 10000);
 
-  it("selects thirty products and prints their QR codes in bulk", async () => {
+  it("prints selected QR codes in bulk from one selected product", async () => {
     renderProductList("/products?keyword=bulk");
 
     await screen.findByText("Bulk Product 01", undefined, { timeout: 8000 });
@@ -608,9 +608,33 @@ describe("ProductListPage", () => {
     fireEvent.click(screen.getByRole("listitem", { name: "Bulk Product 01" }));
     expect(screen.getByText("1 / 30件選択中")).toBeInTheDocument();
 
+    const printArea = screen.getByLabelText("まとめて印刷用QRコード");
+    expect(within(printArea).getAllByRole("listitem")).toHaveLength(1);
+    expect(within(printArea).getByText("Bulk Product 01")).toBeInTheDocument();
+    expect(within(printArea).getByText("HM-000001")).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "選択したQRを印刷" })
+      ).toBeEnabled();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "選択したQRを印刷" }));
+
+    expect(printMock).toHaveBeenCalledTimes(1);
+  }, 10000);
+
+  it("limits bulk QR printing selection to thirty products", async () => {
+    renderProductList("/products?keyword=bulk");
+
+    await screen.findByText("Bulk Product 01", undefined, { timeout: 8000 });
+
+    fireEvent.click(screen.getByRole("button", { name: "まとめて印刷" }));
+    fireEvent.click(screen.getByRole("listitem", { name: "Bulk Product 01" }));
+
     expect(
-      screen.getByRole("button", { name: "選択したQRを印刷" })
-    ).toBeDisabled();
+      screen.getByLabelText("Bulk Product 31を印刷対象に選択")
+    ).toBeEnabled();
 
     for (const product of bulkPrintProducts.slice(1, 30)) {
       fireEvent.click(screen.getByLabelText(`${product.name}を印刷対象に選択`));
@@ -631,10 +655,6 @@ describe("ProductListPage", () => {
         screen.getByRole("button", { name: "選択したQRを印刷" })
       ).toBeEnabled();
     });
-
-    fireEvent.click(screen.getByRole("button", { name: "選択したQRを印刷" }));
-
-    expect(printMock).toHaveBeenCalledTimes(1);
   }, 10000);
 
   it("scrolls to the bulk print selection toolbar when bulk print mode starts", async () => {

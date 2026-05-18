@@ -62,10 +62,11 @@ const productStatusBadgeClassNames: Record<ProductStatus, string> = {
   sold: "product-status-badge is-sold"
 };
 
-const QR_PRINT_LABEL_COUNT = 30;
-const QR_PRINT_LABEL_INDICES = Array.from(
-  { length: QR_PRINT_LABEL_COUNT },
-  (_, index) => index
+const QR_PRINT_LABEL_MIN_COUNT = 1;
+const QR_PRINT_LABEL_MAX_COUNT = 30;
+const QR_PRINT_LABEL_COUNT_OPTIONS = Array.from(
+  { length: QR_PRINT_LABEL_MAX_COUNT },
+  (_, index) => index + QR_PRINT_LABEL_MIN_COUNT
 );
 
 function formatDate(value: string | null) {
@@ -233,6 +234,9 @@ export function ProductDetailPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [qrSvg, setQrSvg] = useState<string | null>(null);
   const [qrError, setQrError] = useState(false);
+  const [qrPrintLabelCount, setQrPrintLabelCount] = useState(
+    QR_PRINT_LABEL_MIN_COUNT
+  );
   const [showCompletedTasks, setShowCompletedTasks] = useState(false);
 
   const productDetailQuery = useQuery({
@@ -528,6 +532,10 @@ export function ProductDetailPage() {
   const taskEmptyMessage = showCompletedTasks
     ? "関連タスクはまだありません。タスク管理から追加してください。"
     : "未完了の関連タスクはありません。";
+  const qrPrintLabelIndices = Array.from(
+    { length: qrPrintLabelCount },
+    (_, index) => index
+  );
 
   return (
     <section
@@ -815,22 +823,40 @@ export function ProductDetailPage() {
             <p className="management-form__hint">
               読み取り後の販売更新はQR画面で行います。
             </p>
-            <div className="management-card__actions">
+            <div className="management-card__actions product-detail-page__qr-actions">
+              <div className="product-detail-page__qr-print-action">
+                <label className="auth-field product-detail-page__qr-print-count">
+                  <span className="auth-field__label">印刷枚数</span>
+                  <select
+                    className="auth-field__input"
+                    value={qrPrintLabelCount}
+                    onChange={(event) => {
+                      setQrPrintLabelCount(Number(event.currentTarget.value));
+                    }}
+                  >
+                    {QR_PRINT_LABEL_COUNT_OPTIONS.map((count) => (
+                      <option key={count} value={count}>
+                        {count}枚
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  className="secondary-button"
+                  disabled={!qrSvg || qrError}
+                  type="button"
+                  onClick={handleQrPrint}
+                >
+                  QRコードを印刷
+                </button>
+              </div>
               <Link
-                className="primary-button button-link"
+                className="primary-button button-link product-detail-page__qr-read-link"
                 state={{ productId: product.productId, qrCodeValue }}
                 to="/qr"
               >
                 QR読み取りへ
               </Link>
-              <button
-                className="secondary-button"
-                disabled={!qrSvg || qrError}
-                type="button"
-                onClick={handleQrPrint}
-              >
-                QRコードを30面印刷
-              </button>
             </div>
           </div>
         </article>
@@ -842,7 +868,7 @@ export function ProductDetailPage() {
           aria-label={`${product.productId} の印刷用QRコード`}
           role="list"
         >
-          {QR_PRINT_LABEL_INDICES.map((index) => (
+          {qrPrintLabelIndices.map((index) => (
             <article
               key={index}
               className="qr-print-label"

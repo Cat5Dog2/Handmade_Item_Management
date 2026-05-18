@@ -292,8 +292,18 @@ describe("ProductDetailPage", () => {
     });
     expect(await screen.findByTestId("product-qr-svg")).toContainHTML("<svg");
     expect(
-      screen.getByRole("button", { name: "QRコードを30面印刷" })
+      screen.getByRole("button", { name: "QRコードを印刷" })
     ).toBeEnabled();
+    expect(screen.getByLabelText("印刷枚数")).toHaveValue("1");
+    const qrPrintAction = screen
+      .getByRole("button", { name: "QRコードを印刷" })
+      .closest(".product-detail-page__qr-print-action");
+    if (!(qrPrintAction instanceof HTMLElement)) {
+      throw new Error("QR印刷操作の配置が見つかりません。");
+    }
+    expect(
+      within(qrPrintAction).getByLabelText("印刷枚数")
+    ).toHaveValue("1");
     expect(screen.getByRole("link", { name: "編集する" })).toHaveAttribute(
       "href",
       "/products/HM-000001/edit"
@@ -312,16 +322,20 @@ describe("ProductDetailPage", () => {
     );
   });
 
-  it("prints thirty generated QR labels from product detail", async () => {
+  it("prints the selected number of generated QR labels from product detail", async () => {
     renderProductDetail();
 
     expect(await screen.findByTestId("product-qr-svg")).toBeInTheDocument();
-    const printArea = screen.getByLabelText("HM-000001 の印刷用QRコード");
-    expect(within(printArea).getAllByRole("listitem")).toHaveLength(30);
-    expect(within(printArea).getAllByText("Blue Ribbon")).toHaveLength(30);
-    expect(within(printArea).getAllByText("HM-000001")).toHaveLength(30);
+    fireEvent.change(screen.getByLabelText("印刷枚数"), {
+      target: { value: "3" }
+    });
 
-    fireEvent.click(screen.getByRole("button", { name: "QRコードを30面印刷" }));
+    const printArea = screen.getByLabelText("HM-000001 の印刷用QRコード");
+    expect(within(printArea).getAllByRole("listitem")).toHaveLength(3);
+    expect(within(printArea).getAllByText("Blue Ribbon")).toHaveLength(3);
+    expect(within(printArea).getAllByText("HM-000001")).toHaveLength(3);
+
+    fireEvent.click(screen.getByRole("button", { name: "QRコードを印刷" }));
 
     expect(printMock).toHaveBeenCalledTimes(1);
   });

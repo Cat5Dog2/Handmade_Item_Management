@@ -1,5 +1,5 @@
 param(
-  [ValidateSet("stg", "demo")]
+  [ValidateSet("stg", "demo", "prod")]
   [string] $DeployEnvironment = "stg"
 )
 
@@ -11,7 +11,7 @@ if ($PSVersionTable.PSVersion.Major -ge 7) {
 }
 
 $repoRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..\..")).Path
-$envFileName = ".env.$DeployEnvironment"
+$envFileName = if ($DeployEnvironment -eq "prod") { ".env" } else { ".env.$DeployEnvironment" }
 $envFile = Join-Path $repoRoot $envFileName
 
 function Import-EnvFile {
@@ -160,19 +160,21 @@ try {
     $substitutions
   )
 
-  $env:DEMO_SEED_ENABLED = if ($env:DEMO_SEED_ENABLED) { $env:DEMO_SEED_ENABLED } else { "true" }
-  $env:DEMO_SEED_TARGET = if ($env:DEMO_SEED_TARGET) { $env:DEMO_SEED_TARGET } else { $DeployEnvironment }
-  $env:DEMO_SEED_COUNT = if ($env:DEMO_SEED_COUNT) { $env:DEMO_SEED_COUNT } else { "25" }
-  $seedConfirmEnvName = if ($DeployEnvironment -eq "demo") { "DEMO_SEED_DEMO_CONFIRM" } else { "DEMO_SEED_STG_CONFIRM" }
-  [Environment]::SetEnvironmentVariable($seedConfirmEnvName, $env:FIREBASE_PROJECT_ID, "Process")
-  $env:DEMO_OWNER_PASSWORD = if ($env:DEMO_OWNER_PASSWORD) { $env:DEMO_OWNER_PASSWORD } else { $env:APP_PASS }
-  $env:FIRESTORE_EMULATOR_HOST = ""
-  $env:FIREBASE_AUTH_EMULATOR_HOST = ""
+  if ($DeployEnvironment -ne "prod") {
+    $env:DEMO_SEED_ENABLED = if ($env:DEMO_SEED_ENABLED) { $env:DEMO_SEED_ENABLED } else { "true" }
+    $env:DEMO_SEED_TARGET = if ($env:DEMO_SEED_TARGET) { $env:DEMO_SEED_TARGET } else { $DeployEnvironment }
+    $env:DEMO_SEED_COUNT = if ($env:DEMO_SEED_COUNT) { $env:DEMO_SEED_COUNT } else { "25" }
+    $seedConfirmEnvName = if ($DeployEnvironment -eq "demo") { "DEMO_SEED_DEMO_CONFIRM" } else { "DEMO_SEED_STG_CONFIRM" }
+    [Environment]::SetEnvironmentVariable($seedConfirmEnvName, $env:FIREBASE_PROJECT_ID, "Process")
+    $env:DEMO_OWNER_PASSWORD = if ($env:DEMO_OWNER_PASSWORD) { $env:DEMO_OWNER_PASSWORD } else { $env:APP_PASS }
+    $env:FIRESTORE_EMULATOR_HOST = ""
+    $env:FIREBASE_AUTH_EMULATOR_HOST = ""
 
-  Resolve-GoogleApplicationCredentials
+    Resolve-GoogleApplicationCredentials
 
-  $seedScript = if ($DeployEnvironment -eq "demo") { "seed:demo:demo" } else { "seed:demo:stg" }
-  Invoke-CheckedCommand -Command "npm" -Arguments @("run", $seedScript)
+    $seedScript = if ($DeployEnvironment -eq "demo") { "seed:demo:demo" } else { "seed:demo:stg" }
+    Invoke-CheckedCommand -Command "npm" -Arguments @("run", $seedScript)
+  }
 } finally {
   Pop-Location
 }

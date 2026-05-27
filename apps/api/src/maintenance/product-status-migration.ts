@@ -1,4 +1,4 @@
-export type ProductStatusMigrationTarget = "emulator" | "stg" | "demo";
+export type ProductStatusMigrationTarget = "emulator" | "stg" | "demo" | "prod";
 export type ProductStatusMigrationMode = "dry-run" | "execute";
 
 type MigrationEnv = Record<string, string | undefined>;
@@ -71,6 +71,28 @@ const PRODUCT_STATUS_MIGRATION_RULES: ProductStatusMigrationRule[] = [
   }
 ];
 const BATCH_WRITE_LIMIT = 400;
+const PRODUCT_STATUS_MIGRATION_TARGETS = [
+  "emulator",
+  "stg",
+  "demo",
+  "prod"
+] as const satisfies ProductStatusMigrationTarget[];
+const PRODUCT_STATUS_MIGRATION_CONFIRM_ENV_NAMES = {
+  demo: "PRODUCT_STATUS_MIGRATION_DEMO_CONFIRM",
+  prod: "PRODUCT_STATUS_MIGRATION_PROD_CONFIRM",
+  stg: "PRODUCT_STATUS_MIGRATION_STG_CONFIRM"
+} as const satisfies Record<
+  Exclude<ProductStatusMigrationTarget, "emulator">,
+  string
+>;
+
+function isProductStatusMigrationTarget(
+  target: string
+): target is ProductStatusMigrationTarget {
+  return PRODUCT_STATUS_MIGRATION_TARGETS.includes(
+    target as ProductStatusMigrationTarget
+  );
+}
 
 function optionalEnvValue(value: string | undefined) {
   const trimmedValue = value?.trim();
@@ -104,12 +126,12 @@ export function resolveProductStatusMigrationTarget(
     optionalEnvValue(env.PRODUCT_STATUS_MIGRATION_TARGET);
   const target = rawTarget?.toLowerCase() ?? "emulator";
 
-  if (target === "emulator" || target === "stg" || target === "demo") {
+  if (isProductStatusMigrationTarget(target)) {
     return target;
   }
 
   throw new Error(
-    "PRODUCT_STATUS_MIGRATION_TARGET must be either 'emulator', 'stg', or 'demo'."
+    "PRODUCT_STATUS_MIGRATION_TARGET must be either 'emulator', 'stg', 'demo', or 'prod'."
   );
 }
 
@@ -162,10 +184,7 @@ export function assertProductStatusMigrationTargetSafety(
   }
 
   if (mode === "execute") {
-    const confirmEnvName =
-      target === "demo"
-        ? "PRODUCT_STATUS_MIGRATION_DEMO_CONFIRM"
-        : "PRODUCT_STATUS_MIGRATION_STG_CONFIRM";
+    const confirmEnvName = PRODUCT_STATUS_MIGRATION_CONFIRM_ENV_NAMES[target];
 
     if (optionalEnvValue(env[confirmEnvName]) !== projectId) {
       throw new Error(
@@ -233,11 +252,7 @@ export async function migrateProductStatuses(
         operationCount += 1;
         updated += 1;
 
-        const committed = await commitBatchIfNeeded(
-          db,
-          batch,
-          operationCount
-        );
+        const committed = await commitBatchIfNeeded(db, batch, operationCount);
         batch = committed.batch;
         operationCount = committed.operationCount;
       }

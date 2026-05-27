@@ -19,7 +19,9 @@ function createSnapshot(id: string, status: string) {
   };
 }
 
-function createDb(docsByStatus: Record<string, ReturnType<typeof createSnapshot>[]>) {
+function createDb(
+  docsByStatus: Record<string, ReturnType<typeof createSnapshot>[]>
+) {
   const batch = {
     commit: vi.fn(async () => undefined),
     update: vi.fn()
@@ -73,7 +75,7 @@ describe("product status migration target", () => {
     });
   });
 
-  it("requires confirmation only when executing against stg or demo", () => {
+  it("requires confirmation only when executing against non-emulator targets", () => {
     expect(resolveProductStatusMigrationTarget(["--target=stg"], {})).toBe(
       "stg"
     );
@@ -100,6 +102,29 @@ describe("product status migration target", () => {
       })
     ).toEqual({
       projectId: "example-demo-project"
+    });
+
+    expect(
+      assertProductStatusMigrationTargetSafety("prod", "dry-run", {
+        FIREBASE_PROJECT_ID: "example-prod-project"
+      })
+    ).toEqual({
+      projectId: "example-prod-project"
+    });
+
+    expect(() => {
+      assertProductStatusMigrationTargetSafety("prod", "execute", {
+        FIREBASE_PROJECT_ID: "example-prod-project"
+      });
+    }).toThrow("PRODUCT_STATUS_MIGRATION_PROD_CONFIRM");
+
+    expect(
+      assertProductStatusMigrationTargetSafety("prod", "execute", {
+        FIREBASE_PROJECT_ID: "example-prod-project",
+        PRODUCT_STATUS_MIGRATION_PROD_CONFIRM: "example-prod-project"
+      })
+    ).toEqual({
+      projectId: "example-prod-project"
     });
   });
 

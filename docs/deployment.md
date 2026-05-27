@@ -392,6 +392,30 @@ Bash:
 bash ./scripts/deploy/gcloud-builds-submit-demo.sh
 ```
 
+prod 環境では、リポジトリルートの `.env` を正本として次のスクリプトを使う。
+Cloud Build に必要な substitutions を `.env` から組み立て、API / Web の反映のみを実行する。prod では demo seed を投入しない。
+
+PowerShell:
+
+```powershell
+.\scripts\deploy\gcloud-builds-submit-prod.ps1
+```
+
+実行ポリシーで `.ps1` がブロックされる場合:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy\gcloud-builds-submit-prod.ps1
+```
+
+Bash:
+
+```bash
+bash ./scripts/deploy/gcloud-builds-submit-prod.sh
+```
+
+既存データの補正が必要な場合は、後述の migration 系コマンドを dry-run で確認してから実更新する。
+DB migration で環境を分離する場合のみ `.env.prod` を追加し、`--target=prod` では `.env.prod` が `.env` を上書きする。
+
 `GOOGLE_APPLICATION_CREDENTIALS` に指定したサービスアカウント JSON が未配置の場合は、`gcloud auth application-default login` で作成される Application Default Credentials を使用できる。
 サービスアカウント JSON を使う場合は、対象 env ファイルの `GOOGLE_APPLICATION_CREDENTIALS` が指すパスへ配置し、秘密鍵を Git に commit しない。
 
@@ -660,6 +684,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy\gcloud-buil
 bash ./scripts/deploy/gcloud-builds-submit-demo.sh
 ```
 
+### prod Cloud Build スクリプト
+
+```powershell
+.\scripts\deploy\gcloud-builds-submit-prod.ps1
+```
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy\gcloud-builds-submit-prod.ps1
+```
+
+```bash
+bash ./scripts/deploy/gcloud-builds-submit-prod.sh
+```
+
 ### demo seed リセットコマンド
 
 既存 Firestore に投入済みの demo seed を削除してから再投入する場合に使う。
@@ -726,6 +764,30 @@ npm run migrate:product-statuses -- --target=demo --dry-run
 ```powershell
 $env:PRODUCT_STATUS_MIGRATION_DEMO_CONFIRM = (Select-String -Path .env.demo -Pattern '^FIREBASE_PROJECT_ID=(.+)$').Matches[0].Groups[1].Value
 npm run migrate:product-statuses -- --target=demo --execute
+```
+
+#### prod dry-run
+
+```powershell
+npm run migrate:product-statuses -- --target=prod --dry-run
+```
+
+#### prod 実更新
+
+本番DBへの実更新前に、dry-run の `matched` と対象商品IDを確認する。
+
+ルート `.env` を本番正本にしている場合:
+
+```powershell
+$env:PRODUCT_STATUS_MIGRATION_PROD_CONFIRM = (Select-String -Path .env -Pattern '^FIREBASE_PROJECT_ID=(.+)$').Matches[0].Groups[1].Value
+npm run migrate:product-statuses -- --target=prod --execute
+```
+
+`.env.prod` で本番値を分ける場合:
+
+```powershell
+$env:PRODUCT_STATUS_MIGRATION_PROD_CONFIRM = (Select-String -Path .env.prod -Pattern '^FIREBASE_PROJECT_ID=(.+)$').Matches[0].Groups[1].Value
+npm run migrate:product-statuses -- --target=prod --execute
 ```
 
 ### Cloud Run デプロイ

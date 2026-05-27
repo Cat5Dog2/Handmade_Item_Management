@@ -35,7 +35,7 @@ function loadEnvFile(fileName: string) {
 function loadTargetEnv(target: ProductStatusMigrationTarget) {
   loadEnvFile(".env");
 
-  if (target === "stg" || target === "demo") {
+  if (target === "stg" || target === "demo" || target === "prod") {
     loadEnvFile(`.env.${target}`);
   }
 }

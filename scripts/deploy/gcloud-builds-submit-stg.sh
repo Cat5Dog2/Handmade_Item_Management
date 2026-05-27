@@ -5,12 +5,16 @@ script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd -- "$script_dir/../.." && pwd)"
 deploy_env="${DEPLOY_ENV:-stg}"
 
-if [[ "$deploy_env" != "stg" && "$deploy_env" != "demo" ]]; then
-  echo "Error: DEPLOY_ENV must be either 'stg' or 'demo'." >&2
+if [[ "$deploy_env" != "stg" && "$deploy_env" != "demo" && "$deploy_env" != "prod" ]]; then
+  echo "Error: DEPLOY_ENV must be either 'stg', 'demo', or 'prod'." >&2
   exit 1
 fi
 
-env_file_name=".env.$deploy_env"
+if [[ "$deploy_env" == "prod" ]]; then
+  env_file_name=".env"
+else
+  env_file_name=".env.$deploy_env"
+fi
 env_file="$repo_root/$env_file_name"
 
 die() {
@@ -195,20 +199,22 @@ gcloud builds submit \
   --config cloudbuild.yaml \
   --substitutions "$substitutions"
 
-export DEMO_SEED_ENABLED="${DEMO_SEED_ENABLED:-true}"
-export DEMO_SEED_TARGET="${DEMO_SEED_TARGET:-$deploy_env}"
-export DEMO_SEED_COUNT="${DEMO_SEED_COUNT:-25}"
-if [[ "$deploy_env" == "demo" ]]; then
-  export DEMO_SEED_DEMO_CONFIRM="$FIREBASE_PROJECT_ID"
-  seed_script="seed:demo:demo"
-else
-  export DEMO_SEED_STG_CONFIRM="$FIREBASE_PROJECT_ID"
-  seed_script="seed:demo:stg"
+if [[ "$deploy_env" != "prod" ]]; then
+  export DEMO_SEED_ENABLED="${DEMO_SEED_ENABLED:-true}"
+  export DEMO_SEED_TARGET="${DEMO_SEED_TARGET:-$deploy_env}"
+  export DEMO_SEED_COUNT="${DEMO_SEED_COUNT:-25}"
+  if [[ "$deploy_env" == "demo" ]]; then
+    export DEMO_SEED_DEMO_CONFIRM="$FIREBASE_PROJECT_ID"
+    seed_script="seed:demo:demo"
+  else
+    export DEMO_SEED_STG_CONFIRM="$FIREBASE_PROJECT_ID"
+    seed_script="seed:demo:stg"
+  fi
+  export DEMO_OWNER_PASSWORD="${DEMO_OWNER_PASSWORD:-${APP_PASS:-}}"
+  export FIRESTORE_EMULATOR_HOST=""
+  export FIREBASE_AUTH_EMULATOR_HOST=""
+
+  resolve_google_application_credentials
+
+  npm run "$seed_script"
 fi
-export DEMO_OWNER_PASSWORD="${DEMO_OWNER_PASSWORD:-${APP_PASS:-}}"
-export FIRESTORE_EMULATOR_HOST=""
-export FIREBASE_AUTH_EMULATOR_HOST=""
-
-resolve_google_application_credentials
-
-npm run "$seed_script"

@@ -9,7 +9,12 @@ import {
   categoryInputSchema,
   getCategoryPath
 } from "@handmade/shared";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient
+} from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import {
   getCategoryFormFieldErrorMessage,
@@ -67,6 +72,7 @@ export function CategoryManagementPage() {
     mode: "onChange"
   });
   const categoriesQuery = useQuery({
+    placeholderData: keepPreviousData,
     queryKey: queryKeys.categories.list,
     queryFn: async () => {
       const response = await apiClient.get<CategoryListData>(

@@ -5,7 +5,12 @@ import type {
   TagMutationData
 } from "@handmade/shared";
 import { API_PATHS, getTagPath, tagInputSchema } from "@handmade/shared";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient
+} from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import {
   getTagFormFieldErrorMessage,
@@ -61,6 +66,7 @@ export function TagManagementPage() {
     mode: "onChange"
   });
   const tagsQuery = useQuery({
+    placeholderData: keepPreviousData,
     queryKey: queryKeys.tags.list,
     queryFn: async () => {
       const response = await apiClient.get<TagListData>(API_PATHS.tags);

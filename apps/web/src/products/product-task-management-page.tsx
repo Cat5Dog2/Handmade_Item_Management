@@ -17,7 +17,12 @@ import {
   getTaskPath,
   taskCreateInputSchema
 } from "@handmade/shared";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient
+} from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ApiClientError } from "../api/api-client";
@@ -254,6 +259,7 @@ export function ProductTaskManagementPage() {
   });
 
   const taskListQuery = useQuery({
+    placeholderData: keepPreviousData,
     enabled: Boolean(productId && productDetailQuery.data),
     queryKey: productId
       ? queryKeys.products.tasks(productId, {

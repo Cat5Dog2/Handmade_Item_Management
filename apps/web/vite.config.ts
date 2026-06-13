@@ -1,5 +1,6 @@
 import path from "node:path";
 import react from "@vitejs/plugin-react";
+import { VitePWA } from "vite-plugin-pwa";
 import { defineConfig, loadEnv } from "vite";
 
 const envDir = path.resolve(__dirname, "../..");
@@ -47,7 +48,18 @@ export default defineConfig(({ mode }) => {
 
   return {
     envDir,
-    plugins: [react()],
+    plugins: [
+      react(),
+      VitePWA({
+        registerType: "autoUpdate",
+        injectRegister: "auto",
+        manifest: false,
+        workbox: {
+          globPatterns: ["**/*.{js,css,html,ico,png,svg,webp}"],
+          navigateFallback: "/index.html",
+        }
+      })
+    ],
     resolve: {
       alias: {
         "@handmade/shared": path.resolve(envDir, "packages/shared/src/index.ts")

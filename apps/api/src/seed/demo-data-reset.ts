@@ -121,9 +121,10 @@ export function assertDemoSeedResetTargetSafety(
   };
 }
 
-function hasSeedName(prefix: string) {
+function hasSeedName(prefix: string, currentName: string) {
   return (data: Record<string, unknown> | undefined) =>
-    typeof data?.name === "string" && data.name.startsWith(prefix);
+    typeof data?.name === "string" &&
+    (data.name === currentName || data.name.startsWith(prefix));
 }
 
 function createDocumentKey(document: Pick<ResetDocument, "collectionPath" | "documentId">) {
@@ -141,10 +142,14 @@ function hasLegacyProductSeedFingerprint(
   );
 }
 
-function hasProductSeedFingerprint(productId: string) {
+function hasProductSeedFingerprint(productId: string, currentName: string) {
   return (data: Record<string, unknown> | undefined) => {
     if (typeof data?.name !== "string") {
       return false;
+    }
+
+    if (data.productId === productId && data.name === currentName) {
+      return true;
     }
 
     if (data.name.startsWith("Demo Handmade Item ")) {
@@ -165,13 +170,14 @@ function hasLegacyTagSeedFingerprint(tagId: string) {
     data?.tagId === tagId && data.name === "タグ";
 }
 
-function hasCustomerSeedFingerprint(customerId: string) {
+function hasCustomerSeedFingerprint(customerId: string, currentName: string) {
   return (data: Record<string, unknown> | undefined) => {
     if (data?.customerId !== customerId) {
       return false;
     }
 
     return (
+      data.name === currentName ||
       (typeof data.name === "string" &&
         data.name.startsWith("Demo Customer ")) ||
       data.name === "わし"
@@ -211,17 +217,20 @@ function createResetDocuments(count: number): ResetDocument[] {
     ...data.categories.map((category) => ({
       collectionPath: "categories",
       documentId: category.categoryId,
-      isSeedDocument: hasSeedName("Demo Category ")
+      isSeedDocument: hasSeedName("Demo Category ", category.name)
     })),
     ...data.tags.map((tag) => ({
       collectionPath: "tags",
       documentId: tag.tagId,
-      isSeedDocument: hasSeedName("Demo Tag ")
+      isSeedDocument: hasSeedName("Demo Tag ", tag.name)
     })),
     ...data.customers.map((customer) => ({
       collectionPath: "customers",
       documentId: customer.customerId,
-      isSeedDocument: hasCustomerSeedFingerprint(customer.customerId)
+      isSeedDocument: hasCustomerSeedFingerprint(
+        customer.customerId,
+        customer.name
+      )
     })),
     ...data.products.map((product) => ({
       collectionPath: "products",
@@ -232,12 +241,12 @@ function createResetDocuments(count: number): ResetDocument[] {
           ? createLegacyProductRelatedDocuments(documentData)
           : [],
       documentId: product.productId,
-      isSeedDocument: hasProductSeedFingerprint(product.productId)
+      isSeedDocument: hasProductSeedFingerprint(product.productId, product.name)
     })),
     ...data.tasks.map((task) => ({
       collectionPath: "tasks",
       documentId: task.taskId,
-      isSeedDocument: hasSeedName("Demo Task ")
+      isSeedDocument: hasSeedName("Demo Task ", task.name)
     })),
     {
       collectionPath: "demoSeeds",

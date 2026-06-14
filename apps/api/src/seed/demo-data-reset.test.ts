@@ -4,6 +4,7 @@ import {
   resetDemoSeedData,
   resolveDemoSeedResetMode
 } from "./demo-data-reset";
+import { buildDemoSeedData } from "./demo-data";
 
 interface TestDocument {
   data?: Record<string, unknown>;
@@ -99,10 +100,24 @@ describe("demo seed reset target", () => {
 
 describe("resetDemoSeedData", () => {
   it("reports matching seed documents in dry-run without deleting", async () => {
+    const seedData = buildDemoSeedData(1);
+    const [category] = seedData.categories;
+    const [tag] = seedData.tags;
+    const [customer] = seedData.customers;
+    const [product] = seedData.products;
+    const [task] = seedData.tasks;
     const { batch, db } = createDb({
       "categories/cat_demo_001": {
         data: {
-          name: "Demo Category 01"
+          categoryId: category.categoryId,
+          name: category.name
+        },
+        exists: true
+      },
+      "customers/cus_000001": {
+        data: {
+          customerId: customer.customerId,
+          name: customer.name
         },
         exists: true
       },
@@ -119,7 +134,23 @@ describe("resetDemoSeedData", () => {
       },
       "products/HM-000001": {
         data: {
-          name: "Demo Handmade Item 001"
+          name: product.name,
+          productId: product.productId,
+          qrCodeValue: product.qrCodeValue
+        },
+        exists: true
+      },
+      "tags/tag_demo_001": {
+        data: {
+          name: tag.name,
+          tagId: tag.tagId
+        },
+        exists: true
+      },
+      "tasks/task_demo_001": {
+        data: {
+          name: task.name,
+          taskId: task.taskId
         },
         exists: true
       }
@@ -134,7 +165,7 @@ describe("resetDemoSeedData", () => {
       })
     ).resolves.toMatchObject({
       deleted: 0,
-      matched: 3,
+      matched: 6,
       mode: "dry-run",
       resetCount: 1
     });

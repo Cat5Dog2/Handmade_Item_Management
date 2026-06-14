@@ -75,8 +75,8 @@ API は Firebase 認証に加えて、このメールアドレスの一致を確
 
 `docker compose --env-file .env.docker up --build` の起動時に、`demo-seed` サービスが Auth / Firestore Emulator へデモデータを投入します。
 
-- 既定では `categories` / `tags` / `customers` / `products` / `tasks` を各25件作成します
-- `APP_OWNER_EMAIL` の Auth ユーザーが存在しない場合は作成します。初期パスワードは `.env.docker` の `DEMO_OWNER_PASSWORD`、未指定時は `password123` です
+- 既定では `categories` / `tags` / `customers` / `products` / `tasks` を各30件作成します
+- `APP_OWNER_EMAIL` の Auth ユーザーが存在しない場合は作成します。Docker emulator では既存ユーザーのパスワードも `.env.docker` の `DEMO_OWNER_PASSWORD`、未指定時は `password123` に同期します
 - 同じIDのドキュメントが既に存在する場合は上書きせずスキップします
 - `counters/product` と `counters/customer` は、デモ件数以上になるように更新します
 - 停止時に `.firebase-emulator-data` へ export されるため、再起動時は重複投入されません

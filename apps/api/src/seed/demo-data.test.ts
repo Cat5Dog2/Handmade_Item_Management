@@ -37,7 +37,11 @@ describe("demo seed data", () => {
     );
     expect(soldProduct?.soldAt).toBeInstanceOf(Date);
     expect(soldProduct?.soldCustomerId).toMatch(/^cus_\d{6}$/);
-    expect(soldProduct?.soldCustomerNameSnapshot).toMatch(/^Demo Customer/);
+    const soldCustomer = data.customers.find(
+      ({ customerId }) => customerId === soldProduct?.soldCustomerId
+    );
+    expect(soldCustomer?.isArchived).toBe(false);
+    expect(soldProduct?.soldCustomerNameSnapshot).toBe(soldCustomer?.name);
   });
 
   it("sets counters to the highest generated product and customer numbers", () => {

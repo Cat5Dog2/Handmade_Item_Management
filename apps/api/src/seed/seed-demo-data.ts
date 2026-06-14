@@ -133,6 +133,13 @@ function hasErrorCode(error: unknown, code: string) {
   );
 }
 
+function resolveDemoOwnerPassword(target: DemoSeedTarget) {
+  return (
+    process.env.DEMO_OWNER_PASSWORD?.trim() ||
+    (target === "emulator" ? DEFAULT_DEMO_OWNER_PASSWORD : undefined)
+  );
+}
+
 async function ensureDemoOwnerUser(auth: Auth, target: DemoSeedTarget) {
   const email = process.env.APP_OWNER_EMAIL?.trim();
 
@@ -142,16 +149,24 @@ async function ensureDemoOwnerUser(auth: Auth, target: DemoSeedTarget) {
   }
 
   try {
-    await auth.getUserByEmail(email);
+    const user = await auth.getUserByEmail(email);
+
+    if (target === "emulator") {
+      await auth.updateUser(user.uid, {
+        emailVerified: true,
+        password: resolveDemoOwnerPassword(target)
+      });
+      console.log(`[demo-seed] Auth emulator user updated: ${email}`);
+      return;
+    }
+
     console.log(`[demo-seed] Auth user already exists: ${email}`);
   } catch (error) {
     if (!hasErrorCode(error, "auth/user-not-found")) {
       throw error;
     }
 
-    const password =
-      process.env.DEMO_OWNER_PASSWORD?.trim() ||
-      (target === "emulator" ? DEFAULT_DEMO_OWNER_PASSWORD : undefined);
+    const password = resolveDemoOwnerPassword(target);
 
     if (!password) {
       throw new Error(

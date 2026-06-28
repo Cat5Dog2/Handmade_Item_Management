@@ -393,7 +393,9 @@ API内部例外は、最終的に以下へ寄せる。
 
 - Firebase Admin SDK で ID Token を検証する
 - 単独利用を担保するため、MVP では `APP_OWNER_EMAIL` と `decodedToken.email` の一致を確認する
-- `APP_OWNER_EMAIL` と一致しない、またはメールアドレスを取得できない場合は `AUTH_FORBIDDEN` を返す
+- demo 環境では `ENABLE_GUEST_LOGIN=true` かつ `decodedToken.firebase.sign_in_provider=anonymous` でメールアドレスを持たないトークンを例外許可する
+- 上記の所有者または demo 匿名ゲストのどちらにも該当しない場合は `AUTH_FORBIDDEN` を返す
+- `VITE_ENABLE_GUEST_LOGIN` はゲストボタンの表示制御にのみ使い、API 認可は `ENABLE_GUEST_LOGIN` を正本とする
 - 認証ユーザーは単独利用前提だが、API側では毎回認証と allowlist 確認を実施する
 - `actorUid` は operationLogs に転記できるよう request context に保持する
 

@@ -178,8 +178,14 @@ if [[ -z "${GOOGLE_CLOUD_PROJECT:-}" ]]; then
   export GOOGLE_CLOUD_PROJECT="$FIREBASE_PROJECT_ID"
 fi
 
+enable_guest_login="false"
+if [[ "$deploy_env" == "demo" ]]; then
+  enable_guest_login="true"
+fi
+
 substitution_parts=(
   "_APP_OWNER_EMAIL=$APP_OWNER_EMAIL"
+  "_ENABLE_GUEST_LOGIN=$enable_guest_login"
   "_CORS_ORIGIN=$CORS_ORIGIN"
   "_FIREBASE_PROJECT_ID=$FIREBASE_PROJECT_ID"
   "_FIREBASE_STORAGE_BUCKET=$FIREBASE_STORAGE_BUCKET"

@@ -1,6 +1,8 @@
 export const APP_NAME = "Handmade Item Management";
 
 export const AUTH_MESSAGES = {
+  guestLoginFailed:
+    "ゲストログインに失敗しました。しばらくしてから再度お試しください。",
   loginFailed: "メールアドレスまたはパスワードが正しくありません。",
   loginRecordFailed:
     "ログイン記録の送信に失敗しました。しばらくしてから再度お試しください。",

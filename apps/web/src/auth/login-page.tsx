@@ -25,7 +25,10 @@ const passwordResetFormSchema = z.object({
 
 function LoginPage() {
   const { clearAuthNotice, authNotice } = useAuthSession();
-  const { login, sendPasswordResetEmail } = useAppAuth();
+  const { guestLogin, login, sendPasswordResetEmail } = useAppAuth();
+  const isGuestLoginEnabled =
+    import.meta.env.VITE_ENABLE_GUEST_LOGIN === "true";
+  const [isGuestLoginSubmitting, setIsGuestLoginSubmitting] = useState(false);
   const [isPasswordResetOpen, setIsPasswordResetOpen] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [passwordResetMessage, setPasswordResetMessage] = useState<
@@ -94,6 +97,24 @@ function LoginPage() {
     }
   });
 
+  const handleGuestLogin = async () => {
+    setLoginError(null);
+    clearAuthNotice();
+    setIsGuestLoginSubmitting(true);
+
+    try {
+      await guestLogin();
+    } catch (error) {
+      setLoginError(
+        error instanceof LoginRecordError
+          ? AUTH_MESSAGES.loginRecordFailed
+          : AUTH_MESSAGES.guestLoginFailed
+      );
+    } finally {
+      setIsGuestLoginSubmitting(false);
+    }
+  };
+
   return (
     <main className="auth-layout">
       <section className="auth-panel" aria-labelledby="login-title">
@@ -147,11 +168,27 @@ function LoginPage() {
               className="primary-button"
               type="submit"
               disabled={
-                !loginForm.formState.isValid || loginForm.formState.isSubmitting
+                !loginForm.formState.isValid ||
+                loginForm.formState.isSubmitting ||
+                isGuestLoginSubmitting
               }
             >
               {loginForm.formState.isSubmitting ? "ログイン中..." : "ログイン"}
             </button>
+            {isGuestLoginEnabled ? (
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={
+                  loginForm.formState.isSubmitting || isGuestLoginSubmitting
+                }
+                onClick={handleGuestLogin}
+              >
+                {isGuestLoginSubmitting
+                  ? "ゲストログイン中..."
+                  : "ゲストとして試す"}
+              </button>
+            ) : null}
             <button
               className="text-button"
               type="button"
@@ -254,9 +291,9 @@ export function AuthStatusPage() {
 }
 
 export function LoginRoute() {
-  const { isAuthenticated, isAuthReady, isLoginInProgress } = useAppAuth();
+  const { isAuthenticated, isAuthReady } = useAppAuth();
 
-  if (!isAuthReady || isLoginInProgress) {
+  if (!isAuthReady) {
     return <AuthStatusPage />;
   }
 

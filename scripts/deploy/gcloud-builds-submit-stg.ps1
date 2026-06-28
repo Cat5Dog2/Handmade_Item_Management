@@ -133,8 +133,11 @@ if ([string]::IsNullOrWhiteSpace($env:GOOGLE_CLOUD_PROJECT)) {
   $env:GOOGLE_CLOUD_PROJECT = $env:FIREBASE_PROJECT_ID
 }
 
+$enableGuestLogin = if ($DeployEnvironment -eq "demo") { "true" } else { "false" }
+
 $substitutions = @(
   "_APP_OWNER_EMAIL=$($env:APP_OWNER_EMAIL)",
+  "_ENABLE_GUEST_LOGIN=$enableGuestLogin",
   "_CORS_ORIGIN=$($env:CORS_ORIGIN)",
   "_FIREBASE_PROJECT_ID=$($env:FIREBASE_PROJECT_ID)",
   "_FIREBASE_STORAGE_BUCKET=$($env:FIREBASE_STORAGE_BUCKET)",

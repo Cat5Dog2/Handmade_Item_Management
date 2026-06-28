@@ -3,6 +3,7 @@ import {
   getAuth,
   onIdTokenChanged,
   sendPasswordResetEmail,
+  signInAnonymously,
   signInWithEmailAndPassword,
   signOut,
   type User
@@ -45,6 +46,10 @@ export function subscribeToAuthChanges(
 
 export function signInWithEmail(email: string, password: string) {
   return signInWithEmailAndPassword(getFirebaseAuth(), email, password);
+}
+
+export function signInAsGuest() {
+  return signInAnonymously(getFirebaseAuth());
 }
 
 export function sendPasswordReset(email: string) {

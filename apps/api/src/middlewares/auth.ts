@@ -9,9 +9,13 @@ import { verifyFirebaseIdToken } from "../firebase/firebase-admin";
 interface VerifiedToken {
   uid: string;
   email?: string | null;
+  firebase?: {
+    sign_in_provider?: string;
+  };
 }
 
 interface CreateRequireAuthOptions {
+  guestLoginEnabled?: boolean;
   ownerEmail?: string | null;
   verifyIdToken?: (idToken: string) => Promise<VerifiedToken>;
 }
@@ -44,6 +48,9 @@ export function createRequireAuth(
   options: CreateRequireAuthOptions = {}
 ): RequestHandler {
   const verifyIdToken = options.verifyIdToken ?? verifyFirebaseIdToken;
+  const guestLoginEnabled =
+    options.guestLoginEnabled ??
+    process.env.ENABLE_GUEST_LOGIN?.trim().toLowerCase() === "true";
   const ownerEmail = normalizeOwnerEmail(
     options.ownerEmail ?? process.env.APP_OWNER_EMAIL
   );
@@ -63,9 +70,14 @@ export function createRequireAuth(
 
     try {
       const decodedToken = await verifyIdToken(idToken);
-      const decodedEmail = decodedToken.email?.trim().toLowerCase();
+      const decodedEmail = normalizeOwnerEmail(decodedToken.email);
+      const isOwner = decodedEmail === ownerEmail;
+      const isAnonymousGuest =
+        guestLoginEnabled &&
+        !decodedEmail &&
+        decodedToken.firebase?.sign_in_provider === "anonymous";
 
-      if (!decodedEmail || decodedEmail !== ownerEmail) {
+      if (!isOwner && !isAnonymousGuest) {
         next(createAuthForbiddenError());
         return;
       }

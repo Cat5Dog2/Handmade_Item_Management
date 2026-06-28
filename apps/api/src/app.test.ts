@@ -59,17 +59,26 @@ function createTestLogger(): ApiLogger {
 }
 
 function createProtectedTestApp({
+  guestLoginEnabled = false,
   logger = createTestLogger(),
   ownerEmail = "owner@example.com",
   verifyIdToken
 }: {
+  guestLoginEnabled?: boolean;
   logger?: ApiLogger;
   ownerEmail?: string;
-  verifyIdToken?: (idToken: string) => Promise<{ uid: string; email?: string }>;
+  verifyIdToken?: (idToken: string) => Promise<{
+    uid: string;
+    email?: string;
+    firebase?: {
+      sign_in_provider?: string;
+    };
+  }>;
 } = {}) {
   return createApp({
     logger,
     requireAuthMiddleware: createRequireAuth({
+      guestLoginEnabled,
       ownerEmail,
       verifyIdToken
     }),
@@ -321,6 +330,71 @@ describe("createApp", () => {
     expect(response.body).toEqual({
       code: "AUTH_FORBIDDEN",
       message: "この操作は実行できません。"
+    });
+  });
+
+  it("returns AUTH_FORBIDDEN for an anonymous user when guest login is disabled", async () => {
+    const response = await request(
+      createProtectedTestApp({
+        verifyIdToken: async () => ({
+          uid: "guest-uid",
+          firebase: {
+            sign_in_provider: "anonymous"
+          }
+        })
+      })
+    )
+      .get("/api/protected")
+      .set("Authorization", "Bearer anonymous-token");
+
+    expect(response.status).toBe(403);
+    expect(response.body).toMatchObject({
+      code: "AUTH_FORBIDDEN"
+    });
+  });
+
+  it("accepts an anonymous user when guest login is enabled", async () => {
+    const response = await request(
+      createProtectedTestApp({
+        guestLoginEnabled: true,
+        verifyIdToken: async () => ({
+          uid: "guest-uid",
+          firebase: {
+            sign_in_provider: "anonymous"
+          }
+        })
+      })
+    )
+      .get("/api/protected")
+      .set("Authorization", "Bearer anonymous-token");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      data: {
+        actorUid: "guest-uid",
+        email: null
+      }
+    });
+  });
+
+  it("does not treat a non-anonymous user without an email as a guest", async () => {
+    const response = await request(
+      createProtectedTestApp({
+        guestLoginEnabled: true,
+        verifyIdToken: async () => ({
+          uid: "password-user",
+          firebase: {
+            sign_in_provider: "password"
+          }
+        })
+      })
+    )
+      .get("/api/protected")
+      .set("Authorization", "Bearer password-token");
+
+    expect(response.status).toBe(403);
+    expect(response.body).toMatchObject({
+      code: "AUTH_FORBIDDEN"
     });
   });
 

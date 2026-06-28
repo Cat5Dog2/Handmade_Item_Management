@@ -6,11 +6,11 @@ import {
   within
 } from "@testing-library/react";
 import { MemoryRouter, useLocation, useNavigate } from "react-router-dom";
-import { vi } from "vitest";
+import { afterEach, vi } from "vitest";
 import App from "./App";
 
 type MockAuthUser = {
-  email: string;
+  email: string | null;
   getIdToken: () => Promise<string>;
   uid: string;
 };
@@ -27,6 +27,18 @@ const authMock = vi.hoisted(() => {
 
   return {
     sendPasswordReset: vi.fn(async () => undefined),
+    signInAsGuest: vi.fn(async () => {
+      currentUser = {
+        email: null,
+        getIdToken: async () => "guest-id-token",
+        uid: "guest-user"
+      };
+      notify();
+
+      return {
+        user: currentUser
+      };
+    }),
     signInWithEmail: vi.fn(async (email: string) => {
       currentUser = {
         email,
@@ -59,6 +71,7 @@ const authMock = vi.hoisted(() => {
       currentUser = null;
       listeners.clear();
       this.sendPasswordReset.mockClear();
+      this.signInAsGuest.mockClear();
       this.signInWithEmail.mockClear();
       this.signOutUser.mockClear();
       this.subscribeToAuthChanges.mockClear();
@@ -166,6 +179,7 @@ let scrollToMock: ReturnType<typeof vi.fn>;
 
 vi.mock("./auth/firebase-auth-client", () => ({
   sendPasswordReset: authMock.sendPasswordReset,
+  signInAsGuest: authMock.signInAsGuest,
   signInWithEmail: authMock.signInWithEmail,
   signOutUser: authMock.signOutUser,
   subscribeToAuthChanges: authMock.subscribeToAuthChanges
@@ -212,6 +226,7 @@ function renderApp(
 
 describe("App routing", () => {
   beforeEach(() => {
+    vi.stubEnv("VITE_ENABLE_GUEST_LOGIN", "false");
     authMock.reset();
     qrScannerMock.clear.mockClear();
     qrScannerMock.pause.mockClear();
@@ -225,6 +240,10 @@ describe("App routing", () => {
       configurable: true,
       value: scrollToMock
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("renders the login route and protects unauthenticated routes", async () => {
@@ -430,6 +449,51 @@ describe("App routing", () => {
         screen.getByRole("heading", { name: "ダッシュボード" })
       ).toBeInTheDocument();
     });
+  });
+
+  it("logs in as an anonymous guest when the demo feature is enabled", async () => {
+    vi.stubEnv("VITE_ENABLE_GUEST_LOGIN", "true");
+    renderApp("/login");
+
+    fireEvent.click(screen.getByRole("button", { name: "ゲストとして試す" }));
+
+    await waitFor(() => {
+      expect(authMock.signInAsGuest).toHaveBeenCalledTimes(1);
+    });
+
+    const loginRecordRequest = fetchMock.mock.calls.find(
+      ([input]) =>
+        new URL(String(input), "http://localhost").pathname ===
+        "/api/auth/login-record"
+    );
+    const requestInit = loginRecordRequest?.[1] as
+      | { headers?: Record<string, string> }
+      | undefined;
+    expect(new Headers(requestInit?.headers).get("Authorization")).toBe(
+      "Bearer guest-id-token"
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("heading", { name: "ダッシュボード" })
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("shows the guest login error when anonymous authentication fails", async () => {
+    vi.stubEnv("VITE_ENABLE_GUEST_LOGIN", "true");
+    authMock.signInAsGuest.mockRejectedValueOnce(
+      new Error("anonymous authentication is disabled")
+    );
+    renderApp("/login");
+
+    fireEvent.click(screen.getByRole("button", { name: "ゲストとして試す" }));
+
+    expect(
+      await screen.findByText(
+        "ゲストログインに失敗しました。しばらくしてから再度お試しください。"
+      )
+    ).toBeInTheDocument();
   });
 
   it("opens the password reset dialog with the current email value", async () => {

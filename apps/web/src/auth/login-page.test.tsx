@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AUTH_MESSAGES } from "../messages/display-messages";
 import { LoginRecordError } from "./auth-provider";
 import { LoginRoute } from "./login-page";
@@ -8,6 +8,7 @@ import { LoginRoute } from "./login-page";
 const authHooks = vi.hoisted(() => ({
   clearAuthNotice: vi.fn(),
   getIdToken: vi.fn(),
+  guestLogin: vi.fn(),
   login: vi.fn(),
   logout: vi.fn(),
   sendPasswordResetEmail: vi.fn(),
@@ -64,6 +65,7 @@ function setDefaultHooks({
 } = {}) {
   authHooks.useAppAuth.mockReturnValue({
     authUser: null,
+    guestLogin: authHooks.guestLogin,
     isAuthenticated,
     isAuthReady,
     isLoginInProgress,
@@ -83,8 +85,10 @@ function setDefaultHooks({
 
 describe("LoginRoute", () => {
   beforeEach(() => {
+    vi.stubEnv("VITE_ENABLE_GUEST_LOGIN", "false");
     authHooks.clearAuthNotice.mockReset();
     authHooks.getIdToken.mockReset();
+    authHooks.guestLogin.mockReset();
     authHooks.login.mockReset();
     authHooks.logout.mockReset();
     authHooks.sendPasswordResetEmail.mockReset();
@@ -92,6 +96,10 @@ describe("LoginRoute", () => {
     authHooks.setIdTokenProvider.mockReset();
     authHooks.useAppAuth.mockReset();
     authHooks.useAuthSession.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("shows the auth status page while auth is not ready", () => {
@@ -128,6 +136,46 @@ describe("LoginRoute", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("パスワードを入力してください。")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "ログイン" })).toBeDisabled();
+  });
+
+  it("does not show guest login when the feature flag is disabled", () => {
+    vi.stubEnv("VITE_ENABLE_GUEST_LOGIN", "false");
+    setDefaultHooks();
+
+    renderLoginRoute();
+
+    expect(
+      screen.queryByRole("button", { name: "ゲストとして試す" })
+    ).not.toBeInTheDocument();
+  });
+
+  it("starts guest login when the demo feature flag is enabled", async () => {
+    vi.stubEnv("VITE_ENABLE_GUEST_LOGIN", "true");
+    authHooks.guestLogin.mockResolvedValue(undefined);
+    setDefaultHooks();
+
+    renderLoginRoute();
+
+    fireEvent.click(screen.getByRole("button", { name: "ゲストとして試す" }));
+
+    await waitFor(() => {
+      expect(authHooks.guestLogin).toHaveBeenCalledTimes(1);
+    });
+    expect(authHooks.clearAuthNotice).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows a retryable message when guest authentication fails", async () => {
+    vi.stubEnv("VITE_ENABLE_GUEST_LOGIN", "true");
+    authHooks.guestLogin.mockRejectedValue(new Error("anonymous auth failed"));
+    setDefaultHooks();
+
+    renderLoginRoute();
+
+    fireEvent.click(screen.getByRole("button", { name: "ゲストとして試す" }));
+
+    expect(
+      await screen.findByText(AUTH_MESSAGES.guestLoginFailed)
+    ).toBeInTheDocument();
   });
 
   it("shows the login record failure message when login record submission fails", async () => {

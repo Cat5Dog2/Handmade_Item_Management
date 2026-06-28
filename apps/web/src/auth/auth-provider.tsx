@@ -9,12 +9,13 @@ import {
   useState,
   type PropsWithChildren
 } from "react";
-import type { User } from "firebase/auth";
+import type { User, UserCredential } from "firebase/auth";
 import { API_PATHS } from "@handmade/shared";
 import { createApiClient } from "../api/api-client";
 import { useAuthSession } from "./auth-session";
 import {
   sendPasswordReset,
+  signInAsGuest,
   signInWithEmail,
   signOutUser,
   subscribeToAuthChanges
@@ -41,6 +42,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isAuthReady: boolean;
   isLoginInProgress: boolean;
+  guestLogin: () => Promise<void>;
   login: (input: LoginInput) => Promise<void>;
   logout: (options?: LogoutOptions) => Promise<void>;
   sendPasswordResetEmail: (email: string) => Promise<void>;
@@ -65,14 +67,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
     return unsubscribe;
   }, [setIdTokenProvider]);
 
-  const login = useCallback(
-    async ({ email, password }: LoginInput) => {
+  const completeLogin = useCallback(
+    async (authenticate: () => Promise<UserCredential>) => {
       let shouldRollbackAuth = false;
 
       setIsLoginInProgress(true);
 
       try {
-        const credential = await signInWithEmail(email, password);
+        const credential = await authenticate();
         shouldRollbackAuth = true;
 
         const loginApiClient = createApiClient({
@@ -105,6 +107,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
     [clearAuthNotice, setIdTokenProvider]
   );
 
+  const login = useCallback(
+    ({ email, password }: LoginInput) =>
+      completeLogin(() => signInWithEmail(email, password)),
+    [completeLogin]
+  );
+
+  const guestLogin = useCallback(
+    () => completeLogin(signInAsGuest),
+    [completeLogin]
+  );
+
   const logout = useCallback(
     async (options: LogoutOptions = {}) => {
       if (options.clearNotice ?? true) {
@@ -128,6 +141,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const value = useMemo<AuthContextValue>(
     () => ({
       authUser,
+      guestLogin,
       isAuthenticated: authUser !== null && !isLoginInProgress,
       isAuthReady,
       isLoginInProgress,
@@ -137,6 +151,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }),
     [
       authUser,
+      guestLogin,
       isAuthReady,
       isLoginInProgress,
       login,

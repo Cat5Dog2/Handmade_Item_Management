@@ -37,7 +37,7 @@ export interface HealthResponseData {
 
 export interface AuthContext {
   actorUid: string;
-  email: string;
+  email: string | null;
 }
 
 export interface ProductListMeta {
